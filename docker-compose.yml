@@ -1,0 +1,15 @@
+cartimage:
+  build: .
+cartrabbit:
+  image: rabbitmq
+cartmysql:
+  image: mysql
+  environment:
+     MYSQL_ROOT_PASSWORD: root
+     MYSQL_DATABASE: pacifica_cart
+cartworkers:
+  image: pacificacartd_cartimage
+  links:
+    - cartrabbit:amqp
+    - cartmysql:mysql
+
