@@ -11,8 +11,10 @@ APIs for users to use.
 
 This code depends on the following libraries and python modules:
 
-N/A
-
+Docker/docker-compose
+Peewee
+Celery
+MySQL-Python
 This is a standard python distutils build process.
 
 ```
