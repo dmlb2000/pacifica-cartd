@@ -2,9 +2,9 @@ from peewee import *
 from playhouse.db_url import connect
 import os
 import datetime
-from cart.celery import cart_app, MYSQL_PASS, MYSQL_ADDR, MYSQL_DATABASE, MYSQL_PORT
+from cart.celery import cart_app, MYSQL_USER, MYSQL_PASS, MYSQL_ADDR, MYSQL_DATABASE, MYSQL_PORT
 
-db = MySQLDatabase(MYSQL_DATABASE, host=MYSQL_ADDR, port=int(MYSQL_PORT), user="root", passwd=MYSQL_PASS)
+db = MySQLDatabase(MYSQL_DATABASE, host=MYSQL_ADDR, port=int(MYSQL_PORT), user=MYSQL_USER, passwd=MYSQL_PASS)
 
 def database_setup():
     db.connect()

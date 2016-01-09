@@ -7,6 +7,8 @@ cartmysql:
   environment:
      MYSQL_ROOT_PASSWORD: root
      MYSQL_DATABASE: pacifica_cart
+     MYSQL_USER: cartd
+     MYSQL_PASSWORD: cartd
 cartworkers:
   image: pacificacartd_cartimage
   links:
