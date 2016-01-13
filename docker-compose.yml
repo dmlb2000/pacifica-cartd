@@ -1,9 +1,3 @@
-cartimage:
-  build: .
-  dockerfile: Dockerfile
-cartserver:
-  build: .
-  dockerfile: Dockerfile.wsgi
 cartrabbit:
   image: rabbitmq
 cartmysql:
@@ -14,7 +8,16 @@ cartmysql:
      MYSQL_USER: cartd
      MYSQL_PASSWORD: cartd
 cartworkers:
-  image: pacificacartd_cartimage
+  build: .
+  dockerfile: Dockerfile
+  links:
+    - cartrabbit:amqp
+    - cartmysql:mysql
+cartserver:
+  build: .
+  dockerfile: Dockerfile.wsgi
+  ports:
+    - 8080:8080
   links:
     - cartrabbit:amqp
     - cartmysql:mysql
