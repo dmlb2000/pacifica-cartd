@@ -1,5 +1,9 @@
 cartimage:
   build: .
+  dockerfile: Dockerfile
+cartserver:
+  build: .
+  dockerfile: Dockerfile.wsgi
 cartrabbit:
   image: rabbitmq
 cartmysql:
