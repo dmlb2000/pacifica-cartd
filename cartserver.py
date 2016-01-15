@@ -6,7 +6,7 @@ The core of the server code is in cart_interface.py.
 """
 from argparse import ArgumentParser
 from wsgiref.simple_server import make_server
-#from cart.tasks import write_message
+from cart.cart_orm import database_setup
 from cart.cart_interface import CartGenerator
 
 PARSER = ArgumentParser(description='Run the cart interface.')
@@ -20,6 +20,8 @@ PARSER.add_argument('-a', '--address', metavar='ADDRESS',
 
 ARGS = PARSER.parse_args()
 GENERATOR = CartGenerator()
+#make sure the database is up 
+database_setup()
 SRV = make_server(ARGS.address, ARGS.port,
                   GENERATOR.pacifica_cartinterface)
 

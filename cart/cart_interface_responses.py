@@ -17,11 +17,27 @@ class Responses(object):
         }
         return self._response
 
+    def cart_proccessing_response(self, start_response):
+        """Response base"""
+        start_response('200 OK', [('Content-Type', 'application/json')])
+        self._response = {
+            'message': 'Cart Processing has begun'
+        }
+        return self._response
+
     def unknown_exception(self, start_response):
         """Response when unknown exception occurs"""
         start_response('200 OK', [('Content-Type', 'application/json')])
         self._response = {
             'message': 'Unknown Exception Occured'
+        }
+        return self._response
+
+    def test_response(self, start_response, variable):
+        """Response when unknown exception occurs"""
+        start_response('200 OK', [('Content-Type', 'application/json')])
+        self._response = {
+            'message': variable
         }
         return self._response
 

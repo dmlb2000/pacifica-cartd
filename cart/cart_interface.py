@@ -1,10 +1,11 @@
 #!/usr/bin/python
 """Class for the cart interface.  Allows API to file interactions"""
-from json import dumps
+import json
 from os import path
 from sys import stderr
 import doctest
 import cart.cart_interface_responses as cart_interface_responses
+from cart.tasks import stageFiles
 
 class CartInterfaceError(Exception):
     """
@@ -14,6 +15,12 @@ class CartInterfaceError(Exception):
     CartInterfaceError()
     """
     pass
+
+def un_abs_path(path_name):
+    """Removes absolute path piece"""
+    if path.isabs(path_name):
+        path_name = path_name[1:]
+    return path_name
 
 class CartGenerator(object):
     """Defines the methods that can be used for cart request types
@@ -37,13 +44,23 @@ class CartGenerator(object):
 
     def stage(self, env, start_response):
         """Tell the archive interface to stage all the files"""
-        resp = cart_interface_responses.Responses(start_response)
-        self._response = resp.base_response()
+        resp = cart_interface_responses.Responses()
+        try:
+            request_body_size = int(env.get('CONTENT_LENGTH', 0))
+        except (ValueError):
+            request_body_size = 0
+
+        request_body = env['wsgi.input'].read(request_body_size)
+        data = json.loads(request_body)
+        fileIds = data['fileids']
+        uuid = str(un_abs_path(env['PATH_INFO']))
+        stageFiles.delay(fileIds, uuid)
+        self._response = resp.cart_proccessing_response(start_response)
         return self.return_response()
 
     def return_response(self):
         """Prints all responses in a nice fashion"""
-        return dumps(self._response, sort_keys=True, indent=4)
+        return json.dumps(self._response, sort_keys=True, indent=4)
 
 
     def pacifica_cartinterface(self, env, start_response):

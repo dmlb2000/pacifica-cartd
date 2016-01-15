@@ -13,6 +13,8 @@ def database_setup():
 class Cart(Model):
     id = PrimaryKeyField()
     cart_uuid = CharField(default=1)
+    file_ids = CharField(default="")
+    bundle_path = CharField(default="")
     creation_date = DateTimeField(default=datetime.datetime.now())
     updated_date = DateTimeField(default=datetime.datetime.now())
     deleted_date = DateTimeField(default=datetime.datetime.now())

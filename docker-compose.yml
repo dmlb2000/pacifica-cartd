@@ -1,19 +1,23 @@
 cartrabbit:
   image: rabbitmq
+  container_name: cartrabbit
 cartmysql:
   image: mysql
+  container_name: cartmysql
   environment:
      MYSQL_ROOT_PASSWORD: root
      MYSQL_DATABASE: pacifica_cart
      MYSQL_USER: cartd
      MYSQL_PASSWORD: cartd
 cartworkers:
+  container_name: cartworkers
   build: .
   dockerfile: Dockerfile
   links:
     - cartrabbit:amqp
     - cartmysql:mysql
 cartserver:
+  container_name: cartserver
   build: .
   dockerfile: Dockerfile.wsgi
   ports:
