@@ -1,14 +1,16 @@
 cartrabbit:
   image: rabbitmq
   container_name: cartrabbit
+
 cartmysql:
   image: mysql
   container_name: cartmysql
   environment:
-     MYSQL_ROOT_PASSWORD: root
-     MYSQL_DATABASE: pacifica_cart
-     MYSQL_USER: cartd
-     MYSQL_PASSWORD: cartd
+    MYSQL_ROOT_PASSWORD: root
+    MYSQL_DATABASE: pacifica_cart
+    MYSQL_USER: cartd
+    MYSQL_PASSWORD: cartd
+
 cartworkers:
   container_name: cartworkers
   build: .
@@ -16,6 +18,12 @@ cartworkers:
   links:
     - cartrabbit:amqp
     - cartmysql:mysql
+  volumes:
+    - /shared:/shared
+  environment:
+    VOLUME_PATH: /shared/
+    ARCHIVE_INTERFACE_URL: http://127.0.0.1
+
 cartserver:
   container_name: cartserver
   build: .
@@ -25,4 +33,8 @@ cartserver:
   links:
     - cartrabbit:amqp
     - cartmysql:mysql
-
+  volumes:
+    - /shared:/shared
+  environment:
+    VOLUME_PATH: /shared/
+    ARCHIVE_INTERFACE_URL: http://127.0.0.1
