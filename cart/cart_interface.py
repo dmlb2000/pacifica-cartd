@@ -28,7 +28,7 @@ def fix_cart_uuid(uuid):
 def is_valid_uuid(uuid):
     """checks to see if the uuid is valid before using it"""
     if not uuid:
-        return False 
+        return False
     if uuid == "":
         return False
 
@@ -47,28 +47,29 @@ class CartGenerator(object):
         """Download the tar file created by the cart"""
         resp = cart_interface_responses.Responses()
         uuid = fix_cart_uuid(env['PATH_INFO'])
-        isValid = is_valid_uuid(uuid)
-        if not isValid:
-            self._response = resp.invalid_uuid_error_response(start_response, uuid)
+        is_valid = is_valid_uuid(uuid)
+        if not is_valid:
+            self._response = resp.invalid_uuid_error_response(
+                start_response, uuid)
             return self.return_response()
         #get the bundle path if available
-        cartPath = availableCart(uuid)
-        if cartPath == False:
+        cart_path = availableCart(uuid)
+        if cart_path == False:
             #cart not ready
             self._response = resp.unready_cart(start_response)
             return self.return_response()
         else:
-            if path.isfile(cartPath):
+            if path.isfile(cart_path):
                 #give back bundle here
                 stderr.flush()
                 try:
-                    myfile = open(cartPath, "r")
+                    myfile = open(cart_path, "r")
                     start_response('200 OK', [('Content-Type',
                                                'application/octet-stream')])
                     if 'wsgi.file_wrapper' in env:
                         return env['wsgi.file_wrapper'](myfile, BLOCK_SIZE)
                     return iter(lambda: myfile.read(BLOCK_SIZE), '')
-                except Exception as ex:
+                except Exception:
                     self._response = resp.bundle_doesnt_exist(start_response)
             else:
                 self._response = resp.bundle_doesnt_exist(start_response)
@@ -81,9 +82,10 @@ class CartGenerator(object):
         """Get the status of a carts tar file"""
         resp = cart_interface_responses.Responses()
         uuid = fix_cart_uuid(env['PATH_INFO'])
-        isValid = is_valid_uuid(uuid)
-        if not isValid:
-            self._response = resp.invalid_uuid_error_response(start_response, uuid)
+        is_valid = is_valid_uuid(uuid)
+        if not is_valid:
+            self._response = resp.invalid_uuid_error_response(
+                start_response, uuid)
             return self.return_response()
 
         status = cartStatus(uuid)
@@ -95,24 +97,25 @@ class CartGenerator(object):
         resp = cart_interface_responses.Responses()
         try:
             request_body_size = int(env.get('CONTENT_LENGTH', 0))
-        except (ValueError):
+        except ValueError:
             request_body_size = 0
 
         try:
             request_body = env['wsgi.input'].read(request_body_size)
             data = json.loads(request_body)
-            fileIds = data['fileids']
-        except Exception as ex:
+            file_ids = data['fileids']
+        except Exception:
             self._response = resp.json_stage_error_response(start_response)
             return self.return_response()
 
         uuid = fix_cart_uuid(env['PATH_INFO'])
-        isValid = is_valid_uuid(uuid)
-        if not isValid:
-            self._response = resp.invalid_uuid_error_response(start_response, uuid)
+        is_valid = is_valid_uuid(uuid)
+        if not is_valid:
+            self._response = resp.invalid_uuid_error_response(
+                start_response, uuid)
             return self.return_response()
 
-        stageFiles.delay(fileIds, uuid)
+        stageFiles.delay(file_ids, uuid)
         self._response = resp.cart_proccessing_response(start_response)
         return self.return_response()
 

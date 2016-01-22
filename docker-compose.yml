@@ -11,6 +11,11 @@ cartmysql:
     MYSQL_USER: cartd
     MYSQL_PASSWORD: cartd
 
+archiveinterface:
+  image: pacifica/archiveinterface
+  container_name: archiveinterface
+
+
 cartworkers:
   container_name: cartworkers
   build: .
@@ -29,7 +34,7 @@ cartserver:
   build: .
   dockerfile: Dockerfile.wsgi
   ports:
-    - 8080:8080
+    - 8081:8081
   links:
     - cartrabbit:amqp
     - cartmysql:mysql

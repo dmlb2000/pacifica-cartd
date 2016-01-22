@@ -20,7 +20,7 @@ PARSER.add_argument('-a', '--address', metavar='ADDRESS',
 
 ARGS = PARSER.parse_args()
 GENERATOR = CartGenerator()
-#make sure the database is up 
+#make sure the database is up
 database_setup()
 SRV = make_server(ARGS.address, ARGS.port,
                   GENERATOR.pacifica_cartinterface)

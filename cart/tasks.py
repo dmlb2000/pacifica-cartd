@@ -1,19 +1,25 @@
 from __future__ import absolute_import
 from cart.celery import cart_app
 from cart.cart_orm import Cart, File, db
+from os import path
 import os
 import time
 
 VOLUME_PATH = os.environ['VOLUME_PATH']
 ARCHIVE_INTERFACE_URL = os.environ['ARCHIVE_INTERFACE_URL']
 
+def fix_absolute_path(filepath):
+    """Removes / from front of path"""
+    if path.isabs(filepath):
+        filepath = filepath[1:]
+    return filepath
+
 def updateCartFiles(uuid, fileIds):
     """Update the files associated to a cart"""
     with db.atomic():
         for fId in fileIds:
-           File.create(cart_uuid=uuid, file_id=fId)
-
-
+            filepath = fix_absolute_path(fId["path"])
+            File.create(cart_uuid=uuid, file_id=fId["id"], bundle_path=filepath)
 
 
 @cart_app.task(ignore_result=True)
@@ -32,7 +38,7 @@ def stageFiles(fileIds, uuid):
     #with update or new, need to add in files
     updateCartFiles(uuid, fileIds)
 
-    getFilesLocally.delay(mycart.cart_uuid)
+    getFilesLocally(mycart.cart_uuid)
     
 
 @cart_app.task(ignore_result=True)
@@ -41,6 +47,7 @@ def getFilesLocally(uuid):
     #tell each file to be pulled
     for f in File.select().where(File.cart_uuid == uuid):
         pullFile(f.id)
+
 
     toBundleFlag = False
     while toBundleFlag == False:
@@ -62,7 +69,7 @@ def getFilesLocally(uuid):
     #All files are local...try to tar
     tarFiles.delay(uuid)
 
-@cart_app.task(ignore_result=True)
+@cart_app.task()
 def pullFile(fId):
     """Pull a file from the archive  """
     #make sure to check size here and make sure enough space is available
@@ -83,6 +90,7 @@ def pullFile(fId):
         #if curl fails...write error
         f.status = "error"
         f.save()
+    return True
 
 @cart_app.task(ignore_result=True)
 def tarFiles(uuid):
@@ -132,5 +140,6 @@ def availableCart(uuid):
 
     if mycart and mycart.status == "ready":
         cartBundlePath = mycart.bundle_path
+        
     return cartBundlePath
 
