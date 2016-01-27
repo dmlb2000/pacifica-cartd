@@ -38,7 +38,9 @@ def stageFiles(fileIds, uuid):
     #with update or new, need to add in files
     updateCartFiles(uuid, fileIds)
 
-    getFilesLocally(mycart.cart_uuid)
+    getFilesLocally.delay(mycart.cart_uuid)
+    prepareBundle.delay(mycart.cart_uuid)
+
     
 
 @cart_app.task(ignore_result=True)
@@ -46,30 +48,29 @@ def getFilesLocally(uuid):
     """Pull the files to the local system from the backend """
     #tell each file to be pulled
     for f in File.select().where(File.cart_uuid == uuid):
-        pullFile(f.id)
+        pullFile.delay(f.id)
 
+@cart_app.task(ignore_result=True)
+def prepareBundle(uuid):
+    toBundleFlag = True
+    for f in File.select().where(File.cart_uuid == uuid):
+        if (f.status == "error"):
+            #error pulling file so try again
+            toBundleFlag = False
+            pullFile.delay(f.id)
 
-    toBundleFlag = False
-    while toBundleFlag == False:
-        toBundleFlag = True
-        for f in File.select().where(File.cart_uuid == uuid):
-            if (f.status == "error"):
-                #error pulling file so try again
-                toBundleFlag = False
-                pullFile(f.id)
+        elif (f.status != "staged"):
+            toBundleFlag = False
 
-            elif (f.status != "staged"):
-                toBundleFlag = False
+    if (toBundleFlag == False):
+        #if not ready to bundle recall this task
+        prepareBundle.delay(uuid)
 
-        if (toBundleFlag == False):
-            #if not ready to bundle sleep for 60 seconds then recheck
-            time.sleep(60)
+    else:
+        #All files are local...try to tar
+        tarFiles.delay(uuid)
 
-
-    #All files are local...try to tar
-    tarFiles.delay(uuid)
-
-@cart_app.task()
+@cart_app.task(ignore_result=True)
 def pullFile(fId):
     """Pull a file from the archive  """
     #make sure to check size here and make sure enough space is available
