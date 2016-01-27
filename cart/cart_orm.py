@@ -13,22 +13,24 @@ def database_setup():
 
 class Cart(Model):
     id = PrimaryKeyField()
-    cart_uuid = CharField(unique=True, index=True, default=1)
+    cart_uuid = CharField(default=1)
     bundle_path = CharField(default="")
     creation_date = DateTimeField(default=datetime.datetime.now())
     updated_date = DateTimeField(default=datetime.datetime.now())
     deleted_date = DateTimeField(default=datetime.datetime.now())
     status = TextField(default="waiting")
+    error = TextField(default="")
 
     class Meta:
         database = db # This model uses the pacifica_cart database.
 
 class File(Model):
     id = PrimaryKeyField()
-    cart_uuid = ForeignKeyField(Cart, to_field="cart_uuid")
+    cart = ForeignKeyField(Cart, to_field="id")
     file_id = CharField(default="")
     bundle_path = CharField(default="")
     status = TextField(default="waiting")
+    error = TextField(default="")
 
     class Meta:
         database = db # This model uses the pacifica_cart database.
