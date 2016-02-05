@@ -57,12 +57,12 @@ class Responses(object):
         }
         return self._response
 
-    def invalid_uuid_error_response(self, start_response, uuid):
+    def invalid_uid_error_response(self, start_response, uid):
         """Response when unknown exception occurs"""
         start_response('200 OK', [('Content-Type', 'application/json')])
         self._response = {
-            'message': "The uuid was not valid",
-            'uuid': uuid
+            'message': "The uid was not valid",
+            'uid': uid
         }
         return self._response
 

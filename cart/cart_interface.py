@@ -19,17 +19,17 @@ class CartInterfaceError(Exception):
     """
     pass
 
-def fix_cart_uuid(uuid):
-    """Removes / from front of cart_uuid"""
-    if path.isabs(uuid):
-        uuid = uuid[1:]
-    return uuid
+def fix_cart_uid(uid):
+    """Removes / from front of cart_uid"""
+    if path.isabs(uid):
+        uid = uid[1:]
+    return uid
 
-def is_valid_uuid(uuid):
-    """checks to see if the uuid is valid before using it"""
-    if not uuid:
+def is_valid_uid(uid):
+    """checks to see if the uid is valid before using it"""
+    if not uid:
         return False
-    if uuid == "":
+    if uid == "":
         return False
 
     return True
@@ -46,14 +46,14 @@ class CartGenerator(object):
     def get(self, env, start_response):
         """Download the tar file created by the cart"""
         resp = cart_interface_responses.Responses()
-        uuid = fix_cart_uuid(env['PATH_INFO'])
-        is_valid = is_valid_uuid(uuid)
+        uid = fix_cart_uid(env['PATH_INFO'])
+        is_valid = is_valid_uid(uid)
         if not is_valid:
-            self._response = resp.invalid_uuid_error_response(
-                start_response, uuid)
+            self._response = resp.invalid_uid_error_response(
+                start_response, uid)
             return self.return_response()
         #get the bundle path if available
-        cart_path = availableCart(uuid)
+        cart_path = availableCart(uid)
         if cart_path == False:
             #cart not ready
             self._response = resp.unready_cart(start_response)
@@ -81,14 +81,14 @@ class CartGenerator(object):
     def status(self, env, start_response):
         """Get the status of a carts tar file"""
         resp = cart_interface_responses.Responses()
-        uuid = fix_cart_uuid(env['PATH_INFO'])
-        is_valid = is_valid_uuid(uuid)
+        uid = fix_cart_uid(env['PATH_INFO'])
+        is_valid = is_valid_uid(uid)
         if not is_valid:
-            self._response = resp.invalid_uuid_error_response(
-                start_response, uuid)
+            self._response = resp.invalid_uid_error_response(
+                start_response, uid)
             return self.return_response()
 
-        status = cartStatus(uuid)
+        status = cartStatus(uid)
         self._response = resp.cart_status_response(start_response, status)
         return self.return_response()
 
@@ -108,14 +108,14 @@ class CartGenerator(object):
             self._response = resp.json_stage_error_response(start_response)
             return self.return_response()
 
-        uuid = fix_cart_uuid(env['PATH_INFO'])
-        is_valid = is_valid_uuid(uuid)
+        uid = fix_cart_uid(env['PATH_INFO'])
+        is_valid = is_valid_uid(uid)
         if not is_valid:
-            self._response = resp.invalid_uuid_error_response(
-                start_response, uuid)
+            self._response = resp.invalid_uid_error_response(
+                start_response, uid)
             return self.return_response()
 
-        stageFiles.delay(file_ids, uuid)
+        stageFiles.delay(file_ids, uid)
         self._response = resp.cart_proccessing_response(start_response)
         return self.return_response()
 

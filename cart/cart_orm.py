@@ -13,11 +13,11 @@ def database_setup():
 
 class Cart(Model):
     id = PrimaryKeyField()
-    cart_uuid = CharField(default=1)
+    cart_uid = CharField(default=1)
     bundle_path = CharField(default="")
     creation_date = DateTimeField(default=datetime.datetime.now())
     updated_date = DateTimeField(default=datetime.datetime.now())
-    deleted_date = DateTimeField(default=datetime.datetime.now())
+    deleted_date = DateTimeField(null=True)
     status = TextField(default="waiting")
     error = TextField(default="")
 
@@ -27,7 +27,7 @@ class Cart(Model):
 class File(Model):
     id = PrimaryKeyField()
     cart = ForeignKeyField(Cart, to_field="id")
-    file_id = CharField(default="")
+    file_name = CharField(default="")
     bundle_path = CharField(default="")
     status = TextField(default="waiting")
     error = TextField(default="")

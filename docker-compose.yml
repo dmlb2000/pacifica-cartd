@@ -27,11 +27,12 @@ cartworkers:
   links:
     - cartrabbit:amqp
     - cartmysql:mysql
+    - archiveinterface:archivei
   volumes:
     - /shared:/shared
   environment:
     VOLUME_PATH: /shared/
-    ARCHIVE_INTERFACE_URL: http://127.0.0.1:8080/
+    ARCHIVE_INTERFACE_URL: None
 
 cartserver:
   container_name: cartserver
@@ -42,8 +43,9 @@ cartserver:
   links:
     - cartrabbit:amqp
     - cartmysql:mysql
+    - archiveinterface:archivei
   volumes:
     - /shared:/shared
   environment:
     VOLUME_PATH: /shared/
-    ARCHIVE_INTERFACE_URL: http://127.0.0.1:8080/
+    ARCHIVE_INTERFACE_URL: None
