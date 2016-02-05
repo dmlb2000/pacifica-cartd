@@ -1,6 +1,7 @@
 from __future__ import absolute_import
-from cart.celery import cart_app
-from cart.cart_orm import Cart, File, db
+from cart.celery import CART_APP
+from cart.cart_orm import Cart, File, DB
+from os import path
 import os
 import time
 import datetime
@@ -29,7 +30,7 @@ def fix_absolute_path(filepath):
 
 def updateCartFiles(cart, fileIds):
     """Update the files associated to a cart"""
-    with db.atomic():
+    with DB.atomic():
         for fId in fileIds:
             filepath = fix_absolute_path(fId["path"])
             File.create(cart=cart, file_name=fId["id"], bundle_path=filepath)
@@ -37,10 +38,11 @@ def updateCartFiles(cart, fileIds):
             cart.save()
 
 
-@cart_app.task(ignore_result=True)
+
+@CART_APP.task(ignore_result=True)
 def stageFiles(fileIds, uid):
     """Tell the files to be staged on the backend system """
-    db.connect()
+    DB.connect()
     mycart = Cart(cart_uid=uid, status="staging")
     mycart.save()
     #with update or new, need to add in files
@@ -49,20 +51,18 @@ def stageFiles(fileIds, uid):
     getFilesLocally.delay(mycart.id)
     prepareBundle.delay(mycart.id)
 
-    
-
-@cart_app.task(ignore_result=True)
+@CART_APP.task(ignore_result=True)
 def getFilesLocally(cartid):
     """Pull the files to the local system from the backend """
     #tell each file to be pulled
     for f in File.select().where(File.cart == cartid):
         pullFile.delay(f.id, False, True)
 
-@cart_app.task(ignore_result=True)
+@CART_APP.task(ignore_result=True)
 def prepareBundle(cartid):
     toBundleFlag = True
     for f in File.select().where(File.cart == cartid):
-        if (f.status == "error"):
+        if f.status == "error":
             #error pulling file so set cart error and return
             try:
                 mycart = Cart.get(Cart.id == cartid)
@@ -75,10 +75,10 @@ def prepareBundle(cartid):
                 #case if record no longer exists
                 return
 
-        elif (f.status != "staged"):
+        elif f.status != "staged":
             toBundleFlag = False
 
-    if (toBundleFlag == False):
+    if toBundleFlag == False:
         #if not ready to bundle recall this task
         prepareBundle.delay(cartid)
 
@@ -86,7 +86,8 @@ def prepareBundle(cartid):
         #All files are local...try to tar
         tarFiles.delay(cartid)
 
-@cart_app.task(ignore_result=True)
+
+@CART_APP.task(ignore_result=True)
 def pullFile(fId, record_error, stage_file):
     """Pull a file from the archive  """
     try:
@@ -96,7 +97,8 @@ def pullFile(fId, record_error, stage_file):
         mycart = f.cart 
     except Exception as ex:
         f = None
-        return 
+        return
+
 
     #stage the file if neccasary
     if (stage_file):
@@ -111,12 +113,14 @@ def pullFile(fId, record_error, stage_file):
             return
 
     #make sure to check size here and make sure enough space is available
+
     try:
               
         file_name = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid, f.bundle_path)
         file_path = os.path.dirname(file_name)
         path_created = create_bundle_directories(file_path)
     except Exception as ex:
+
         f.status = "error"
         f.error = "Failed to pull with error: " + str(ex)
         f.save()
@@ -151,13 +155,16 @@ def pullFile(fId, record_error, stage_file):
         
     
 
-@cart_app.task(ignore_result=True)
+
+@CART_APP.task(ignore_result=True)
 def tarFiles(cartid):
     """Start to bundle all the files together"""
     #make sure to check size here and make sure enough space is available
+
     #tar file module for python
     #set datetime type, owners
-    db.connect()
+
+    DB.connect()
     mycart = Cart.get(Cart.id == cartid)
     mycart.status = "bundling"
     mycart.updated_date = datetime.datetime.now()
@@ -169,12 +176,13 @@ def tarFiles(cartid):
     mycart.bundle_path = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid)
     mycart.updated_date = datetime.datetime.now()
     mycart.save()
-    db.close()
+    DB.close()
 
-@cart_app.task
+
+@CART_APP.task
 def cartStatus(uid):
-    """Get the status of a specified cart""" 
-    db.connect()
+    """Get the status of a specified cart"""
+    DB.connect()
     status = None
     try:
         mycart = (Cart.select().where(Cart.cart_uid == str(uid)).order_by(Cart.creation_date.desc()).get())
@@ -184,16 +192,17 @@ def cartStatus(uid):
         status = ["error","No cart with uid "+ uid + " found"] 
     
     if mycart:
-        status = [mycart.status,""]
+        status = [mycart.status, ""]
 
-    db.close()
+    DB.close()
     return status
 
-@cart_app.task
+
+@CART_APP.task
 def availableCart(uid):
     """Checks if the asked for cart tar is available
        returns the path to tar if yes, false if not"""
-    db.connect()
+    DB.connect()
     cartBundlePath = False
     try:
         mycart = (Cart.select().where(Cart.cart_uid == str(uid)).order_by(Cart.creation_date.desc()).get())
@@ -203,7 +212,6 @@ def availableCart(uid):
 
     if mycart and mycart.status == "ready":
         cartBundlePath = mycart.bundle_path
-        
     return cartBundlePath
 
 def filePullCurl(filepath):

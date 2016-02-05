@@ -1,6 +1,8 @@
 """File for setting up Cart Interface server responses"""
 class Responses(object):
-
+    """
+    Basic responses class to centralize how we reply to given states.
+    """
     def unknown_request(self, start_response, request_method):
         """Response for when unknown request type given"""
         start_response('200 OK', [('Content-Type', 'application/json')])
@@ -70,7 +72,7 @@ class Responses(object):
         """Response that tells the carts status.
            Status is a tuple of status, and message"""
         start_response('200 OK', [('Content-Type', 'application/json')])
-        if(status[1] != ""):
+        if status[1] != "":
             self._response = {
                 'status': status[0],
                 'message': status[1]
@@ -92,3 +94,4 @@ class Responses(object):
 
     def __init__(self):
         self._response = None
+

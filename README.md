@@ -24,7 +24,11 @@ python ./setup.py install
 
 # Running It
 
-N/A
+To bring up a test instance use docker-compose
+
+```
+docker-compose up
+```
 
 # API Examples
 

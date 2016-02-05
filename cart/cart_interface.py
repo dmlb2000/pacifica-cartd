@@ -69,7 +69,7 @@ class CartGenerator(object):
                     if 'wsgi.file_wrapper' in env:
                         return env['wsgi.file_wrapper'](myfile, BLOCK_SIZE)
                     return iter(lambda: myfile.read(BLOCK_SIZE), '')
-                except Exception:
+                except IOError:
                     self._response = resp.bundle_doesnt_exist(start_response)
             else:
                 self._response = resp.bundle_doesnt_exist(start_response)
@@ -104,7 +104,11 @@ class CartGenerator(object):
             request_body = env['wsgi.input'].read(request_body_size)
             data = json.loads(request_body)
             file_ids = data['fileids']
-        except Exception:
+        except IOError:
+            # is exception is probably from the read()
+            self._response = resp.json_stage_error_response(start_response)
+            return self.return_response()
+        except ValueError:
             self._response = resp.json_stage_error_response(start_response)
             return self.return_response()
 
