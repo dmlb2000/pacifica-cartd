@@ -32,7 +32,7 @@ cartworkers:
     - /shared:/shared
   environment:
     VOLUME_PATH: /shared/
-    ARCHIVE_INTERFACE_URL: None
+    #ARCHIVE_INTERFACE_URL: None
 
 cartserver:
   container_name: cartserver
@@ -48,4 +48,4 @@ cartserver:
     - /shared:/shared
   environment:
     VOLUME_PATH: /shared/
-    ARCHIVE_INTERFACE_URL: None
+    #ARCHIVE_INTERFACE_URL: None

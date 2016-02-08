@@ -2,4 +2,4 @@ pylint
 MySQL-python
 celery
 peewee
-pycurl
+requests

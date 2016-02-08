@@ -5,22 +5,24 @@ from os import path
 import os
 import time
 import datetime
-import pycurl
 from StringIO import StringIO
 import errno
+import requests
 
-#try:
-VOLUME_PATH = os.environ['VOLUME_PATH']
+BLOCK_SIZE = 1<<20
+
+try:
+    VOLUME_PATH = os.environ['VOLUME_PATH']
     #archive_int = os.getenv("ARCHIVE_INTERFACE_URL")
-    #if archive_int != None:
-        #ARCHIVE_INTERFACE_URL = archive_int
-    #else:
-ARCHIVE_INTERFACE_ADDR = os.environ['ARCHIVEI_PORT_8080_TCP_ADDR']
-ARCHIVE_INTERFACE_PORT = os.environ['ARCHIVEI_PORT_8080_TCP_PORT']
+    if "ARCHIVE_INTERFACE_URL" in os.environ:
+        ARCHIVE_INTERFACE_URL = os.getenv("ARCHIVE_INTERFACE_URL")
+    else:
+        ARCHIVE_INTERFACE_ADDR = os.environ['ARCHIVEI_PORT_8080_TCP_ADDR']
+        ARCHIVE_INTERFACE_PORT = os.environ['ARCHIVEI_PORT_8080_TCP_PORT']
         # check if it already exists first, if not do this, else take the part that is filled out
-ARCHIVE_INTERFACE_URL = ('http://' + ARCHIVE_INTERFACE_ADDR + ':' + ARCHIVE_INTERFACE_PORT + '/')
-#except Exception as ex:
-    #print "Error with environment variable: " + str(ex)
+        ARCHIVE_INTERFACE_URL = ('http://' + ARCHIVE_INTERFACE_ADDR + ':' + ARCHIVE_INTERFACE_PORT + '/')
+except Exception as ex:
+    print "Error with environment variable: " + str(ex)
 
 def fix_absolute_path(filepath):
     """Removes / from front of path"""
@@ -100,7 +102,7 @@ def pullFile(fId, record_error, stage_file):
         return
 
 
-    #stage the file if neccasary
+    #stage the file if neccasary on the archive
     if (stage_file):
         try:
             archive_stage_file(f.file_name)
@@ -112,31 +114,43 @@ def pullFile(fId, record_error, stage_file):
             mycart.save()
             return
 
-    #make sure to check size here and make sure enough space is available
-
+    #check to see if file is available to pull from archive interface
     try:
-              
-        file_name = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid, f.bundle_path)
-        file_path = os.path.dirname(file_name)
-        path_created = create_bundle_directories(file_path)
+        response = archive_status_file(f.file_name)
     except Exception as ex:
-
         f.status = "error"
-        f.error = "Failed to pull with error: " + str(ex)
+        f.error = "Failed to status file with error: " + str(ex)
         f.save()
         mycart.updated_date = datetime.datetime.now()
         mycart.save()
         return
 
-    if path_created:
+
+    #make sure to check size here and make sure enough space is available
+
+    try:
+              
+        abs_cart_file_path = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid, f.bundle_path)
+        cart_file_dirs = os.path.dirname(abs_cart_file_path)
+        path_created_flag = create_bundle_directories(cart_file_dirs)
+    except Exception as ex:
+
+        f.status = "error"
+        f.error = "Failed to create directories with error: " + str(ex)
+        f.save()
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return
+
+    if path_created_flag:
         try:
             #curl here
-            #filePullCurl(f.file_name)
+            filePullCurl(f.file_name, abs_cart_file_path)
             f.status = "staged"
             f.save()
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
-        except Exception as ex:
+        except IOError as ex:
             #if curl fails...try a second time, if that fails write error
             if(record_error):
                 f.status = "error"
@@ -214,13 +228,12 @@ def availableCart(uid):
         cartBundlePath = mycart.bundle_path
     return cartBundlePath
 
-def filePullCurl(filepath):
-    c = pycurl.Curl()
-    c.setopt(c.URL, ARCHIVE_INTERFACE_URL)
-    with open(filepath, 'w+') as f:
-        c.setopt(c.WRITEFUNCTION, f.write)
-        c.perform()
-    c.close()
+def filePullCurl(archive_filename, cart_filepath):
+    r = requests.get(ARCHIVE_INTERFACE_URL + archive_filename, stream=True)
+    with open(cart_filepath, 'w+') as f:
+        for chunk in r.iter_content(BLOCK_SIZE):
+            f.write(chunk)
+
 def create_bundle_directories(filepath):
     try:
         os.makedirs(filepath, 0777)
@@ -233,10 +246,10 @@ def create_bundle_directories(filepath):
     return True
 
 def archive_stage_file(file_name):
-    c = pycurl.Curl()
-    c.setopt(c.URL, str(ARCHIVE_INTERFACE_URL + file_name))
-    c.setopt(c.POST, True)
-    c.perform()
-    c.close()
-    return
+    requests.post(str(ARCHIVE_INTERFACE_URL + file_name))
+
+def archive_status_file(file_name):
+    r = requests.head(str(ARCHIVE_INTERFACE_URL + file_name))
+    print "The head request returns:" + r.text
+    return r.text
 
