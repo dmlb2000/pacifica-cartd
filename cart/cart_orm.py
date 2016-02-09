@@ -8,7 +8,7 @@ Using PeeWee to implement the ORM.
 # pylint: disable=too-few-public-methods
 # pylint: disable=invalid-name
 from peewee import MySQLDatabase, Model, PrimaryKeyField, CharField, DateTimeField
-from peewee import ForeignKeyField, TextField
+from peewee import ForeignKeyField, TextField, ProgrammingError
 import datetime
 from cart.celery import MYSQL_USER, MYSQL_PASS, MYSQL_ADDR, MYSQL_DATABASE, MYSQL_PORT
 
@@ -22,9 +22,23 @@ def database_setup():
     """
     Setup and create the database from the db connection.
     """
-    DB.connect()
+    database_connect()
     DB.create_tables([Cart, File], safe=True)
-    DB.close()
+    database_close()
+
+def database_connect():
+    """Makes sure database is connected.  Trying to connect a second
+    time doesnt cause any problems"""
+    DB.connect()
+
+def database_close():
+    """Closes the database connection. Closing already closed database
+    throws an error so catch it and continue on"""
+    try:
+        DB.close()
+    except ProgrammingError as err:
+        #error for closing an already closed database so continue on
+        return
 
 class Cart(Model):
     """

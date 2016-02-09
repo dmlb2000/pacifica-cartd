@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 from cart.celery import CART_APP
-from cart.cart_orm import Cart, File, DB
+from cart.cart_orm import Cart, File, DB, database_connect, database_close
 from os import path
 import os
 import time
 import datetime
-from StringIO import StringIO
 import errno
 import requests
+import psutil
 
 BLOCK_SIZE = 1<<20
 
@@ -44,7 +44,7 @@ def updateCartFiles(cart, fileIds):
 @CART_APP.task(ignore_result=True)
 def stageFiles(fileIds, uid):
     """Tell the files to be staged on the backend system """
-    DB.connect()
+    database_connect()
     mycart = Cart(cart_uid=uid, status="staging")
     mycart.save()
     #with update or new, need to add in files
@@ -52,16 +52,20 @@ def stageFiles(fileIds, uid):
 
     getFilesLocally.delay(mycart.id)
     prepareBundle.delay(mycart.id)
+    database_close()
 
 @CART_APP.task(ignore_result=True)
 def getFilesLocally(cartid):
     """Pull the files to the local system from the backend """
     #tell each file to be pulled
+    database_connect()
     for f in File.select().where(File.cart == cartid):
-        pullFile.delay(f.id, False, True)
+        pullFile.delay(f.id, False)
+    database_close()
 
 @CART_APP.task(ignore_result=True)
 def prepareBundle(cartid):
+    database_connect()
     toBundleFlag = True
     for f in File.select().where(File.cart == cartid):
         if f.status == "error":
@@ -72,9 +76,11 @@ def prepareBundle(cartid):
                 mycart.error = "Failed to pull file(s)"
                 mycart.updated_date = datetime.datetime.now()
                 mycart.save()
+                database_close()
                 return
             except Exception as ex:
                 #case if record no longer exists
+                database_close()
                 return
 
         elif f.status != "staged":
@@ -87,11 +93,13 @@ def prepareBundle(cartid):
     else:
         #All files are local...try to tar
         tarFiles.delay(cartid)
+    database_close()
 
 
 @CART_APP.task(ignore_result=True)
-def pullFile(fId, record_error, stage_file):
+def pullFile(fId, record_error):
     """Pull a file from the archive  """
+    database_connect()
     try:
         f = File.get(File.id == fId)
         f.status = "staging"
@@ -99,57 +107,40 @@ def pullFile(fId, record_error, stage_file):
         mycart = f.cart 
     except Exception as ex:
         f = None
+        database_close()
         return
 
-
-    #stage the file if neccasary on the archive
-    if (stage_file):
-        try:
-            archive_stage_file(f.file_name)
-        except Exception as ex:
-            f.status = "error"
-            f.error = "Failed to stage with error: " + str(ex)
-            f.save()
-            mycart.updated_date = datetime.datetime.now()
-            mycart.save()
-            return
+    #stage the file on the archive.  True on success, False on fail
+    stage_call = archive_stage_file(f, mycart)
 
     #check to see if file is available to pull from archive interface
-    try:
-        response = archive_status_file(f.file_name)
-    except Exception as ex:
-        f.status = "error"
-        f.error = "Failed to status file with error: " + str(ex)
-        f.save()
-        mycart.updated_date = datetime.datetime.now()
-        mycart.save()
+    response = archive_status_file(f, mycart)
+    size_needed = check_file_size_needed(response)
+    ready_to_pull = check_file_ready_pull(response)
+
+    #Check to see if ready to pull.  If not recall this to check again
+    if ready_to_pull == False:
+        pullFile.delay(fId, False)
+        database_close()
         return
 
+    #create the path the file will be downloaded to
+    abs_cart_file_path = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid, f.bundle_path)
+    path_created = create_download_path(f, mycart, abs_cart_file_path)
 
-    #make sure to check size here and make sure enough space is available
+    #Check size here and make sure enough space is available.
+    enough_space = check_space_requirements(f, mycart, size_needed)
 
-    try:
-              
-        abs_cart_file_path = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid, f.bundle_path)
-        cart_file_dirs = os.path.dirname(abs_cart_file_path)
-        path_created_flag = create_bundle_directories(cart_file_dirs)
-    except Exception as ex:
-
-        f.status = "error"
-        f.error = "Failed to create directories with error: " + str(ex)
-        f.save()
-        mycart.updated_date = datetime.datetime.now()
-        mycart.save()
-        return
-
-    if path_created_flag:
+    if path_created and enough_space:
         try:
-            #curl here
+            #curl here to download from the archive interface
             filePullCurl(f.file_name, abs_cart_file_path)
             f.status = "staged"
             f.save()
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
+            database_close()
+            return
         except IOError as ex:
             #if curl fails...try a second time, if that fails write error
             if(record_error):
@@ -158,16 +149,13 @@ def pullFile(fId, record_error, stage_file):
                 f.save()
                 mycart.updated_date = datetime.datetime.now()
                 mycart.save()
+                database_close()
+                return
             else:
-                pullFile.delay(fId, True, False)
-    else:
-        f.status = "error"
-        f.error = "Failed to create directories inside bundle"
-        f.save()
-        mycart.updated_date = datetime.datetime.now()
-        mycart.save()
-        
-    
+                pullFile.delay(fId, True)
+                database_close()
+                return
+           
 
 
 @CART_APP.task(ignore_result=True)
@@ -178,7 +166,7 @@ def tarFiles(cartid):
     #tar file module for python
     #set datetime type, owners
 
-    DB.connect()
+    database_connect
     mycart = Cart.get(Cart.id == cartid)
     mycart.status = "bundling"
     mycart.updated_date = datetime.datetime.now()
@@ -190,13 +178,13 @@ def tarFiles(cartid):
     mycart.bundle_path = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid)
     mycart.updated_date = datetime.datetime.now()
     mycart.save()
-    DB.close()
+    database_close
 
 
 @CART_APP.task
 def cartStatus(uid):
     """Get the status of a specified cart"""
-    DB.connect()
+    database_connect()
     status = None
     try:
         mycart = (Cart.select().where(Cart.cart_uid == str(uid)).order_by(Cart.creation_date.desc()).get())
@@ -208,7 +196,7 @@ def cartStatus(uid):
     if mycart:
         status = [mycart.status, ""]
 
-    DB.close()
+    database_close()
     return status
 
 
@@ -216,7 +204,7 @@ def cartStatus(uid):
 def availableCart(uid):
     """Checks if the asked for cart tar is available
        returns the path to tar if yes, false if not"""
-    DB.connect()
+    database_connect()
     cartBundlePath = False
     try:
         mycart = (Cart.select().where(Cart.cart_uid == str(uid)).order_by(Cart.creation_date.desc()).get())
@@ -226,6 +214,7 @@ def availableCart(uid):
 
     if mycart and mycart.status == "ready":
         cartBundlePath = mycart.bundle_path
+    database_close()
     return cartBundlePath
 
 def filePullCurl(archive_filename, cart_filepath):
@@ -239,17 +228,86 @@ def create_bundle_directories(filepath):
         os.makedirs(filepath, 0777)
     except OSError as exception:
         #dont worry about error if the directory already exists
-        #other errors are a problem however.
+        #other errors are a problem however so push them up
         if exception.errno != errno.EEXIST:
-            return False
+            raise exception
 
+
+def archive_stage_file(cart_file, mycart):
+    """Sends a post to the archive interface telling it to stage the file """
+    try:
+        requests.post(str(ARCHIVE_INTERFACE_URL + cart_file.file_name))
+        return True
+    except Exception as ex:
+        cart_file.status = "error"
+        cart_file.error = "Failed to stage with error: " + str(ex)
+        cart_file.save()
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return False
+
+
+
+def archive_status_file(cart_file, mycart):
+    """Gets a status from the  archive interface via Head and returns response """
+    try:
+        r = requests.head(str(ARCHIVE_INTERFACE_URL + cart_file.file_name))
+        print "The head request returns:" + r.text
+        return r.text
+    except Exception as ex:
+        cart_file.status = "error"
+        cart_file.error = "Failed to status file with error: " + str(ex)
+        cart_file.save()
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return False
+
+def check_file_size_needed(response):
+    """Checks response (should be from Archive Interface head request) for file size """
+    return 10
+
+def check_file_ready_pull(response):
+    """Checks response (should be from Archive Interface head request) for bytes per level
+       then returns True or False based on if the file is at level 1 (downloadable)"""
     return True
 
-def archive_stage_file(file_name):
-    requests.post(str(ARCHIVE_INTERFACE_URL + file_name))
+def check_space_requirements(cart_file, mycart, size_needed):
+    """Checks to make sure there is enough space available on disk for the file
+    to be downloaded """
+    try:
+        #available space is in bytes
+        available_space = psutil.disk_usage(VOLUME_PATH).free
+    except Exception as ex:
+        f.status = "error"
+        f.error = "Failed to get available file space with error: " + str(ex)
+        f.save()
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return False
 
-def archive_status_file(file_name):
-    r = requests.head(str(ARCHIVE_INTERFACE_URL + file_name))
-    print "The head request returns:" + r.text
-    return r.text
+    if(size_needed > available_space):
+        f.status = "error"
+        f.error = "Not enough space to download file"
+        f.save()
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return False
+
+    #there is enough space so return true
+    return True
+
+def create_download_path(f, mycart, abs_cart_file_path):
+    """ Create the directories that the file will be pulled to"""
+    try:          
+        cart_file_dirs = os.path.dirname(abs_cart_file_path)
+        create_bundle_directories(cart_file_dirs)
+    except Exception as ex:
+        f.status = "error"
+        f.error = "Failed to create directories with error: " + str(ex)
+        f.save()
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return False
+
+    return True
 

@@ -3,3 +3,4 @@ MySQL-python
 celery
 peewee
 requests
+psutil
