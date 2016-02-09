@@ -6,8 +6,9 @@ import os
 import time
 import datetime
 import errno
-import requests
 import psutil
+import pycurl
+from StringIO import StringIO
 
 BLOCK_SIZE = 1<<20
 
@@ -115,6 +116,7 @@ def pullFile(fId, record_error):
 
     #check to see if file is available to pull from archive interface
     response = archive_status_file(f, mycart)
+    print response
     size_needed = check_file_size_needed(response)
     ready_to_pull = check_file_ready_pull(response)
 
@@ -218,10 +220,12 @@ def availableCart(uid):
     return cartBundlePath
 
 def filePullCurl(archive_filename, cart_filepath):
-    r = requests.get(ARCHIVE_INTERFACE_URL + archive_filename, stream=True)
+    c = pycurl.Curl()
+    c.setopt(c.URL, str(ARCHIVE_INTERFACE_URL + archive_filename))
     with open(cart_filepath, 'w+') as f:
-        for chunk in r.iter_content(BLOCK_SIZE):
-            f.write(chunk)
+        c.setopt(c.WRITEFUNCTION, f.write)
+        c.perform()
+    c.close()
 
 def create_bundle_directories(filepath):
     try:
@@ -236,7 +240,11 @@ def create_bundle_directories(filepath):
 def archive_stage_file(cart_file, mycart):
     """Sends a post to the archive interface telling it to stage the file """
     try:
-        requests.post(str(ARCHIVE_INTERFACE_URL + cart_file.file_name))
+        c = pycurl.Curl() 
+        c.setopt(c.URL, str(ARCHIVE_INTERFACE_URL + cart_file.file_name))
+        c.setopt(c.POST, True)
+        c.perform()
+        c.close()
         return True
     except Exception as ex:
         cart_file.status = "error"
@@ -251,9 +259,16 @@ def archive_stage_file(cart_file, mycart):
 def archive_status_file(cart_file, mycart):
     """Gets a status from the  archive interface via Head and returns response """
     try:
-        r = requests.head(str(ARCHIVE_INTERFACE_URL + cart_file.file_name))
-        print "The head request returns:" + r.text
-        return r.text
+        storage = StringIO()
+        c = pycurl.Curl() 
+        c.setopt(c.CUSTOMREQUEST, "HEAD")
+        c.setopt(c.URL, str(ARCHIVE_INTERFACE_URL + cart_file.file_name))
+        c.setopt(c.NOBODY, False)
+        c.setopt(c.WRITEFUNCTION, storage.write)
+        c.perform()
+        c.close()
+        content = storage.getvalue()
+        return content
     except Exception as ex:
         cart_file.status = "error"
         cart_file.error = "Failed to status file with error: " + str(ex)
@@ -261,6 +276,7 @@ def archive_status_file(cart_file, mycart):
         mycart.updated_date = datetime.datetime.now()
         mycart.save()
         return False
+    
 
 def check_file_size_needed(response):
     """Checks response (should be from Archive Interface head request) for file size """

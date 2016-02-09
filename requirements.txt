@@ -2,5 +2,5 @@ pylint
 MySQL-python
 celery
 peewee
-requests
 psutil
+pycurl
