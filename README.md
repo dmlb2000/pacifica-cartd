@@ -15,6 +15,9 @@ Docker/docker-compose
 Peewee
 Celery
 MySQL-Python
+psutil
+pycurl
+
 This is a standard python distutils build process.
 
 ```
@@ -44,20 +47,21 @@ MY_CART_UUID=`uuidgen`
 Post a file to create a new cart.
 
 Contents of file (foo.json).
+id =  the id being used on the Archive
+path = internal structure of bundle for file placement 
 ```
 {
   "fileids": [
-    1234,
-    2345,
-    3456,
-    4567
+    {"id":"foo.txt", "path":"1/2/3/foo.txt"},
+    {"id":"bar.csv", "path":"1/2/3/bar.csv"},
+    {"id":"baz.ini", "path":"2/3/4/baz.ini"}
   ]
 }
 ```
 
 Post the file to the following URL.
 ```
-curl -X POST --upload-file /tmp/foo.json http://127.0.0.1:8080/$MY_CART_UUID
+curl -X POST --upload-file /tmp/foo.json http://127.0.0.1:8081/$MY_CART_UUID
 ```
 
 ## Status a Cart
@@ -65,7 +69,7 @@ curl -X POST --upload-file /tmp/foo.json http://127.0.0.1:8080/$MY_CART_UUID
 Head on the cart to find whether its created and ready for download.
 
 ```
-curl -X HEAD http://127.0.0.1:8080/$MY_CART_UUID
+curl -X HEAD http://127.0.0.1:8081/$MY_CART_UUID
 ```
 
 Data returned should be json telling you status of cart.
@@ -98,7 +102,7 @@ If the cart is finally ready for download.
 }
 ```
 
-If the cart has no space available to create the tarfile.
+If the cart has an error (such as no space available to create the tarfile).
 ```
 {
   "status": "error"
@@ -111,6 +115,9 @@ If the cart has no space available to create the tarfile.
 To download the tarfile for the cart.
 
 ```
-curl http://127.0.0.1:8080/$MY_CART_UUID
+curl http://127.0.0.1:8081/$MY_CART_UUID
 ```
-
+To save to file
+```
+curl -O http://127.0.0.1:8081/$MY_CART_UUID
+```
