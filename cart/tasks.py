@@ -10,8 +10,8 @@ import errno
 import psutil
 import pycurl
 from StringIO import StringIO
+import tarfile
 
-BLOCK_SIZE = 1<<20
 
 try:
     VOLUME_PATH = os.environ['VOLUME_PATH']
@@ -173,23 +173,45 @@ def pullFile(fId, record_error):
 @CART_APP.task(ignore_result=True)
 def tarFiles(cartid):
     """Start to bundle all the files together"""
-    #make sure to check size here and make sure enough space is available
-
     #tar file module for python
     #set datetime type, owners
 
     database_connect
-    mycart = Cart.get(Cart.id == cartid)
-    mycart.status = "bundling"
-    mycart.updated_date = datetime.datetime.now()
-    mycart.save()
+    try:
+        mycart = Cart.get(Cart.id == cartid)
+        mycart.status = "bundling"
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+    except Exception as ex:
+        #case if record no longer exists
+        database_close()
+        return
+
+    #make sure there is enough space for tar file
+    path_to_files = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid)
+    enough_space = check_space_for_tar(path_to_files, mycart)
+
+    if enough_space == False:
+        #error set getting enough space
+        database_close()
+        return
+
     #get a path to where the tar will be
     #for each file put into bundle here
     #update the carts status and bundle path
-    mycart.status = "ready"
-    mycart.bundle_path = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid)
-    mycart.updated_date = datetime.datetime.now()
-    mycart.save()
+    bundle_path = os.path.join(VOLUME_PATH, str(mycart.id), (mycart.cart_uid + ".tar"))
+    tar = tarfile.open(bundle_path, "w")
+    tar.add(path_to_files, arcname=mycart.cart_uid)
+    tar.close()
+    try:
+        mycart.status = "ready"
+        mycart.bundle_path = bundle_path
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+    except Exception as ex:
+        database_close()
+        return
+
     database_close
 
 
@@ -203,10 +225,11 @@ def cartStatus(uid):
     except Exception as ex:
         #case if no record exists yet in database
         mycart = None
-        status = ["error","No cart with uid "+ uid + " found"] 
+        status = ["error","No cart with uid " + uid + " found"] 
     
     if mycart:
-        status = [mycart.status, ""]
+        #send the status and any available error text
+        status = [mycart.status, mycart.error]
 
     database_close()
     return status
@@ -360,3 +383,37 @@ def create_download_path(f, mycart, abs_cart_file_path):
 
     return True
 
+def check_space_for_tar(path_to_files, mycart):
+    """Check to see if there is enough space for the tar"""
+    try:
+        #available space is in bytes
+        available_space = long(psutil.disk_usage(VOLUME_PATH).free)
+        size_needed = long(get_path_size(path_to_files))
+    except Exception as ex:
+        mycart.status = "error"
+        mycart.error = "Failed to get available file space with error: " + str(ex)
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return False
+
+    print "available space is: " + str(available_space)
+    print "Size needed is: " + str(size_needed)
+    if(size_needed > available_space):
+        mycart.status = "error"
+        mycart.error = "Not enough space to build Tar"
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return False
+
+    #there is enough space so return true
+    return True
+
+def get_path_size(source):
+    total_size = os.path.getsize(source)
+    for item in os.listdir(source):
+        itempath = os.path.join(source, item)
+        if os.path.isfile(itempath):
+            total_size += os.path.getsize(itempath)
+        elif os.path.isdir(itempath):
+            total_size += get_path_size(itempath)
+    return total_size
