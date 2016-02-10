@@ -4,6 +4,7 @@ from cart.cart_orm import Cart, File, DB, database_connect, database_close
 from os import path
 import os
 import time
+import json
 import datetime
 import errno
 import psutil
@@ -116,12 +117,21 @@ def pullFile(fId, record_error):
 
     #check to see if file is available to pull from archive interface
     response = archive_status_file(f, mycart)
-    print response
-    size_needed = check_file_size_needed(response)
-    ready_to_pull = check_file_ready_pull(response)
+    size_needed = check_file_size_needed(response, f, mycart)
+
+    #Return from function if the size_needed couldnt be parsed (-1 return)
+    if size_needed < 0:
+        database_close()
+        return
+
+    ready_to_pull = check_file_ready_pull(response, f, mycart)
 
     #Check to see if ready to pull.  If not recall this to check again
-    if ready_to_pull == False:
+    # error on less then 0
+    if ready_to_pull < 0:
+        database_close()
+        return
+    elif ready_to_pull == False:
         pullFile.delay(fId, False)
         database_close()
         return
@@ -278,33 +288,56 @@ def archive_status_file(cart_file, mycart):
         return False
     
 
-def check_file_size_needed(response):
+def check_file_size_needed(response, cart_file, mycart):
     """Checks response (should be from Archive Interface head request) for file size """
-    return 10
+    try:
+        decoded = json.loads(response)
+        filesize = decoded['filesize']
+        return long(filesize)
+    except (ValueError, KeyError, TypeError):
+        cart_file.status = "error"
+        cart_file.error = "Failed to decode json for file size with error: " + str(ex)
+        cart_file.save()
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return (-1)
 
-def check_file_ready_pull(response):
+def check_file_ready_pull(response, cart_file, mycart):
     """Checks response (should be from Archive Interface head request) for bytes per level
        then returns True or False based on if the file is at level 1 (downloadable)"""
-    return True
+    try:
+        decoded = json.loads(response)
+        media = decoded['file_storage_media']
+        if media == "disk":
+            return True
+        else:
+            return False
+    except (ValueError, KeyError, TypeError):
+        cart_file.status = "error"
+        cart_file.error = "Failed to decode json for file status with error: " + str(ex)
+        cart_file.save()
+        mycart.updated_date = datetime.datetime.now()
+        mycart.save()
+        return (-1)
 
 def check_space_requirements(cart_file, mycart, size_needed):
     """Checks to make sure there is enough space available on disk for the file
     to be downloaded """
     try:
         #available space is in bytes
-        available_space = psutil.disk_usage(VOLUME_PATH).free
+        available_space = long(psutil.disk_usage(VOLUME_PATH).free)
     except Exception as ex:
-        f.status = "error"
-        f.error = "Failed to get available file space with error: " + str(ex)
-        f.save()
+        cart_file.status = "error"
+        cart_file.error = "Failed to get available file space with error: " + str(ex)
+        cart_file.save()
         mycart.updated_date = datetime.datetime.now()
         mycart.save()
         return False
 
     if(size_needed > available_space):
-        f.status = "error"
-        f.error = "Not enough space to download file"
-        f.save()
+        cart_file.status = "error"
+        cart_file.error = "Not enough space to download file"
+        cart_file.save()
         mycart.updated_date = datetime.datetime.now()
         mycart.save()
         return False
