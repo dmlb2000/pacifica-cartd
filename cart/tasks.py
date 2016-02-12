@@ -15,9 +15,9 @@ import shutil
 import logging
 
 """Uncomment these lines for database query logging"""
-#logger = logging.getLogger('peewee')
-#logger.setLevel(logging.DEBUG)
-#logger.addHandler(logging.StreamHandler())
+logger = logging.getLogger('peewee')
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
 
 
 
@@ -31,6 +31,11 @@ try:
         ARCHIVE_INTERFACE_PORT = os.environ['ARCHIVEI_PORT_8080_TCP_PORT']
         # check if it already exists first, if not do this, else take the part that is filled out
         ARCHIVE_INTERFACE_URL = ('http://' + ARCHIVE_INTERFACE_ADDR + ':' + ARCHIVE_INTERFACE_PORT + '/')
+    #buffer used for least recently used delete
+    if "LRU_BUFFER_TIME" in os.environ:
+        LRU_BUFFER_TIME = os.getenv("LRU_BUFFER_TIME")
+    else:
+        LRU_BUFFER_TIME = 0
 except Exception as ex:
     print "Error with environment variable: " + str(ex)
 
@@ -115,6 +120,9 @@ def pullFile(fId, record_error):
         f.status = "staging"
         f.save
         mycart = f.cart 
+        #make sure cart wasnt deleted before pulling file
+        if mycart.deleted_date:
+            return
     except Exception as ex:
         f = None
         database_close()
@@ -149,7 +157,7 @@ def pullFile(fId, record_error):
     path_created = create_download_path(f, mycart, abs_cart_file_path)
 
     #Check size here and make sure enough space is available.
-    enough_space = check_space_requirements(f, mycart, size_needed)
+    enough_space = check_space_requirements(f, mycart, size_needed, True)
 
     if path_created and enough_space:
         try:
@@ -197,7 +205,7 @@ def tarFiles(cartid):
 
     #make sure there is enough space for tar file
     path_to_files = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid)
-    enough_space = check_space_for_tar(path_to_files, mycart)
+    enough_space = check_space_for_tar(path_to_files, mycart, True)
 
     if enough_space == False:
         #error set getting enough space
@@ -229,7 +237,7 @@ def cartStatus(uid):
     database_connect()
     status = None
     try:
-        mycart = (Cart.select().where(Cart.cart_uid == str(uid)).order_by(Cart.creation_date.desc()).get())
+        mycart = (Cart.select().where((Cart.cart_uid == str(uid)) & (Cart.deleted_date.is_null(True))).order_by(Cart.creation_date.desc()).get())
     except Exception as ex:
         #case if no record exists yet in database
         mycart = None
@@ -250,7 +258,7 @@ def availableCart(uid):
     database_connect()
     cartBundlePath = False
     try:
-        mycart = (Cart.select().where(Cart.cart_uid == str(uid)).order_by(Cart.creation_date.desc()).get())
+        mycart = (Cart.select().where((Cart.cart_uid == str(uid)) & (Cart.deleted_date.is_null(True))).order_by(Cart.creation_date.desc()).get())
     except Exception as ex:
         #case if no record exists yet in database
         mycart = None
@@ -351,9 +359,12 @@ def check_file_ready_pull(response, cart_file, mycart):
         mycart.save()
         return (-1)
 
-def check_space_requirements(cart_file, mycart, size_needed):
+def check_space_requirements(cart_file, mycart, size_needed, deleted_flag):
     """Checks to make sure there is enough space available on disk for the file
-    to be downloaded """
+    to be downloaded
+    Note it will recursively call itself if there isnt enough
+    space. It will delete a cart first, then call  itself
+    until either there is enough space or there is no carts to delete""" 
     try:
         #available space is in bytes
         available_space = long(psutil.disk_usage(VOLUME_PATH).free)
@@ -366,6 +377,9 @@ def check_space_requirements(cart_file, mycart, size_needed):
         return False
 
     if(size_needed > available_space):
+        if deleted_flag:
+            cart_deleted = lru_cart_delete(mycart)
+            return check_space_requirements(cart_file, mycart, size_needed, cart_deleted)
         cart_file.status = "error"
         cart_file.error = "Not enough space to download file"
         cart_file.save()
@@ -391,8 +405,11 @@ def create_download_path(f, mycart, abs_cart_file_path):
 
     return True
 
-def check_space_for_tar(path_to_files, mycart):
-    """Check to see if there is enough space for the tar"""
+def check_space_for_tar(path_to_files, mycart, deleted_flag):
+    """Check to see if there is enough space for the tar
+    Note it will recursively call itself if there isnt enough
+    space. It will delete a cart first, then call  itself
+    until either there is enough space or there is no carts to delete"""
     try:
         #available space is in bytes
         available_space = long(psutil.disk_usage(VOLUME_PATH).free)
@@ -405,6 +422,9 @@ def check_space_for_tar(path_to_files, mycart):
         return False
 
     if(size_needed > available_space):
+        if deleted_flag:
+            cart_deleted = lru_cart_delete(mycart)
+            return check_space_for_tar(path_to_files, mycart, cart_deleted)
         mycart.status = "error"
         mycart.error = "Not enough space to build Tar"
         mycart.updated_date = datetime.datetime.now()
@@ -456,5 +476,18 @@ def delete_cart_bundle(cart):
         return True
     except Exception as ex:
         return False
+
+def lru_cart_delete(mycart):
+    """Delete the least recently used cart that isnt this one.
+    Only delete one cart per call
+    """
+    try:
+        lru_time = datetime.datetime.now() - datetime.timedelta(seconds=int(LRU_BUFFER_TIME))
+        del_cart = (Cart.select().where((Cart.id != mycart.id) & (Cart.deleted_date.is_null(True)) & (Cart.updated_date < lru_time) ).order_by(Cart.creation_date).get())
+        return delete_cart_bundle(del_cart)
+    except Exception as ex:
+        #case if no cart exists that can be deleted
+        return False
+
 
     

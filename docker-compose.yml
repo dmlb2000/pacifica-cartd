@@ -32,6 +32,7 @@ cartworkers:
     - /shared:/shared
   environment:
     VOLUME_PATH: /shared/
+    LRU_BUFFER_TIME: 0
     #ARCHIVE_INTERFACE_URL: None
 
 cartserver:
@@ -48,4 +49,5 @@ cartserver:
     - /shared:/shared
   environment:
     VOLUME_PATH: /shared/
+    LRU_BUFFER_TIME: 0
     #ARCHIVE_INTERFACE_URL: None
