@@ -7,11 +7,13 @@ Using PeeWee to implement the ORM.
 # disable this for classes Cart, File and Meta (within Cart and File)
 # pylint: disable=too-few-public-methods
 # pylint: disable=invalid-name
-from peewee import MySQLDatabase, Model, PrimaryKeyField, CharField, DateTimeField
-from peewee import ForeignKeyField, TextField, ProgrammingError, OperationalError
+from peewee import MySQLDatabase, PrimaryKeyField, CharField, DateTimeField
+from peewee import ForeignKeyField, TextField
+from peewee import Model, ProgrammingError, OperationalError
 import datetime
 import time
-from cart.celery import MYSQL_USER, MYSQL_PASS, MYSQL_ADDR, MYSQL_DATABASE, MYSQL_PORT
+from cart.celery import MYSQL_USER, MYSQL_PASS, MYSQL_ADDR, MYSQL_DATABASE
+from cart.celery import MYSQL_PORT
 
 DB = MySQLDatabase(MYSQL_DATABASE,
                    host=MYSQL_ADDR,
@@ -27,10 +29,11 @@ def database_setup(attempts=0):
         database_connect()
         DB.create_tables([Cart, File], safe=True)
         database_close()
-    except OperationalError as err:
+    except OperationalError:
         #couldnt connect, potentially wait and try again
-        if(attempts < 3):
-            print "Waiting for ten seconds and trying to connect to Database again"
+        if attempts < 3:
+            print """Waiting for ten seconds and trying to connect
+                to Database again"""
             time.sleep(10)
             attempts += 1
             database_setup(attempts)
@@ -46,7 +49,7 @@ def database_close():
     throws an error so catch it and continue on"""
     try:
         DB.close()
-    except ProgrammingError as err:
+    except ProgrammingError:
         #error for closing an already closed database so continue on
         return
 

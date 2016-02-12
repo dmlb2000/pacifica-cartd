@@ -12,10 +12,15 @@ APIs for users to use.
 This code depends on the following libraries and python modules:
 
 Docker/docker-compose
+
 Peewee
+
 Celery
+
 MySQL-Python
+
 psutil
+
 pycurl
 
 This is a standard python distutils build process.
@@ -47,8 +52,11 @@ MY_CART_UUID=`uuidgen`
 Post a file to create a new cart.
 
 Contents of file (foo.json).
+
 id =  the id being used on the Archive
+
 path = internal structure of bundle for file placement 
+
 ```
 {
   "fileids": [
@@ -121,3 +129,13 @@ To save to file
 ```
 curl -O http://127.0.0.1:8081/$MY_CART_UUID
 ```
+
+## Delete a Cart
+
+Delete a created cart.
+
+```
+curl -X DELETE http://127.0.0.1:8081/$MY_CART_UUID
+```
+
+Data returned should be json telling you status of cart deletion.

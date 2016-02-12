@@ -11,6 +11,14 @@ import psutil
 import pycurl
 from StringIO import StringIO
 import tarfile
+import shutil
+import logging
+
+"""Uncomment these lines for database query logging"""
+#logger = logging.getLogger('peewee')
+#logger.setLevel(logging.DEBUG)
+#logger.addHandler(logging.StreamHandler())
+
 
 
 try:
@@ -396,8 +404,6 @@ def check_space_for_tar(path_to_files, mycart):
         mycart.save()
         return False
 
-    print "available space is: " + str(available_space)
-    print "Size needed is: " + str(size_needed)
     if(size_needed > available_space):
         mycart.status = "error"
         mycart.error = "Not enough space to build Tar"
@@ -417,3 +423,38 @@ def get_path_size(source):
         elif os.path.isdir(itempath):
             total_size += get_path_size(itempath)
     return total_size
+
+def remove_cart(uid):
+    deleted_flag = True
+    iterator = 0 #used to verify at least one cart deleted
+    database_connect()
+    try:
+        for cart in  Cart.select().where((Cart.cart_uid == str(uid)) & (Cart.deleted_date.is_null(True))):
+            iterator += 1
+            success = delete_cart_bundle(cart)
+            if success == False:
+                deleted_flag = False
+        database_close()
+        if deleted_flag and iterator > 0:
+            return "Cart Deleted Successfully"
+        elif deleted_flag:
+            return "Cart with uid: " + str(uid) + " was previously deleted or no longer exists"
+        else:
+            return "Error with deleting Cart"
+    except Exception as ex:
+        #case if record no longer exists
+        database_close()
+        return "Error Deleteing Cart with uid: " + str(uid)
+
+def delete_cart_bundle(cart):
+    try:
+        path_to_files = os.path.join(VOLUME_PATH, str(cart.id))
+        shutil.rmtree(path_to_files)
+        cart.status = "deleted"
+        cart.deleted_date = datetime.datetime.now()
+        cart.save()
+        return True
+    except Exception as ex:
+        return False
+
+    

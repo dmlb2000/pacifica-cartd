@@ -5,7 +5,7 @@ from os import path
 from sys import stderr
 import doctest
 import cart.cart_interface_responses as cart_interface_responses
-from cart.tasks import stageFiles, cartStatus, availableCart
+from cart.tasks import stageFiles, cartStatus, availableCart, remove_cart
 
 
 BLOCK_SIZE = 1<<20
@@ -93,7 +93,7 @@ class CartGenerator(object):
         return self.return_response()
 
     def stage(self, env, start_response):
-        """Tell the archive interface to stage all the files"""
+        """Get all the files locally and bundled"""
         resp = cart_interface_responses.Responses()
         try:
             request_body_size = int(env.get('CONTENT_LENGTH', 0))
@@ -123,6 +123,20 @@ class CartGenerator(object):
         self._response = resp.cart_proccessing_response(start_response)
         return self.return_response()
 
+    def delete_cart(self, env, start_response):
+        """Delete a cart that has been created"""
+        resp = cart_interface_responses.Responses()
+        uid = fix_cart_uid(env['PATH_INFO'])
+        is_valid = is_valid_uid(uid)
+        if not is_valid:
+            self._response = resp.invalid_uid_error_response(
+                start_response, uid)
+            return self.return_response()
+
+        message = remove_cart(uid)
+        self._response = resp.cart_delete_response(start_response, message)
+        return self.return_response()
+
     def return_response(self):
         """Prints all responses in a nice fashion"""
         return json.dumps(self._response, sort_keys=True, indent=4)
@@ -137,6 +151,8 @@ class CartGenerator(object):
                 return self.status(env, start_response)
             elif env['REQUEST_METHOD'] == 'POST':
                 return self.stage(env, start_response)
+            elif env['REQUEST_METHOD'] == 'DELETE':
+                return self.delete_cart(env, start_response)
             else:
                 resp = cart_interface_responses.Responses()
                 self._response = resp.unknown_request(start_response,

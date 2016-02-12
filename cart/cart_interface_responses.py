@@ -91,6 +91,13 @@ class Responses(object):
         }
         return self._response
 
+    def cart_delete_response(self, start_response, message):
+        """Response For cart deletion"""
+        start_response('200 OK', [('Content-Type', 'application/json')])
+        self._response = {
+            'message': str(message)
+        }
+        return self._response
 
     def __init__(self):
         self._response = None
