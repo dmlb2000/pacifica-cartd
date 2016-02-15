@@ -1,8 +1,10 @@
 #!/usr/bin/python
 """Class for the cart interface.  Allows API to file interactions"""
 import json
-from os import path
+from os import path, fork, pipe, fdopen, read, write, close
 from sys import stderr
+from tarfile import TarFile
+import sys, os
 import doctest
 import cart.cart_interface_responses as cart_interface_responses
 from cart.tasks import stageFiles, cartStatus, availableCart, remove_cart
@@ -59,16 +61,31 @@ class CartGenerator(object):
             self._response = resp.unready_cart(start_response)
             return self.return_response()
         else:
-            if path.isfile(cart_path):
+            if path.isdir(cart_path):
                 #give back bundle here
                 stderr.flush()
                 try:
-                    myfile = open(cart_path, "r")
+                    #want to stream the tar file out
+                    (rpipe, wpipe) = pipe()
+                    cpid = fork()
+                    if cpid == 0:
+                        # we are the child process
+                        #write the data to the pipe
+                        close(rpipe)
+                        wfd = fdopen(wpipe, "wb")
+                        mytar = TarFile.open(fileobj=wfd, mode='w|')
+                        mytar.add(cart_path, arcname=uid)
+                        mytar.close()
+                        os._exit(0)
+                    # we are the parent
+                    close(wpipe)
+                    #open the pipe as a file
+                    rfd = fdopen(rpipe, "rb")
                     start_response('200 OK', [('Content-Type',
                                                'application/octet-stream')])
                     if 'wsgi.file_wrapper' in env:
-                        return env['wsgi.file_wrapper'](myfile, BLOCK_SIZE)
-                    return iter(lambda: myfile.read(BLOCK_SIZE), '')
+                        return env['wsgi.file_wrapper'](rfd, BLOCK_SIZE)
+                    return iter(lambda: rfd.read(BLOCK_SIZE), '')
                 except IOError:
                     self._response = resp.bundle_doesnt_exist(start_response)
             else:

@@ -10,14 +10,13 @@ import errno
 import psutil
 import pycurl
 from StringIO import StringIO
-import tarfile
 import shutil
 import logging
 
 """Uncomment these lines for database query logging"""
-logger = logging.getLogger('peewee')
-logger.setLevel(logging.DEBUG)
-logger.addHandler(logging.StreamHandler())
+#logger = logging.getLogger('peewee')
+#logger.setLevel(logging.DEBUG)
+#logger.addHandler(logging.StreamHandler())
 
 
 
@@ -80,6 +79,10 @@ def getFilesLocally(cartid):
 
 @CART_APP.task(ignore_result=True)
 def prepareBundle(cartid):
+    """Checks to see if all the files are staged locally
+    before calling the bundling action.  If not will call
+    itself to continue the waiting process
+    """
     database_connect()
     toBundleFlag = True
     for f in File.select().where(File.cart == cartid):
@@ -188,14 +191,16 @@ def pullFile(fId, record_error):
 
 @CART_APP.task(ignore_result=True)
 def tarFiles(cartid):
-    """Start to bundle all the files together"""
-    #tar file module for python
-    #set datetime type, owners
+    """Start to bundle all the files together
+    Due to streaming the tar we dont need to try and bundle 
+    everything together"""
 
-    database_connect
+    database_connect()
     try:
         mycart = Cart.get(Cart.id == cartid)
-        mycart.status = "bundling"
+        bundle_path = os.path.join(VOLUME_PATH, str(mycart.id), (mycart.cart_uid))
+        mycart.status = "ready"
+        mycart.bundle_path = bundle_path
         mycart.updated_date = datetime.datetime.now()
         mycart.save()
     except Exception as ex:
@@ -203,32 +208,7 @@ def tarFiles(cartid):
         database_close()
         return
 
-    #make sure there is enough space for tar file
-    path_to_files = os.path.join(VOLUME_PATH, str(mycart.id), mycart.cart_uid)
-    enough_space = check_space_for_tar(path_to_files, mycart, True)
-
-    if enough_space == False:
-        #error set getting enough space
-        database_close()
-        return
-
-    #get a path to where the tar will be
-    #for each file put into bundle here
-    #update the carts status and bundle path
-    bundle_path = os.path.join(VOLUME_PATH, str(mycart.id), (mycart.cart_uid + ".tar"))
-    tar = tarfile.open(bundle_path, "w")
-    tar.add(path_to_files, arcname=mycart.cart_uid)
-    tar.close()
-    try:
-        mycart.status = "ready"
-        mycart.bundle_path = bundle_path
-        mycart.updated_date = datetime.datetime.now()
-        mycart.save()
-    except Exception as ex:
-        database_close()
-        return
-
-    database_close
+    database_close()
 
 
 @CART_APP.task
@@ -269,6 +249,10 @@ def availableCart(uid):
     return cartBundlePath
 
 def filePullCurl(archive_filename, cart_filepath):
+    """Performs a curl that will attempt to write
+    the contents of a file from the archive interface
+    to the specified cart filepath
+    """
     c = pycurl.Curl()
     c.setopt(c.URL, str(ARCHIVE_INTERFACE_URL + archive_filename))
     with open(cart_filepath, 'w+') as f:
@@ -277,6 +261,9 @@ def filePullCurl(archive_filename, cart_filepath):
     c.close()
 
 def create_bundle_directories(filepath):
+    """Creates all the directories in the given path
+    if they do not already exist.
+    """
     try:
         os.makedirs(filepath, 0777)
     except OSError as exception:
@@ -405,36 +392,10 @@ def create_download_path(f, mycart, abs_cart_file_path):
 
     return True
 
-def check_space_for_tar(path_to_files, mycart, deleted_flag):
-    """Check to see if there is enough space for the tar
-    Note it will recursively call itself if there isnt enough
-    space. It will delete a cart first, then call  itself
-    until either there is enough space or there is no carts to delete"""
-    try:
-        #available space is in bytes
-        available_space = long(psutil.disk_usage(VOLUME_PATH).free)
-        size_needed = long(get_path_size(path_to_files))
-    except Exception as ex:
-        mycart.status = "error"
-        mycart.error = "Failed to get available file space with error: " + str(ex)
-        mycart.updated_date = datetime.datetime.now()
-        mycart.save()
-        return False
-
-    if(size_needed > available_space):
-        if deleted_flag:
-            cart_deleted = lru_cart_delete(mycart)
-            return check_space_for_tar(path_to_files, mycart, cart_deleted)
-        mycart.status = "error"
-        mycart.error = "Not enough space to build Tar"
-        mycart.updated_date = datetime.datetime.now()
-        mycart.save()
-        return False
-
-    #there is enough space so return true
-    return True
-
 def get_path_size(source):
+    """Returns the size of a specific directory, including
+    all subdirectories and files
+    """
     total_size = os.path.getsize(source)
     for item in os.listdir(source):
         itempath = os.path.join(source, item)
@@ -445,6 +406,9 @@ def get_path_size(source):
     return total_size
 
 def remove_cart(uid):
+    """Call when a DELETE request comes in. Verifies there is a cart
+    to delete then removes it
+    """
     deleted_flag = True
     iterator = 0 #used to verify at least one cart deleted
     database_connect()
@@ -467,6 +431,8 @@ def remove_cart(uid):
         return "Error Deleteing Cart with uid: " + str(uid)
 
 def delete_cart_bundle(cart):
+    """ Gets the path to where a carts file are and 
+    attempts to delete the file tree"""
     try:
         path_to_files = os.path.join(VOLUME_PATH, str(cart.id))
         shutil.rmtree(path_to_files)
