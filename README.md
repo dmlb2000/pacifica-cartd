@@ -166,5 +166,35 @@ Specifically use "mysql" as the environemnt variable prefix when linking
 Other required options are MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
 
 On container startup the MYSQL_DATABASE will be created with MYSQL_USER, and MYSQL_PASSWORD
-having access.  On web server startup table creation will happen if the tables do not already 
-exist
+having access.  On web server startup necessary table creation will happen if the tables do 
+not already exist
+
+## Pacifica Archive Interface (optional)
+
+The expected backend Archive manager API the pacifica cart uses
+
+When Linking use: archiveinterface:archivei
+
+Specifically use "archivei" as the environemnt variable prefix when linking
+
+Other required options are ports, specifically which port you want exposed
+
+Optional option but recommended is volumes.  Creating a shared volume makes sure that even after the Archive Interface container is removed the file data  stays in case the Archive Interface needs to be restarted after removal
+
+**NOTE** if not using the Archive Interface inside a container (case such as deployed on different server) set the following Environment variable in the cart server/workers:
+ARCHIVE_INTERFACE_URL: urltointerface:port/
+
+Remember to include the port and ending /
+
+
+ ## cartworkers
+
+The backside of the cartserver which handles requesting/storing of files and provides
+statuses
+
+Needs to build its image using the Dockerfile
+
+Linked in Containers: cartrabbit:amqp, cartmysql:mysql, (optional archiveinterface:archivei)
+Specifically use "amqp", "mysql", "archivei" as the environemnt variable prefix respectively when linking
+
+Optional option but recommended is volumes.  Creating a shared volume makes sure that even after the cart workers container is removed the file data  stays in case the workers need to be restarted after removal
