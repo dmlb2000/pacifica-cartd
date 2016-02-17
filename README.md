@@ -139,3 +139,32 @@ curl -X DELETE http://127.0.0.1:8081/$MY_CART_UUID
 ```
 
 Data returned should be json telling you status of cart deletion.
+
+
+# docker-compose.yml breakdown
+
+Discuss the various components that make up the docker-compose file
+including environment variables, containers, and images
+
+## cartrabbit - RabbitMQ
+
+The amqp preference for the cart.  Used to handle all the tasks.
+
+When Linking use: cartrabbit:amqp
+
+Specifically use "amqp" as the environemnt variable prefix when linking
+
+## cartmysql - MySQL
+
+The sql preference for the cart.  Used to handle all cart creation and storage statistics.
+Accessed via Peewee ORM
+
+When Linking use: cartmysql:mysql
+
+Specifically use "mysql" as the environemnt variable prefix when linking
+
+Other required options are MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
+
+On container startup the MYSQL_DATABASE will be created with MYSQL_USER, and MYSQL_PASSWORD
+having access.  On web server startup table creation will happen if the tables do not already 
+exist
