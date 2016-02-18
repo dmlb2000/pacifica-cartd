@@ -156,18 +156,20 @@ Specifically use "amqp" as the environemnt variable prefix when linking
 
 ## cartmysql - MySQL
 
-The sql preference for the cart.  Used to handle all cart creation and storage statistics.
+The sql preference for the cart.  Used to handle all cart creation and storage
+statistics.
 Accessed via Peewee ORM
 
 When Linking use: cartmysql:mysql
 
 Specifically use "mysql" as the environemnt variable prefix when linking
 
-Other required options are MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD
+Other required options are MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER,
+MYSQL_PASSWORD
 
-On container startup the MYSQL_DATABASE will be created with MYSQL_USER, and MYSQL_PASSWORD
-having access.  On web server startup necessary table creation will happen if the tables do 
-not already exist
+On container startup the MYSQL_DATABASE will be created with MYSQL_USER, 
+and MYSQL_PASSWORD having access.  On web server startup necessary table
+creation will happen if the tables do not already exist
 
 ## Pacifica Archive Interface (optional)
 
@@ -179,22 +181,46 @@ Specifically use "archivei" as the environemnt variable prefix when linking
 
 Other required options are ports, specifically which port you want exposed
 
-Optional option but recommended is volumes.  Creating a shared volume makes sure that even after the Archive Interface container is removed the file data  stays in case the Archive Interface needs to be restarted after removal
+Optional option but recommended is volumes.  Creating a shared volume makes
+sure that even after the Archive Interface container is removed the file data
+stays in case the Archive Interface needs to be restarted after removal
 
-**NOTE** if not using the Archive Interface inside a container (case such as deployed on different server) set the following Environment variable in the cart server/workers:
+**NOTE** if not using the Archive Interface inside a container (case such as 
+deployed on different server) set the following Environment variable in the
+cart server/workers:
 ARCHIVE_INTERFACE_URL: urltointerface:port/
 
 Remember to include the port and ending /
 
 
- ## cartworkers
+## cartworkers
 
-The backside of the cartserver which handles requesting/storing of files and provides
-statuses
+The backside of the cartserver which handles requesting/storing of files and
+provides statuses
 
 Needs to build its image using the Dockerfile
 
-Linked in Containers: cartrabbit:amqp, cartmysql:mysql, (optional archiveinterface:archivei)
-Specifically use "amqp", "mysql", "archivei" as the environemnt variable prefix respectively when linking
+Linked in Containers: cartrabbit:amqp, cartmysql:mysql, (optional 
+archiveinterface:archivei)
+Specifically use "amqp", "mysql", "archivei" as the environemnt variable prefix
+respectively when linking.
 
-Optional option but recommended is volumes.  Creating a shared volume makes sure that even after the cart workers container is removed the file data  stays in case the workers need to be restarted after removal
+Optional option but recommended is volumes.  Creating a shared volume makes
+sure that even after the cart workers container is removed the file data  stays
+in case the workers need to be restarted after removal
+
+Environment variables:
+VOLUME_PATH - Required - Used as the root directory for all file storage.
+
+LRU_BUFFER_TIME - Optional - Time, in seconds, that you want carts to be safe
+from the least recently used buffer deletion.  If a cart was last used since
+current time minus that buffer it is safe from deletion.  Not specified or a
+0 given will result in no buffer
+
+ARCHIVE_INTERFACE_URL - Optional - Needs to be set if not using the Pacifica 
+Archive Interface as a linked in container. This will be the url to the
+archive interface. Should be in the form of:
+
+urltointerface:port/
+
+Remember to include the port and ending /
