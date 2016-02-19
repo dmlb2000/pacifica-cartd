@@ -32,7 +32,8 @@ python ./setup.py install
 
 # Running It
 
-To bring up a test instance use docker-compose
+To bring up a test instance use docker-compose from the directory
+the pacifica cart was checked out into
 
 ```
 docker-compose up
@@ -118,7 +119,7 @@ If the cart has an error (such as no space available to create the tarfile).
 }
 ```
 
-## Get the cart
+## Get a cart
 
 To download the tarfile for the cart.
 
@@ -224,3 +225,39 @@ archive interface. Should be in the form of:
 urltointerface:port/
 
 Remember to include the port and ending /
+
+## cartserver
+
+The wsgi web server for the cart which provides the API 
+
+Needs to build its image using the Dockerfile.wsgi
+
+Linked in Containers: cartrabbit:amqp, cartmysql:mysql, (optional 
+archiveinterface:archivei)
+Specifically use "amqp", "mysql", "archivei" as the environemnt variable prefix
+respectively when linking.
+
+Other required options are ports, specifically which port you want exposed
+
+Optional option but recommended is volumes.  Creating a shared volume makes
+sure that even after the cart workers container is removed the file data  stays
+in case the workers need to be restarted after removal
+
+Environment variables:
+VOLUME_PATH - Required - Used as the root directory for all file storage.
+
+LRU_BUFFER_TIME - Optional - Time, in seconds, that you want carts to be safe
+from the least recently used buffer deletion.  If a cart was last used since
+current time minus that buffer it is safe from deletion.  Not specified or a
+0 given will result in no buffer
+
+ARCHIVE_INTERFACE_URL - Optional - Needs to be set if not using the Pacifica 
+Archive Interface as a linked in container. This will be the url to the
+archive interface. Should be in the form of:
+
+urltointerface:port/
+
+Remember to include the port and ending /
+
+The environment variables should be exactly the same as those used for the
+cartworkers container
