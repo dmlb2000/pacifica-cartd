@@ -1,19 +1,25 @@
+"""Module that has the utility functionality for
+the cart
+"""
 from __future__ import absolute_import
 from cart.cart_orm import Cart, File, DB, database_connect, database_close
-from os import path
-from cart.cart_env_globals import VOLUME_PATH, ARCHIVE_INTERFACE_URL, LRU_BUFFER_TIME
+from cart.cart_env_globals import VOLUME_PATH, LRU_BUFFER_TIME
 import os
-import time
 import json
 import datetime
 import errno
 import psutil
-import pycurl
-from StringIO import StringIO
 import shutil
 
 
-class cart_utils:
+class Cartutils(object):
+    """Class used to provide utility functions for the
+    cart to use.
+    """
+    def __init__(self):
+        self._vol_path = VOLUME_PATH
+        self._lru_buff = LRU_BUFFER_TIME
+
     @staticmethod
     def fix_absolute_path(filepath):
         """Removes / from front of path"""
@@ -22,12 +28,13 @@ class cart_utils:
         return filepath
 
     @classmethod
-    def updateCartFiles(cls, cart, fileIds):
+    def update_cart_files(cls, cart, file_ids):
         """Update the files associated to a cart"""
         with DB.atomic():
-            for fId in fileIds:
-                filepath = cls.fix_absolute_path(fId["path"])
-                File.create(cart=cart, file_name=fId["id"], bundle_path=filepath)
+            for f_id in file_ids:
+                filepath = cls.fix_absolute_path(f_id["path"])
+                File.create(
+                    cart=cart, file_name=f_id["id"], bundle_path=filepath)
                 cart.updated_date = datetime.datetime.now()
                 cart.save()
 
@@ -43,26 +50,29 @@ class cart_utils:
             #other errors are a problem however so push them up
             if exception.errno != errno.EEXIST:
                 raise exception
-        
+
     @staticmethod
     def check_file_size_needed(response, cart_file, mycart):
-        """Checks response (should be from Archive Interface head request) for file size """
+        """Checks response (should be from Archive Interface head request)
+         for file size """
         try:
             decoded = json.loads(response)
             filesize = decoded['filesize']
             return long(filesize)
         except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = "error"
-            cart_file.error = "Failed to decode json for file size with error: " + str(ex)
+            cart_file.error = """Failed to decode file size
+            json with error: """ + str(ex)
             cart_file.save()
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
-            return (-1)
+            return -1
 
     @staticmethod
     def check_file_ready_pull(response, cart_file, mycart):
-        """Checks response (should be from Archive Interface head request) for bytes per level
-           then returns True or False based on if the file is at level 1 (downloadable)"""
+        """Checks response (should be from Archive Interface head request)
+        for bytes per level then returns True or False based on if the file
+        is at level 1 (downloadable)"""
         try:
             decoded = json.loads(response)
             media = decoded['file_storage_media']
@@ -70,25 +80,25 @@ class cart_utils:
                 return True
             else:
                 return False
-        except (ValueError, KeyError, TypeError):
+        except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = "error"
-            cart_file.error = "Failed to decode json for file status with error: " + str(ex)
+            cart_file.error = """Failed to decode json for file status
+            with error: """ + str(ex)
             cart_file.save()
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
-            return (-1)
+            return -1
 
-
-    @staticmethod
-    def check_space_requirements(cart_file, mycart, size_needed, deleted_flag):
-        """Checks to make sure there is enough space available on disk for the file
-        to be downloaded
+    def check_space_requirements(
+            self, cart_file, mycart, size_needed, deleted_flag):
+        """Checks to make sure there is enough space available on disk
+        for the fileto be downloaded
         Note it will recursively call itself if there isnt enough
         space. It will delete a cart first, then call  itself
-        until either there is enough space or there is no carts to delete""" 
+        until either there is enough space or there is no carts to delete"""
         try:
             #available space is in bytes
-            available_space = long(psutil.disk_usage(VOLUME_PATH).free)
+            available_space = long(psutil.disk_usage(self._vol_path).free)
         except Exception as ex:
             cart_file.status = "error"
             cart_file.error = "Failed to get available file space with error: " + str(ex)
@@ -97,10 +107,10 @@ class cart_utils:
             mycart.save()
             return False
 
-        if(size_needed > available_space):
+        if size_needed > available_space:
             if deleted_flag:
-                cart_deleted = lru_cart_delete(mycart)
-                return check_space_requirements(cart_file, mycart, size_needed, cart_deleted)
+                cart_deleted = self.lru_cart_delete(mycart)
+                return self.check_space_requirements(cart_file, mycart, size_needed, cart_deleted)
             cart_file.status = "error"
             cart_file.error = "Not enough space to download file"
             cart_file.save()
@@ -112,23 +122,23 @@ class cart_utils:
         return True
 
     @classmethod
-    def create_download_path(cls,f, mycart, abs_cart_file_path):
+    def create_download_path(cls, cart_file, mycart, abs_cart_file_path):
         """ Create the directories that the file will be pulled to"""
-        try:          
+        try:    
             cart_file_dirs = os.path.dirname(abs_cart_file_path)
             cls.create_bundle_directories(cart_file_dirs)
         except Exception as ex:
-            f.status = "error"
-            f.error = "Failed to create directories with error: " + str(ex)
-            f.save()
+            cart_file.status = "error"
+            cart_file.error = "Failed directory create with error: " + str(ex)
+            cart_file.save()
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
             return False
 
         return True
 
-    @staticmethod
-    def get_path_size(source):
+    @classmethod
+    def get_path_size(cls, source):
         """Returns the size of a specific directory, including
         all subdirectories and files
         """
@@ -138,11 +148,11 @@ class cart_utils:
             if os.path.isfile(itempath):
                 total_size += os.path.getsize(itempath)
             elif os.path.isdir(itempath):
-                total_size += get_path_size(itempath)
+                total_size += cls.get_path_size(itempath)
         return total_size
 
     @classmethod
-    def remove_cart(cls,uid):
+    def remove_cart(cls, uid):
         """Call when a DELETE request comes in. Verifies there is a cart
         to delete then removes it
         """
@@ -159,17 +169,19 @@ class cart_utils:
             if deleted_flag and iterator > 0:
                 return "Cart Deleted Successfully"
             elif deleted_flag:
-                return "Cart with uid: " + str(uid) + " was previously deleted or no longer exists"
+                return "Cart with uid: " + str(uid) + """
+                was previously deleted or no longer exists"""
             else:
                 return "Error with deleting Cart"
         except Exception as ex:
             #case if record no longer exists
             database_close()
-            return "Error Deleteing Cart with uid: " + str(uid)
+            return "Error Deleteing Cart with uid: " + str(uid) + """with
+            exception """ + str(ex)
 
     @staticmethod
     def delete_cart_bundle(cart):
-        """ Gets the path to where a carts file are and 
+        """ Gets the path to where a carts file are and
         attempts to delete the file tree"""
         try:
             path_to_files = os.path.join(VOLUME_PATH, str(cart.id))
@@ -178,7 +190,7 @@ class cart_utils:
             cart.deleted_date = datetime.datetime.now()
             cart.save()
             return True
-        except Exception as ex:
+        except Exception:
             return False
 
     @classmethod
@@ -187,25 +199,27 @@ class cart_utils:
         Only delete one cart per call
         """
         try:
-            lru_time = datetime.datetime.now() - datetime.timedelta(seconds=int(LRU_BUFFER_TIME))
-            del_cart = (Cart.select().where((Cart.id != mycart.id) & (Cart.deleted_date.is_null(True)) & (Cart.updated_date < lru_time) ).order_by(Cart.creation_date).get())
+            lru_time = datetime.datetime.now() - datetime.timedelta(
+                seconds=int(LRU_BUFFER_TIME))
+            del_cart = (Cart.select().where((Cart.id != mycart.id) & (
+                Cart.deleted_date.is_null(True)) & (Cart.updated_date < lru_time)).order_by(Cart.creation_date).get())
             return cls.delete_cart_bundle(del_cart)
-        except Exception as ex:
+        except Exception:
             #case if no cart exists that can be deleted
             return False
 
     @staticmethod
-    def cartStatus(uid):
+    def cart_status(uid):
         """Get the status of a specified cart"""
         database_connect()
         status = None
         try:
             mycart = (Cart.select().where((Cart.cart_uid == str(uid)) & (Cart.deleted_date.is_null(True))).order_by(Cart.creation_date.desc()).get())
-        except Exception as ex:
+        except Exception:
             #case if no record exists yet in database
             mycart = None
-            status = ["error","No cart with uid " + uid + " found"] 
-        
+            status = ["error", "No cart with uid " + uid + " found"]
+
         if mycart:
             #send the status and any available error text
             status = [mycart.status, mycart.error]
@@ -214,19 +228,29 @@ class cart_utils:
         return status
 
     @staticmethod
-    def availableCart(uid):
+    def available_cart(uid):
         """Checks if the asked for cart tar is available
            returns the path to tar if yes, false if not"""
         database_connect()
-        cartBundlePath = False
+        cart_bundle_path = False
         try:
             mycart = (Cart.select().where((Cart.cart_uid == str(uid)) & (Cart.deleted_date.is_null(True))).order_by(Cart.creation_date.desc()).get())
-        except Exception as ex:
+        except Exception:
             #case if no record exists yet in database
             mycart = None
 
         if mycart and mycart.status == "ready":
-            cartBundlePath = mycart.bundle_path
+            cart_bundle_path = mycart.bundle_path
         database_close()
-        return cartBundlePath
+        return cart_bundle_path
+
+    @staticmethod
+    def set_file_status(cart_file, cart, status, error):
+        """Sets the status and/or error for a cart"""
+        cart_file.status = str(status)
+        if error:
+            cart_file.error = str(error)
+        cart_file.save()
+        cart.updated_date = datetime.datetime.now()
+        cart.save()
     

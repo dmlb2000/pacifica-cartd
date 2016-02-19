@@ -1,4 +1,9 @@
 import os
+import logging
+"""Uncomment these lines for database query logging"""
+#logger = logging.getLogger('peewee')
+#logger.setLevel(logging.DEBUG)
+#logger.addHandler(logging.StreamHandler())
 
 try:
     VOLUME_PATH = os.environ['VOLUME_PATH']

@@ -8,7 +8,7 @@ import sys, os
 import doctest
 import cart.cart_interface_responses as cart_interface_responses
 from cart.tasks import stage_files
-from cart.cart_utils import cart_utils
+from cart.cart_utils import Cartutils
 
 
 BLOCK_SIZE = 1<<20
@@ -56,7 +56,8 @@ class CartGenerator(object):
                 start_response, uid)
             return self.return_response()
         #get the bundle path if available
-        cart_path = cart_utils.availableCart(uid)
+        cart_utils = Cartutils()
+        cart_path = cart_utils.available_cart(uid)
         if cart_path == False:
             #cart not ready
             self._response = resp.unready_cart(start_response)
@@ -106,7 +107,8 @@ class CartGenerator(object):
                 start_response, uid)
             return self.return_response()
 
-        status = cart_utils.cartStatus(uid)
+        cart_utils = Cartutils()
+        status = cart_utils.cart_status(uid)
         self._response = resp.cart_status_response(start_response, status)
         return self.return_response()
 
@@ -151,6 +153,7 @@ class CartGenerator(object):
                 start_response, uid)
             return self.return_response()
 
+        cart_utils = Cartutils()
         message = cart_utils.remove_cart(uid)
         self._response = resp.cart_delete_response(start_response, message)
         return self.return_response()
