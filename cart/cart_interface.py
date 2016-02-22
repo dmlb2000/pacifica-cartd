@@ -1,10 +1,10 @@
 #!/usr/bin/python
 """Class for the cart interface.  Allows API to file interactions"""
 import json
-from os import path, fork, pipe, fdopen, read, write, close
+from os import path, fork, pipe, fdopen, close
 from sys import stderr
 from tarfile import TarFile
-import sys, os
+import os
 import doctest
 import cart.cart_interface_responses as cart_interface_responses
 from cart.tasks import stage_files

@@ -101,7 +101,8 @@ class Cartutils(object):
             available_space = long(psutil.disk_usage(self._vol_path).free)
         except Exception as ex:
             cart_file.status = "error"
-            cart_file.error = "Failed to get available file space with error: " + str(ex)
+            cart_file.error = """Failed to get available file
+            space with error: """ + str(ex)
             cart_file.save()
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
@@ -110,7 +111,8 @@ class Cartutils(object):
         if size_needed > available_space:
             if deleted_flag:
                 cart_deleted = self.lru_cart_delete(mycart)
-                return self.check_space_requirements(cart_file, mycart, size_needed, cart_deleted)
+                return self.check_space_requirements(cart_file, mycart,
+                                                     size_needed, cart_deleted)
             cart_file.status = "error"
             cart_file.error = "Not enough space to download file"
             cart_file.save()
@@ -124,7 +126,7 @@ class Cartutils(object):
     @classmethod
     def create_download_path(cls, cart_file, mycart, abs_cart_file_path):
         """ Create the directories that the file will be pulled to"""
-        try:    
+        try:
             cart_file_dirs = os.path.dirname(abs_cart_file_path)
             cls.create_bundle_directories(cart_file_dirs)
         except Exception as ex:
@@ -160,7 +162,12 @@ class Cartutils(object):
         iterator = 0 #used to verify at least one cart deleted
         database_connect()
         try:
-            for cart in  Cart.select().where((Cart.cart_uid == str(uid)) & (Cart.deleted_date.is_null(True))):
+            carts = (Cart
+                     .select()
+                     .where(
+                         (Cart.cart_uid == str(uid)) &
+                         (Cart.deleted_date.is_null(True))))
+            for cart in  carts:
                 iterator += 1
                 success = cls.delete_cart_bundle(cart)
                 if success == False:
@@ -201,8 +208,14 @@ class Cartutils(object):
         try:
             lru_time = datetime.datetime.now() - datetime.timedelta(
                 seconds=int(LRU_BUFFER_TIME))
-            del_cart = (Cart.select().where((Cart.id != mycart.id) & (
-                Cart.deleted_date.is_null(True)) & (Cart.updated_date < lru_time)).order_by(Cart.creation_date).get())
+            del_cart = (Cart
+                        .select()
+                        .where(
+                            (Cart.id != mycart.id) &
+                            (Cart.deleted_date.is_null(True)) &
+                            (Cart.updated_date < lru_time))
+                        .order_by(Cart.creation_date)
+                        .get())
             return cls.delete_cart_bundle(del_cart)
         except Exception:
             #case if no cart exists that can be deleted
@@ -214,7 +227,13 @@ class Cartutils(object):
         database_connect()
         status = None
         try:
-            mycart = (Cart.select().where((Cart.cart_uid == str(uid)) & (Cart.deleted_date.is_null(True))).order_by(Cart.creation_date.desc()).get())
+            mycart = (Cart
+                      .select()
+                      .where(
+                          (Cart.cart_uid == str(uid)) &
+                          (Cart.deleted_date.is_null(True)))
+                      .order_by(Cart.creation_date.desc())
+                      .get())
         except Exception:
             #case if no record exists yet in database
             mycart = None
@@ -234,7 +253,13 @@ class Cartutils(object):
         database_connect()
         cart_bundle_path = False
         try:
-            mycart = (Cart.select().where((Cart.cart_uid == str(uid)) & (Cart.deleted_date.is_null(True))).order_by(Cart.creation_date.desc()).get())
+            mycart = (Cart
+                      .select()
+                      .where(
+                          (Cart.cart_uid == str(uid)) &
+                          (Cart.deleted_date.is_null(True)))
+                      .order_by(Cart.creation_date.desc())
+                      .get())
         except Exception:
             #case if no record exists yet in database
             mycart = None
