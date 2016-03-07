@@ -3,17 +3,8 @@
 Primary celery process.
 """
 from __future__ import absolute_import
-import os
-
 from celery import Celery
-BROKER_URL = 'amqp://guest:guest@'\
-             +os.environ['AMQP_PORT_5672_TCP_ADDR']\
-             +':'+os.environ['AMQP_PORT_5672_TCP_PORT']+'//'
-MYSQL_PASS = os.environ['MYSQL_ENV_MYSQL_PASSWORD']
-MYSQL_USER = os.environ['MYSQL_ENV_MYSQL_USER']
-MYSQL_PORT = os.environ['MYSQL_PORT_3306_TCP_PORT']
-MYSQL_ADDR = os.environ['MYSQL_PORT_3306_TCP_ADDR']
-MYSQL_DATABASE = os.environ['MYSQL_ENV_MYSQL_DATABASE']
+from cart.cart_env_globals import BROKER_URL
 CART_APP = Celery('cart',
                   broker=BROKER_URL,
                   backend="amqp",

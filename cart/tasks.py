@@ -10,6 +10,7 @@ from cart.cart_env_globals import VOLUME_PATH
 from cart.archive_requests import ArchiveRequests
 import os
 import datetime
+import pycurl
 
 
 @CART_APP.task(ignore_result=True)
@@ -54,7 +55,7 @@ def prepare_bundle(cartid):
                 mycart.save()
                 database_close()
                 return
-            except Exception:
+            except Cart.DoesNotExist:
                 #case if record no longer exists
                 database_close()
                 return
@@ -84,7 +85,7 @@ def pull_file(file_id, record_error):
         #make sure cart wasnt deleted before pulling file
         if mycart.deleted_date:
             return
-    except Exception as ex:
+    except Cart.DoesNotExist:
         database_close()
         return
 
@@ -92,14 +93,14 @@ def pull_file(file_id, record_error):
     #stage the file on the archive.  True on success, False on fail
     try:
         archive_request.stage_file(cart_file.file_name)
-    except Exception as ex:
+    except pycurl.error as ex:
         error_msg = "Failed to stage with error: " + str(ex)
         cart_utils.set_file_status(cart_file, mycart, "error", error_msg)
 
     #check to see if file is available to pull from archive interface
     try:
         response = archive_request.status_file(cart_file.file_name)
-    except Exception as ex:
+    except pycurl.error:
         error_msg = "Failed to status file with error: " + str(ex)
         cart_utils.set_file_status(cart_file, mycart, "error", error_msg)
         response = False
@@ -139,7 +140,7 @@ def pull_file(file_id, record_error):
             archive_request.pull_file(cart_file.file_name, abs_cart_file_path)
             cart_utils.set_file_status(cart_file, mycart, "staged", False)
             database_close()
-        except IOError as ex:
+        except pycurl.error as ex:
             #if curl fails...try a second time, if that fails write error
             if record_error:
                 error_msg = "Failed to pull with error: " + str(ex)
@@ -166,7 +167,7 @@ def tar_files(cartid):
         mycart.bundle_path = bundle_path
         mycart.updated_date = datetime.datetime.now()
         mycart.save()
-    except Exception:
+    except Cart.DoesNotExist:
         #case if record no longer exists
         database_close()
         return

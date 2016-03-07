@@ -226,6 +226,9 @@ urltointerface:port/
 
 Remember to include the port and ending /
 
+DATABASE_LOGGING - Optional - Set if you want to debug the Peewee queries.
+Causes the queries to be printed out
+
 ## cartserver
 
 The wsgi web server for the cart which provides the API 

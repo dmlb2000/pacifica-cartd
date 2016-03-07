@@ -12,8 +12,10 @@ from peewee import ForeignKeyField, TextField
 from peewee import Model, ProgrammingError, OperationalError
 import datetime
 import time
-from cart.celery import MYSQL_USER, MYSQL_PASS, MYSQL_ADDR, MYSQL_DATABASE
-from cart.celery import MYSQL_PORT
+from cart.cart_env_globals import MYSQL_USER, MYSQL_PASS, MYSQL_ADDR
+from cart.cart_env_globals import MYSQL_PORT, MYSQL_DATABASE
+from cart.cart_env_globals import DATABASE_CONNECT_ATTEMPTS, DATABASE_WAIT
+
 
 DB = MySQLDatabase(MYSQL_DATABASE,
                    host=MYSQL_ADDR,
@@ -31,10 +33,9 @@ def database_setup(attempts=0):
         database_close()
     except OperationalError:
         #couldnt connect, potentially wait and try again
-        if attempts < 3:
-            print """Waiting for ten seconds and trying to connect
-                to Database again"""
-            time.sleep(10)
+        if attempts < DATABASE_CONNECT_ATTEMPTS:
+            #wait specified time to try reconnecting
+            time.sleep(DATABASE_WAIT)
             attempts += 1
             database_setup(attempts)
 
