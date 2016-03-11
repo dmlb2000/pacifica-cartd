@@ -98,7 +98,7 @@ class CartGenerator(object):
                         mytar.add(cart_path, arcname=uid)
                         mytar.close()
                         #to exit from the fork child without killing the parent
-                        #we need to use_exit.  Diabling the pylint for this
+                        #we need to use_exit.  Disabling the pylint for this
                         #so that it doesnt throw an error
                         # pylint: disable=protected-access
                         os._exit(0)
