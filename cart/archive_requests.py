@@ -1,6 +1,8 @@
 """Module that is used by the cart to send requests to the
 archive interface
 """
+# pylint extension-pkg-whitelist=pycurl
+
 from __future__ import absolute_import
 from StringIO import StringIO
 import pycurl

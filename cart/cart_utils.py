@@ -6,8 +6,9 @@ import os
 import json
 import datetime
 import errno
-import psutil
 import shutil
+import psutil
+from peewee import DoesNotExist
 from cart.cart_orm import Cart, File, DB, database_connect, database_close
 from cart.cart_env_globals import VOLUME_PATH, LRU_BUFFER_TIME
 
@@ -154,8 +155,7 @@ class Cartutils(object):
             media = decoded['file_storage_media']
             if media == "disk":
                 return True
-            else:
-                return False
+            return False
         except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = "error"
             cart_file.error = """Failed to decode json for file status
@@ -231,7 +231,7 @@ class Cartutils(object):
                         .order_by(Cart.creation_date)
                         .get())
             return cls.delete_cart_bundle(del_cart)
-        except Cart.DoesNotExist:
+        except DoesNotExist:
             #case if no cart exists that can be deleted
             return False
 
@@ -255,7 +255,7 @@ class Cartutils(object):
                           (Cart.deleted_date.is_null(True)))
                       .order_by(Cart.creation_date.desc())
                       .get())
-        except Cart.DoesNotExist:
+        except DoesNotExist:
             #case if no record exists yet in database
             mycart = None
             status = ["error", "No cart with uid " + uid + " found"]
@@ -281,7 +281,7 @@ class Cartutils(object):
                           (Cart.deleted_date.is_null(True)))
                       .order_by(Cart.creation_date.desc())
                       .get())
-        except Cart.DoesNotExist:
+        except DoesNotExist:
             #case if no record exists yet in database
             mycart = None
 

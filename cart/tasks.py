@@ -1,11 +1,13 @@
 """Module that contains all the amqp tasks that support the
 cart infrastructure
 """
+# pylint extension-pkg-whitelist=pycurl
 
 from __future__ import absolute_import
 import os
 import datetime
 import pycurl
+from peewee import DoesNotExist
 from cart.celery import CART_APP
 from cart.cart_orm import Cart, File, database_connect, database_close
 from cart.cart_utils import Cartutils
@@ -55,7 +57,7 @@ def prepare_bundle(cartid):
                 mycart.save()
                 database_close()
                 return
-            except Cart.DoesNotExist:
+            except DoesNotExist:
                 #case if record no longer exists
                 database_close()
                 return
@@ -85,7 +87,7 @@ def pull_file(file_id, record_error):
         #make sure cart wasnt deleted before pulling file
         if mycart.deleted_date:
             return
-    except Cart.DoesNotExist:
+    except DoesNotExist:
         database_close()
         return
 
@@ -120,7 +122,7 @@ def pull_file(file_id, record_error):
     if ready_to_pull < 0:
         database_close()
         return
-    elif ready_to_pull == False:
+    elif not ready_to_pull:
         pull_file.delay(file_id, False)
         database_close()
         return
@@ -167,7 +169,7 @@ def tar_files(cartid):
         mycart.bundle_path = bundle_path
         mycart.updated_date = datetime.datetime.now()
         mycart.save()
-    except Cart.DoesNotExist:
+    except DoesNotExist:
         #case if record no longer exists
         database_close()
         return
