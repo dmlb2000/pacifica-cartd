@@ -23,9 +23,9 @@ class ArchiveRequests(object):
         to the specified cart filepath
         """
         mycurl = pycurl.Curl()
-        mycurl.setopt(mycurl.URL, str(self._url + archive_filename))
+        mycurl.setopt(pycurl.URL, str(self._url + archive_filename))
         with open(cart_filepath, 'w+') as myfile:
-            mycurl.setopt(mycurl.WRITEFUNCTION, myfile.write)
+            mycurl.setopt(pycurl.WRITEFUNCTION, myfile.write)
             mycurl.perform()
         mycurl.close()
 
@@ -34,8 +34,8 @@ class ArchiveRequests(object):
         """
 
         mycurl = pycurl.Curl()
-        mycurl.setopt(mycurl.URL, str(self._url + file_name))
-        mycurl.setopt(mycurl.POST, True)
+        mycurl.setopt(pycurl.URL, str(self._url + file_name))
+        mycurl.setopt(pycurl.POST, True)
         mycurl.perform()
         mycurl.close()
 
@@ -46,10 +46,10 @@ class ArchiveRequests(object):
 
         storage = StringIO()
         mycurl = pycurl.Curl()
-        mycurl.setopt(mycurl.CUSTOMREQUEST, "HEAD")
-        mycurl.setopt(mycurl.URL, str(self._url + file_name))
-        mycurl.setopt(mycurl.NOBODY, False)
-        mycurl.setopt(mycurl.WRITEFUNCTION, storage.write)
+        mycurl.setopt(pycurl.CUSTOMREQUEST, "HEAD")
+        mycurl.setopt(pycurl.URL, str(self._url + file_name))
+        mycurl.setopt(pycurl.NOBODY, False)
+        mycurl.setopt(pycurl.WRITEFUNCTION, storage.write)
         mycurl.perform()
         mycurl.close()
         content = storage.getvalue()
