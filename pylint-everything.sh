@@ -1,4 +1,4 @@
 #!/bin/bash -xe
 
-pylint cart
+pylint --extension-pkg-whitelist=pycurl cart
 pylint cartserver
