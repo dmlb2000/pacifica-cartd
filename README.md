@@ -229,6 +229,12 @@ Remember to include the port and ending /
 DATABASE_LOGGING - Optional - Set if you want to debug the Peewee queries.
 Causes the queries to be printed out
 
+DATABASE_CONNECT_ATTEMPTS - Optional - Set the number of times the application
+tries to connect to the database if a failure occurs. Default 3
+
+DATABASE_WAIT - Optional - Set the amount of time (in seconds) the application will
+take between trying to reconnect to the database.  Default 10 seconds
+
 ## cartserver
 
 The wsgi web server for the cart which provides the API 
@@ -261,6 +267,12 @@ archive interface. Should be in the form of:
 urltointerface:port/
 
 Remember to include the port and ending /
+
+DATABASE_CONNECT_ATTEMPTS - Optional - Set the number of times the application
+tries to connect to the database if a failure occurs. Default 3
+
+DATABASE_WAIT - Optional - Set the amount of time (in seconds) the application will
+take between trying to reconnect to the database.  Default 10 seconds
 
 The environment variables should be exactly the same as those used for the
 cartworkers container
