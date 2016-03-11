@@ -1,7 +1,6 @@
 """Module that contains all the amqp tasks that support the
 cart infrastructure
 """
-# pylint extension-pkg-whitelist=pycurl
 
 from __future__ import absolute_import
 import os
