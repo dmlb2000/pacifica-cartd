@@ -2,9 +2,9 @@
 archive interface
 """
 from __future__ import absolute_import
-from cart.cart_env_globals import  ARCHIVE_INTERFACE_URL
-import pycurl
 from StringIO import StringIO
+import pycurl
+from cart.cart_env_globals import  ARCHIVE_INTERFACE_URL
 
 
 class ArchiveRequests(object):

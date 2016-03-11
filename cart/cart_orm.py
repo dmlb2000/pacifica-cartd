@@ -7,11 +7,11 @@ Using PeeWee to implement the ORM.
 # disable this for classes Cart, File and Meta (within Cart and File)
 # pylint: disable=too-few-public-methods
 # pylint: disable=invalid-name
+import datetime
+import time
 from peewee import MySQLDatabase, PrimaryKeyField, CharField, DateTimeField
 from peewee import ForeignKeyField, TextField
 from peewee import Model, ProgrammingError, OperationalError
-import datetime
-import time
 from cart.cart_env_globals import MYSQL_USER, MYSQL_PASS, MYSQL_ADDR
 from cart.cart_env_globals import MYSQL_PORT, MYSQL_DATABASE
 from cart.cart_env_globals import DATABASE_CONNECT_ATTEMPTS, DATABASE_WAIT

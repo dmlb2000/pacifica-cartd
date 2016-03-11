@@ -3,14 +3,14 @@ cart infrastructure
 """
 
 from __future__ import absolute_import
+import os
+import datetime
+import pycurl
 from cart.celery import CART_APP
 from cart.cart_orm import Cart, File, database_connect, database_close
 from cart.cart_utils import Cartutils
 from cart.cart_env_globals import VOLUME_PATH
 from cart.archive_requests import ArchiveRequests
-import os
-import datetime
-import pycurl
 
 
 @CART_APP.task(ignore_result=True)
@@ -63,7 +63,7 @@ def prepare_bundle(cartid):
         elif c_file.status != "staged":
             bundle_flag = False
 
-    if bundle_flag == False:
+    if not bundle_flag:
         #if not ready to bundle recall this task
         prepare_bundle.delay(cartid)
 

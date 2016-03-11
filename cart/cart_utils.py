@@ -2,14 +2,15 @@
 the cart
 """
 from __future__ import absolute_import
-from cart.cart_orm import Cart, File, DB, database_connect, database_close
-from cart.cart_env_globals import VOLUME_PATH, LRU_BUFFER_TIME
 import os
 import json
 import datetime
 import errno
 import psutil
 import shutil
+from cart.cart_orm import Cart, File, DB, database_connect, database_close
+from cart.cart_env_globals import VOLUME_PATH, LRU_BUFFER_TIME
+
 
 
 class Cartutils(object):
@@ -188,7 +189,7 @@ class Cartutils(object):
         for cart in  carts:
             iterator += 1
             success = cls.delete_cart_bundle(cart)
-            if success == False:
+            if not success:
                 deleted_flag = False
         database_close()
         if deleted_flag and iterator > 0:

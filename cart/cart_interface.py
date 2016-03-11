@@ -1,10 +1,9 @@
 #!/usr/bin/python
 """Class for the cart interface.  Allows API to file interactions"""
 import json
-from os import path, fork, pipe, fdopen, close
+import os
 from sys import stderr
 from tarfile import TarFile
-import os
 import doctest
 import cart.cart_interface_responses as cart_interface_responses
 from cart.tasks import stage_files
@@ -23,13 +22,33 @@ class CartInterfaceError(Exception):
     pass
 
 def fix_cart_uid(uid):
-    """Removes / from front of cart_uid"""
-    if path.isabs(uid):
+    """Removes / from front of cart_uid
+
+    Doc Tests
+
+    >>> fix_cart_uid('test/')
+    'test'
+    >>> fix_cart_uid('test')
+    'test'
+
+    """
+    if os.path.isabs(uid):
         uid = uid[1:]
     return uid
 
 def is_valid_uid(uid):
-    """checks to see if the uid is valid before using it"""
+    """checks to see if the uid is valid before using it
+
+    Doc Tests
+
+    >>> is_valid_uid('3434')
+    'True'
+    >>> is_valid_uid(None)
+    'False'
+    >>> is_valid_uid("")
+    'False'
+
+    """
     if not uid:
         return False
     if uid == "":
@@ -58,31 +77,33 @@ class CartGenerator(object):
         #get the bundle path if available
         cart_utils = Cartutils()
         cart_path = cart_utils.available_cart(uid)
-        if cart_path == False:
+        if not cart_path:
             #cart not ready
             self._response = resp.unready_cart(start_response)
             return self.return_response()
         else:
-            if path.isdir(cart_path):
+            if os.path.isdir(cart_path):
                 #give back bundle here
                 stderr.flush()
                 try:
                     #want to stream the tar file out
-                    (rpipe, wpipe) = pipe()
-                    cpid = fork()
+                    (rpipe, wpipe) = os.pipe()
+                    cpid = os.fork()
                     if cpid == 0:
                         # we are the child process
                         #write the data to the pipe
-                        close(rpipe)
-                        wfd = fdopen(wpipe, "wb")
+                        os.close(rpipe)
+                        wfd = os.fdopen(wpipe, "wb")
                         mytar = TarFile.open(fileobj=wfd, mode='w|')
                         mytar.add(cart_path, arcname=uid)
                         mytar.close()
+                        # pylint: disable=protected-access
                         os._exit(0)
+                        # pylint: enable=protected-access
                     # we are the parent
-                    close(wpipe)
+                    os.close(wpipe)
                     #open the pipe as a file
-                    rfd = fdopen(rpipe, "rb")
+                    rfd = os.fdopen(rpipe, "rb")
                     start_response('200 OK', [('Content-Type',
                                                'application/octet-stream')])
                     if 'wsgi.file_wrapper' in env:
