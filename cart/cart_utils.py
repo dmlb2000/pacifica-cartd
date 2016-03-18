@@ -94,7 +94,7 @@ class Cartutils(object):
     def check_space_requirements(
             self, cart_file, mycart, size_needed, deleted_flag):
         """Checks to make sure there is enough space available on disk
-        for the fileto be downloaded
+        for the file to be downloaded
         Note it will recursively call itself if there isnt enough
         space. It will delete a cart first, then call  itself
         until either there is enough space or there is no carts to delete"""
