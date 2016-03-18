@@ -122,13 +122,13 @@ class TestCartUtils(unittest.TestCase):
                                     bundle_path="/tmp/1/1.txt")
             cart_utils = Cartutils()
             ready = cart_utils.check_file_ready_pull(response, test_file,
-                                                          test_cart)
+                                                     test_cart)
             self.assertEqual(ready, True)
             self.assertNotEqual(test_file.status, "error")
 
             #now check for an error by sending a bad response
             ready = cart_utils.check_file_size_needed("", test_file,
-                                                          test_cart)
+                                                      test_cart)
             self.assertEqual(ready, -1)
             self.assertEqual(test_file.status, "error")
 
@@ -142,7 +142,7 @@ class TestCartUtils(unittest.TestCase):
             os.makedirs(test_cart.bundle_path, 0777)
             deleted = cart_utils.delete_cart_bundle(test_cart)
             self.assertEqual(deleted, True)
-            
+       
 
 
 if __name__ == '__main__':
