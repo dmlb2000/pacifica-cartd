@@ -142,7 +142,6 @@ class TestCartUtils(unittest.TestCase):
             os.makedirs(test_cart.bundle_path, 0777)
             deleted = cart_utils.delete_cart_bundle(test_cart)
             self.assertEqual(deleted, True)
-       
 
 
 if __name__ == '__main__':
