@@ -8,6 +8,7 @@ from peewee import SqliteDatabase
 import cart.cart_orm
 from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
+from cart.cart_interface import fix_cart_uid, is_valid_uid
 
 TEST_DB = SqliteDatabase(':memory:')
 cart.cart_orm.DB = TEST_DB
@@ -159,6 +160,30 @@ class TestCartUtils(unittest.TestCase):
             cart_utils.set_file_status(test_file, test_cart, "error", "fake error")
             self.assertEqual(test_file.status, "error")
             self.assertEqual(test_file.error, "fake error")
+
+class TestCartInterface(unittest.TestCase):
+    """
+    Contains all the tests for the Cart Interface
+    """
+    def test_fix_cart_uid(self):
+        """ Testing the create filepath cleanup"""
+        path = fix_cart_uid('test/')
+        self.assertEqual(path, "test/")
+        path = fix_cart_uid('test')
+        self.assertEqual(path, "test")
+        path = fix_cart_uid('/test')
+        self.assertEqual(path, "test")
+
+    def test_fix_cart_uid(self):
+        """ Testing if the passed guids are valid"""
+        valid= is_valid_uid('3434')
+        self.assertEqual(valid, True)
+        valid = is_valid_uid(None)
+        self.assertEqual(valid, False)
+        valid = is_valid_uid('')
+        self.assertEqual(valid, False)
+        valid = is_valid_uid('foo')
+        self.assertEqual(valid, True)
 
 
 if __name__ == '__main__':

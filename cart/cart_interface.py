@@ -16,21 +16,11 @@ class CartInterfaceError(Exception):
     """
     CartInterfaceError - basic exception class for this module.
     Will be used to throw exceptions up to the top level of the application
-    >>> CartInterfaceError()
-    CartInterfaceError()
     """
     pass
 
 def fix_cart_uid(uid):
     """Removes / from front of cart_uid
-
-    Doc Tests
-
-    >>> fix_cart_uid('test/')
-    'test'
-    >>> fix_cart_uid('test')
-    'test'
-
     """
     if os.path.isabs(uid):
         uid = uid[1:]
@@ -38,16 +28,6 @@ def fix_cart_uid(uid):
 
 def is_valid_uid(uid):
     """checks to see if the uid is valid before using it
-
-    Doc Tests
-
-    >>> is_valid_uid('3434')
-    'True'
-    >>> is_valid_uid(None)
-    'False'
-    >>> is_valid_uid("")
-    'False'
-
     """
     if not uid:
         return False
