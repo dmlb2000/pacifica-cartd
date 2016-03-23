@@ -113,6 +113,13 @@ def pull_file(file_id, record_error):
         database_close()
         return
 
+    mod_time = cart_utils.check_file_modified_time(response, cart_file, mycart)
+
+    #Return from function if the mtime couldnt be parsed (-1 return)
+    if mod_time < 0:
+        database_close()
+        return
+
     ready_to_pull = cart_utils.check_file_ready_pull(
         response, cart_file, mycart)
 
@@ -151,6 +158,8 @@ def pull_file(file_id, record_error):
             else:
                 pull_file.delay(file_id, True)
                 database_close()
+
+        os.utime(abs_cart_file_path,(mod_time, mod_time))
 
 
 @CART_APP.task(ignore_result=True)

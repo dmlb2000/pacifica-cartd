@@ -166,6 +166,24 @@ class Cartutils(object):
             mycart.save()
             return -1
 
+    @staticmethod
+    def check_file_modified_time(response, cart_file, mycart):
+        """Checks response (should be from Archive Interface head request)
+         for file modified time """
+        try:
+            decoded = json.loads(response)
+            mod_time = decoded['mtime']
+            return mod_time
+        except (ValueError, KeyError, TypeError) as ex:
+            cart_file.status = "error"
+            cart_file.error = """Failed to decode file mtime
+            json with error: """ + str(ex) + """ Response received from the
+            Archive is: """ + str(response)
+            cart_file.save()
+            mycart.updated_date = datetime.datetime.now()
+            mycart.save()
+            return -1
+
 
 
     ###########################################################################

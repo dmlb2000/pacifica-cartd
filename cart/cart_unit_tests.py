@@ -3,12 +3,14 @@ File used to unit test the pacifica_cart
 """
 import unittest
 import os
+import cart.cart_orm
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase
 from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
 
 TEST_DB = SqliteDatabase(':memory:')
+cart.cart_orm.DB = TEST_DB
 
 class TestCartUtils(unittest.TestCase):
     """
@@ -141,7 +143,22 @@ class TestCartUtils(unittest.TestCase):
             cart_utils = Cartutils()
             os.makedirs(test_cart.bundle_path, 0777)
             deleted = cart_utils.delete_cart_bundle(test_cart)
+            self.assertEqual(test_cart.status, "deleted")
             self.assertEqual(deleted, True)
+            self.assertEqual(os.path.isdir(test_cart.bundle_path), False)
+
+    def test_set_file_status(self):
+        """test that trys to set a specific files status"""
+        with test_database(TEST_DB, (Cart, File)):
+
+            test_cart = Cart.create(cart_uid='1', status="staging",
+                                    bundle_path="/tmp/1/")
+            test_file = File.create(cart=test_cart, file_name="1.txt",
+                                    bundle_path="/tmp/1/1.txt")
+            cart_utils = Cartutils()
+            cart_utils.set_file_status(test_file, test_cart, "error", "fake error")
+            self.assertEqual(test_file.status, "error")
+            self.assertEqual(test_file.error, "fake error")
 
 
 if __name__ == '__main__':
