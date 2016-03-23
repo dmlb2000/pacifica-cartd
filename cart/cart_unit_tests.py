@@ -3,9 +3,9 @@ File used to unit test the pacifica_cart
 """
 import unittest
 import os
-import cart.cart_orm
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase
+import cart.cart_orm
 from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
 

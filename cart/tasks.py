@@ -107,16 +107,9 @@ def pull_file(file_id, record_error):
         response = False
 
     size_needed = cart_utils.check_file_size_needed(response, cart_file, mycart)
-
-    #Return from function if the size_needed couldnt be parsed (-1 return)
-    if size_needed < 0:
-        database_close()
-        return
-
     mod_time = cart_utils.check_file_modified_time(response, cart_file, mycart)
-
-    #Return from function if the mtime couldnt be parsed (-1 return)
-    if mod_time < 0:
+    #Return from function if the values couldnt be parsed (-1 return)
+    if size_needed < 0 or mod_time < 0:
         database_close()
         return
 
@@ -159,7 +152,7 @@ def pull_file(file_id, record_error):
                 pull_file.delay(file_id, True)
                 database_close()
 
-        os.utime(abs_cart_file_path,(mod_time, mod_time))
+        os.utime(abs_cart_file_path, (mod_time, mod_time))
 
 
 @CART_APP.task(ignore_result=True)
