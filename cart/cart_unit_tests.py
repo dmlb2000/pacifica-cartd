@@ -174,9 +174,9 @@ class TestCartInterface(unittest.TestCase):
         path = fix_cart_uid('/test')
         self.assertEqual(path, "test")
 
-    def test_fix_cart_uid(self):
+    def test_is_valid_uid(self):
         """ Testing if the passed guids are valid"""
-        valid= is_valid_uid('3434')
+        valid = is_valid_uid('3434')
         self.assertEqual(valid, True)
         valid = is_valid_uid(None)
         self.assertEqual(valid, False)
