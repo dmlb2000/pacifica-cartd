@@ -4,3 +4,4 @@ celery
 peewee
 psutil
 pycurl
+coverage
