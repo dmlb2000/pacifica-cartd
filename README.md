@@ -1,5 +1,8 @@
 # Pacifica Data Cart
 [![Build Status](https://travis-ci.org/EMSL-MSC/pacifica-cartd.svg?branch=master)](https://travis-ci.org/EMSL-MSC/pacifica-cartd)
+[![Code Climate](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd/badges/gpa.svg)](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd)
+[![Test Coverage](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd/badges/coverage.svg)](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd/coverage)
+[![Issue Count](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd/badges/issue_count.svg)](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd)
 
 Pacifica data cart for bundling and transfer of data sets.
 

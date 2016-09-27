@@ -5,3 +5,4 @@ peewee
 psutil
 pycurl
 coverage
+codeclimate-test-reporter

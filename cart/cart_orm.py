@@ -89,4 +89,3 @@ class File(Model):
         Meta object containing the database connection
         """
         database = DB # This model uses the pacifica_cart database.
-
