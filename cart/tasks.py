@@ -5,7 +5,7 @@ cart infrastructure
 from __future__ import absolute_import
 import os
 import datetime
-import pycurl
+import requests
 from peewee import DoesNotExist
 from cart.celery import CART_APP
 from cart.cart_orm import Cart, File, database_connect, database_close
@@ -94,17 +94,17 @@ def pull_file(file_id, record_error):
     #stage the file on the archive.  True on success, False on fail
     try:
         archive_request.stage_file(cart_file.file_name)
-    except pycurl.error as ex:
+    except requests.exceptions.RequestException as ex:
         error_msg = "Failed to stage with error: " + str(ex)
         cart_utils.set_file_status(cart_file, mycart, "error", error_msg)
 
     #check to see if file is available to pull from archive interface
     try:
         response = archive_request.status_file(cart_file.file_name)
-    except pycurl.error:
+    except requests.exceptions.RequestException as ex:
         error_msg = "Failed to status file with error: " + str(ex)
         cart_utils.set_file_status(cart_file, mycart, "error", error_msg)
-        response = False
+        response = 'False'
 
     size_needed = cart_utils.check_file_size_needed(response, cart_file, mycart)
     mod_time = cart_utils.check_file_modified_time(response, cart_file, mycart)
@@ -137,12 +137,11 @@ def pull_file(file_id, record_error):
 
     if path_created and enough_space:
         try:
-            #curl here to download from the archive interface
             archive_request.pull_file(cart_file.file_name, abs_cart_file_path)
             cart_utils.set_file_status(cart_file, mycart, "staged", False)
             database_close()
-        except pycurl.error as ex:
-            #if curl fails...try a second time, if that fails write error
+        except requests.exceptions.RequestException as ex:
+            #if request fails...try a second time, if that fails write error
             if record_error:
                 error_msg = "Failed to pull with error: " + str(ex)
                 cart_utils.set_file_status(

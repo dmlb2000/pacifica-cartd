@@ -1,5 +1,5 @@
 import os, sys
-import pycurl
+import requests
 from StringIO import StringIO
 
 FILENAME1 = 'foo.txt'
@@ -32,12 +32,7 @@ def push2archive(filename):
 	filesize = os.path.getsize(filename)
 	f = open(filename,'rb')
 
-	c = pycurl.Curl() 
-	c.setopt(pycurl.INFILESIZE, filesize)
-	c.setopt(c.URL, str(ARCHIVEURL+filename))
-	c.setopt(pycurl.PUT, 1)
-	c.setopt(pycurl.INFILE, f)
-	c.perform()
+	requests.put(str(ARCHIVEURL+filename), data=f)
 	f.close()
 
 write()

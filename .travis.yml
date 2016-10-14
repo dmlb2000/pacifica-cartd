@@ -1,9 +1,8 @@
+sudo: required
+services:
+  - docker
 language: python
 python:
   - "2.7"
 install: "pip install -r requirements.txt"
-script:
- - pylint --extension-pkg-whitelist=pycurl cart
- - pylint cartserver
- - coverage run --include='cart/*' -m cart.cart_unit_tests -v
- - codeclimate-test-reporter
+script: bash -xe ./travis/static-analysis.sh && bash -xe ./travis/unit-tests.sh && bash -xe ./travis/test-deploy.sh

@@ -184,7 +184,3 @@ class TestCartInterface(unittest.TestCase):
         self.assertEqual(valid, False)
         valid = is_valid_uid('foo')
         self.assertEqual(valid, True)
-
-
-if __name__ == '__main__':
-    unittest.main()

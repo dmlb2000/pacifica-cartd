@@ -3,6 +3,7 @@ MySQL-python
 celery
 peewee
 psutil
-pycurl
 coverage
+requests
+httpretty
 codeclimate-test-reporter

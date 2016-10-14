@@ -3,6 +3,10 @@
 [![Code Climate](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd/badges/gpa.svg)](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd)
 [![Test Coverage](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd/badges/coverage.svg)](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd/coverage)
 [![Issue Count](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd/badges/issue_count.svg)](https://codeclimate.com/github/EMSL-MSC/pacifica-cartd)
+[![Docker Stars](https://img.shields.io/docker/stars/pacifica/cartd.svg?maxAge=2592000)](https://hub.docker.com/r/pacifica/cartd)
+[![Docker Pulls](https://img.shields.io/docker/pulls/pacifica/cartd.svg?maxAge=2592000)](https://hub.docker.com/r/pacifica/cartd)
+[![Docker Automated build](https://img.shields.io/docker/automated/pacifica/cartd.svg?maxAge=2592000)](https://hub.docker.com/r/pacifica/cartd)
+
 
 Pacifica data cart for bundling and transfer of data sets.
 
@@ -24,7 +28,7 @@ MySQL-Python
 
 psutil
 
-pycurl
+requests
 
 This is a standard python distutils build process.
 
