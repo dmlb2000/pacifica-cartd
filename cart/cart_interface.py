@@ -31,9 +31,6 @@ def is_valid_uid(uid):
     """
     if not uid:
         return False
-    if uid == "":
-        return False
-
     return True
 
 
@@ -69,7 +66,8 @@ class CartGenerator(object):
                     #want to stream the tar file out
                     (rpipe, wpipe) = os.pipe()
                     cpid = os.fork()
-                    if cpid == 0:
+                    # the fork screws up coverage testing... :(
+                    if cpid == 0: # pragma: no cover
                         # we are the child process
                         #write the data to the pipe
                         os.close(rpipe)
@@ -97,8 +95,6 @@ class CartGenerator(object):
             else:
                 self._response = resp.bundle_doesnt_exist(start_response)
                 return self.return_response()
-
-
         return self.return_response()
 
     def status(self, env, start_response):
