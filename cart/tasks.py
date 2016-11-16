@@ -97,6 +97,8 @@ def pull_file(file_id, record_error):
     except requests.exceptions.RequestException as ex:
         error_msg = "Failed to stage with error: " + str(ex)
         cart_utils.set_file_status(cart_file, mycart, "error", error_msg)
+        database_close()
+        return
 
     #check to see if file is available to pull from archive interface
     try:
@@ -151,7 +153,10 @@ def pull_file(file_id, record_error):
                 pull_file.delay(file_id, True)
                 database_close()
 
-        os.utime(abs_cart_file_path, (mod_time, mod_time))
+        os.utime(abs_cart_file_path, (int(float(mod_time)), int(float(mod_time))))
+
+
+
 
 
 @CART_APP.task(ignore_result=True)

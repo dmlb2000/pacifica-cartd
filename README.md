@@ -136,6 +136,11 @@ curl http://127.0.0.1:8081/$MY_CART_UUID
 To save to file
 ```
 curl -O http://127.0.0.1:8081/$MY_CART_UUID
+
+Once this finishes there will be a tar file named $MY_CART_UUID
+Untar by:
+
+tar xf $MY_CART_UUID
 ```
 
 ## Delete a Cart

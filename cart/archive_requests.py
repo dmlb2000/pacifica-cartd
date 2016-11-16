@@ -32,7 +32,10 @@ class ArchiveRequests(object):
     def stage_file(self, file_name):
         """Sends a post to the archive interface telling it to stage the file
         """
-        requests.post(str(self._url + file_name))
+        resp = requests.post(str(self._url + file_name))
+        if str(resp.status_code) == '500':
+            raise requests.exceptions.RequestException(str(dumps(resp.text)))
+
 
     @staticmethod
     def _status_dict(headers, file_name):
