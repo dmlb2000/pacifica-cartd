@@ -11,13 +11,6 @@ class Responses(object):
             'request_method': request_method
         }
         return self._response
-    def base_response(self, start_response):
-        """Response base"""
-        start_response('200 OK', [('Content-Type', 'application/json')])
-        self._response = {
-            'message': 'Basic return'
-        }
-        return self._response
 
     def cart_proccessing_response(self, start_response):
         """Response base"""
@@ -83,7 +76,7 @@ class Responses(object):
             }
         return self._response
 
-    def test_response(self, start_response, variable):
+    def test_response(self, start_response, variable): # pragma: no cover
         """Response when unknown exception occurs"""
         start_response('200 OK', [('Content-Type', 'application/json')])
         self._response = {

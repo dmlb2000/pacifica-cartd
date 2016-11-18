@@ -9,7 +9,7 @@ import errno
 import shutil
 import psutil
 from peewee import DoesNotExist
-from cart.cart_orm import Cart, File, DB, database_connect, database_close
+from cart.cart_orm import Cart, File
 from cart.cart_env_globals import VOLUME_PATH, LRU_BUFFER_TIME
 
 
@@ -198,7 +198,7 @@ class Cartutils(object):
         """
         deleted_flag = True
         iterator = 0 #used to verify at least one cart deleted
-        database_connect()
+        Cart.database_connect()
         carts = (Cart
                  .select()
                  .where(
@@ -209,7 +209,7 @@ class Cartutils(object):
             success = cls.delete_cart_bundle(cart)
             if not success:
                 deleted_flag = False
-        database_close()
+        Cart.database_close()
         if deleted_flag and iterator > 0:
             return "Cart Deleted Successfully"
         elif deleted_flag:
@@ -263,7 +263,7 @@ class Cartutils(object):
     @staticmethod
     def cart_status(uid):
         """Get the status of a specified cart"""
-        database_connect()
+        Cart.database_connect()
         status = None
         try:
             mycart = (Cart
@@ -282,14 +282,14 @@ class Cartutils(object):
             #send the status and any available error text
             status = [mycart.status, mycart.error]
 
-        database_close()
+        Cart.database_close()
         return status
 
     @staticmethod
     def available_cart(uid):
         """Checks if the asked for cart tar is available
            returns the path to tar if yes, false if not"""
-        database_connect()
+        Cart.database_connect()
         cart_bundle_path = False
         try:
             mycart = (Cart
@@ -305,7 +305,7 @@ class Cartutils(object):
 
         if mycart and mycart.status == "ready":
             cart_bundle_path = mycart.bundle_path
-        database_close()
+        Cart.database_close()
         return cart_bundle_path
 
 
@@ -327,7 +327,7 @@ class Cartutils(object):
     @classmethod
     def update_cart_files(cls, cart, file_ids):
         """Update the files associated to a cart"""
-        with DB.atomic():
+        with Cart.atomic():
             for f_id in file_ids:
                 filepath = cls.fix_absolute_path(f_id["path"])
                 File.create(

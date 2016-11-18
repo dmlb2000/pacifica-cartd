@@ -28,9 +28,10 @@ def database_setup(attempts=0):
     Setup and create the database from the db connection.
     """
     try:
-        database_connect()
-        DB.create_tables([Cart, File], safe=True)
-        database_close()
+        Cart.database_connect()
+        for cls in [Cart, File]:
+            cls.create_table()
+        Cart.database_close()
     except OperationalError:
         #couldnt connect, potentially wait and try again
         if attempts < DATABASE_CONNECT_ATTEMPTS:
@@ -39,22 +40,53 @@ def database_setup(attempts=0):
             attempts += 1
             database_setup(attempts)
 
+class CartBase(Model):
+    """
+    Base Cart Model class.
+    """
+    @classmethod
+    def atomic(cls):
+        """Do the DB atomic bits.
+        """
+        # pylint: disable=no-member
+        return cls._meta.database.atomic()
+        # pylint: enable=no-member
 
-def database_connect():
-    """Makes sure database is connected.  Trying to connect a second
-    time doesnt cause any problems"""
-    DB.connect()
+    @classmethod
+    def database_connect(cls):
+        """Makes sure database is connected.  Trying to connect a second
+        time doesnt cause any problems"""
+        # pylint: disable=no-member
+        cls._meta.database.connect()
+        # pylint: enable=no-member
 
-def database_close():
-    """Closes the database connection. Closing already closed database
-    throws an error so catch it and continue on"""
-    try:
-        DB.close()
-    except ProgrammingError:
-        #error for closing an already closed database so continue on
-        return
+    @classmethod
+    def database_close(cls):
+        """Closes the database connection. Closing already closed database
+        throws an error so catch it and continue on"""
+        try:
+            # pylint: disable=no-member
+            cls._meta.database.close()
+            # pylint: enable=no-member
+        except ProgrammingError:
+            #error for closing an already closed database so continue on
+            return
 
-class Cart(Model):
+    class Meta(object):
+        """
+        Meta object containing the database connection
+        """
+        database = DB # This model uses the pacifica_cart database.
+
+    def reload(self):
+        """reload my current state from the DB"""
+        newer_self = self.get(self._meta.primary_key == self._get_pk_value())
+        for field_name in self._meta.fields.keys():
+            val = getattr(newer_self, field_name)
+            setattr(self, field_name, val)
+        self._dirty.clear()
+
+class Cart(CartBase):
     """
     Cart object model
     """
@@ -67,13 +99,7 @@ class Cart(Model):
     status = TextField(default="waiting")
     error = TextField(default="")
 
-    class Meta(object):
-        """
-        Meta object containing the database connection
-        """
-        database = DB # This model uses the pacifica_cart database.
-
-class File(Model):
+class File(CartBase):
     """
     File object model to keep track of what's been downloaded for a cart
     """
@@ -83,9 +109,3 @@ class File(Model):
     bundle_path = CharField(default="")
     status = TextField(default="waiting")
     error = TextField(default="")
-
-    class Meta(object):
-        """
-        Meta object containing the database connection
-        """
-        database = DB # This model uses the pacifica_cart database.

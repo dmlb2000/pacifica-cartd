@@ -189,5 +189,5 @@ class CartGenerator(object):
             return self.return_response()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     doctest.testmod(verbose=True)

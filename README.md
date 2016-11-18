@@ -30,12 +30,6 @@ psutil
 
 requests
 
-This is a standard python distutils build process.
-
-```
-python ./setup.py build
-python ./setup.py install
-```
 
 # Running It
 

@@ -8,7 +8,7 @@ import datetime
 import requests
 from peewee import DoesNotExist
 from cart.celery import CART_APP
-from cart.cart_orm import Cart, File, database_connect, database_close
+from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
 from cart.cart_env_globals import VOLUME_PATH
 from cart.archive_requests import ArchiveRequests
@@ -17,7 +17,7 @@ from cart.archive_requests import ArchiveRequests
 @CART_APP.task(ignore_result=True)
 def stage_files(file_ids, uid):
     """Tell the files to be staged on the backend system """
-    database_connect()
+    Cart.database_connect()
     mycart = Cart(cart_uid=uid, status="staging")
     mycart.save()
     #with update or new, need to add in files
@@ -26,16 +26,16 @@ def stage_files(file_ids, uid):
 
     get_files_locally.delay(mycart.id)
     prepare_bundle.delay(mycart.id)
-    database_close()
+    Cart.database_close()
 
 @CART_APP.task(ignore_result=True)
 def get_files_locally(cartid):
     """Pull the files to the local system from the backend """
     #tell each file to be pulled
-    database_connect()
+    Cart.database_connect()
     for cart_file in File.select().where(File.cart == cartid):
         pull_file.delay(cart_file.id, False)
-    database_close()
+    Cart.database_close()
 
 @CART_APP.task(ignore_result=True)
 def prepare_bundle(cartid):
@@ -43,7 +43,7 @@ def prepare_bundle(cartid):
     before calling the bundling action.  If not will call
     itself to continue the waiting process
     """
-    database_connect()
+    Cart.database_connect()
     bundle_flag = True
     for c_file in File.select().where(File.cart == cartid):
         if c_file.status == "error":
@@ -54,11 +54,11 @@ def prepare_bundle(cartid):
                 mycart.error = "Failed to pull file(s)"
                 mycart.updated_date = datetime.datetime.now()
                 mycart.save()
-                database_close()
+                Cart.database_close()
                 return
             except DoesNotExist:
                 #case if record no longer exists
-                database_close()
+                Cart.database_close()
                 return
 
         elif c_file.status != "staged":
@@ -71,13 +71,13 @@ def prepare_bundle(cartid):
     else:
         #All files are local...try to tar
         tar_files.delay(cartid)
-    database_close()
+    Cart.database_close()
 
 
 @CART_APP.task(ignore_result=True)
 def pull_file(file_id, record_error):
     """Pull a file from the archive  """
-    database_connect()
+    Cart.database_connect()
     try:
         cart_file = File.get(File.id == file_id)
         mycart = cart_file.cart
@@ -87,7 +87,7 @@ def pull_file(file_id, record_error):
         if mycart.deleted_date:
             return
     except DoesNotExist:
-        database_close()
+        Cart.database_close()
         return
 
     archive_request = ArchiveRequests()
@@ -97,7 +97,7 @@ def pull_file(file_id, record_error):
     except requests.exceptions.RequestException as ex:
         error_msg = "Failed to stage with error: " + str(ex)
         cart_utils.set_file_status(cart_file, mycart, "error", error_msg)
-        database_close()
+        Cart.database_close()
         return
 
     #check to see if file is available to pull from archive interface
@@ -112,7 +112,7 @@ def pull_file(file_id, record_error):
     mod_time = cart_utils.check_file_modified_time(response, cart_file, mycart)
     #Return from function if the values couldnt be parsed (-1 return)
     if size_needed < 0 or mod_time < 0:
-        database_close()
+        Cart.database_close()
         return
 
     ready_to_pull = cart_utils.check_file_ready_pull(
@@ -121,11 +121,11 @@ def pull_file(file_id, record_error):
     #Check to see if ready to pull.  If not recall this to check again
     # error on less then 0
     if ready_to_pull < 0:
-        database_close()
+        Cart.database_close()
         return
     elif not ready_to_pull:
         pull_file.delay(file_id, False)
-        database_close()
+        Cart.database_close()
         return
 
     #create the path the file will be downloaded to
@@ -141,17 +141,17 @@ def pull_file(file_id, record_error):
         try:
             archive_request.pull_file(cart_file.file_name, abs_cart_file_path)
             cart_utils.set_file_status(cart_file, mycart, "staged", False)
-            database_close()
+            Cart.database_close()
         except requests.exceptions.RequestException as ex:
             #if request fails...try a second time, if that fails write error
             if record_error:
                 error_msg = "Failed to pull with error: " + str(ex)
                 cart_utils.set_file_status(
                     cart_file, mycart, "error", error_msg)
-                database_close()
+                Cart.database_close()
             else:
                 pull_file.delay(file_id, True)
-                database_close()
+                Cart.database_close()
 
         os.utime(abs_cart_file_path, (int(float(mod_time)), int(float(mod_time))))
 
@@ -165,7 +165,7 @@ def tar_files(cartid):
     Due to streaming the tar we dont need to try and bundle
     everything together"""
 
-    database_connect()
+    Cart.database_connect()
     try:
         mycart = Cart.get(Cart.id == cartid)
         bundle_path = os.path.join(
@@ -176,7 +176,7 @@ def tar_files(cartid):
         mycart.save()
     except DoesNotExist:
         #case if record no longer exists
-        database_close()
+        Cart.database_close()
         return
 
-    database_close()
+    Cart.database_close()
