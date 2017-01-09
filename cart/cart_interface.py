@@ -71,7 +71,7 @@ class CartGenerator(object):
                         # we are the child process
                         #write the data to the pipe
                         os.close(rpipe)
-                        wfd = os.fdopen(wpipe, "wb")
+                        wfd = os.fdopen(wpipe, 'wb')
                         mytar = TarFile.open(fileobj=wfd, mode='w|')
                         mytar.add(cart_path, arcname=uid)
                         mytar.close()
@@ -84,7 +84,7 @@ class CartGenerator(object):
                     # we are the parent
                     os.close(wpipe)
                     #open the pipe as a file
-                    rfd = os.fdopen(rpipe, "rb")
+                    rfd = os.fdopen(rpipe, 'rb')
                     start_response('200 OK', [('Content-Type',
                                                'application/octet-stream')])
                     if 'wsgi.file_wrapper' in env:
@@ -139,7 +139,7 @@ class CartGenerator(object):
                 start_response, uid)
             return self.return_response()
 
-        stage_files.delay(file_ids, uid)
+        stage_files(file_ids, uid)
         self._response = resp.cart_proccessing_response(start_response)
         return self.return_response()
 
@@ -188,6 +188,6 @@ class CartGenerator(object):
                 self._response = resp.unknown_exception(start_response)
             return self.return_response()
 
+if __name__ == '__main__': # pragma: no cover
 
-if __name__ == "__main__": # pragma: no cover
     doctest.testmod(verbose=True)

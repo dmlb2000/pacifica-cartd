@@ -36,7 +36,7 @@ class TestCartOrm(unittest.TestCase):
         def fake_database_connect(cls):
             """throw error during connect"""
             cls.throw_error = True
-            raise OperationalError("Failing")
+            raise OperationalError('Failing')
         cart.cart_orm.CartBase.orig_database_connect = cart.cart_orm.CartBase.database_connect
         cart.cart_orm.CartBase.database_connect = \
             MethodType(fake_database_connect, cart.cart_orm.CartBase)

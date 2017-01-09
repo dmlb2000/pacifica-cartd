@@ -57,7 +57,7 @@ Contents of file (foo.json).
 
 id =  the id being used on the Archive
 
-path = internal structure of bundle for file placement 
+path = internal structure of bundle for file placement
 
 ```
 {
@@ -174,7 +174,7 @@ Specifically use "mysql" as the environemnt variable prefix when linking
 Other required options are MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER,
 MYSQL_PASSWORD
 
-On container startup the MYSQL_DATABASE will be created with MYSQL_USER, 
+On container startup the MYSQL_DATABASE will be created with MYSQL_USER,
 and MYSQL_PASSWORD having access.  On web server startup necessary table
 creation will happen if the tables do not already exist
 
@@ -192,7 +192,7 @@ Optional option but recommended is volumes.  Creating a shared volume makes
 sure that even after the Archive Interface container is removed the file data
 stays in case the Archive Interface needs to be restarted after removal
 
-**NOTE** if not using the Archive Interface inside a container (case such as 
+**NOTE** if not using the Archive Interface inside a container (case such as
 deployed on different server) set the following Environment variable in the
 cart server/workers:
 ARCHIVE_INTERFACE_URL: urltointerface:port/
@@ -207,7 +207,7 @@ provides statuses
 
 Needs to build its image using the Dockerfile
 
-Linked in Containers: cartrabbit:amqp, cartmysql:mysql, (optional 
+Linked in Containers: cartrabbit:amqp, cartmysql:mysql, (optional
 archiveinterface:archivei)
 Specifically use "amqp", "mysql", "archivei" as the environemnt variable prefix
 respectively when linking.
@@ -224,7 +224,7 @@ from the least recently used buffer deletion.  If a cart was last used since
 current time minus that buffer it is safe from deletion.  Not specified or a
 0 given will result in no buffer
 
-ARCHIVE_INTERFACE_URL - Optional - Needs to be set if not using the Pacifica 
+ARCHIVE_INTERFACE_URL - Optional - Needs to be set if not using the Pacifica
 Archive Interface as a linked in container. This will be the url to the
 archive interface. Should be in the form of:
 
@@ -243,11 +243,11 @@ take between trying to reconnect to the database.  Default 10 seconds
 
 ## cartserver
 
-The wsgi web server for the cart which provides the API 
+The wsgi web server for the cart which provides the API
 
 Needs to build its image using the Dockerfile.wsgi
 
-Linked in Containers: cartrabbit:amqp, cartmysql:mysql, (optional 
+Linked in Containers: cartrabbit:amqp, cartmysql:mysql, (optional
 archiveinterface:archivei)
 Specifically use "amqp", "mysql", "archivei" as the environemnt variable prefix
 respectively when linking.
@@ -266,7 +266,7 @@ from the least recently used buffer deletion.  If a cart was last used since
 current time minus that buffer it is safe from deletion.  Not specified or a
 0 given will result in no buffer
 
-ARCHIVE_INTERFACE_URL - Optional - Needs to be set if not using the Pacifica 
+ARCHIVE_INTERFACE_URL - Optional - Needs to be set if not using the Pacifica
 Archive Interface as a linked in container. This will be the url to the
 archive interface. Should be in the form of:
 

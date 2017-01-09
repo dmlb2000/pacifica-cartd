@@ -56,24 +56,21 @@ class Responses(object):
         """Response when unknown exception occurs"""
         start_response('200 OK', [('Content-Type', 'application/json')])
         self._response = {
-            'message': "The uid was not valid",
+            'message': 'The uid was not valid',
             'uid': uid
         }
         return self._response
 
     def cart_status_response(self, start_response, status):
-        """Response that tells the carts status.
-           Status is a tuple of status, and message"""
-        start_response('200 OK', [('Content-Type', 'application/json')])
-        if status[1] != "":
-            self._response = {
-                'status': status[0],
-                'message': status[1]
-            }
-        else:
-            self._response = {
-                'status': status[0]
-            }
+        """Response that tells the carts status. Status is a tuple of status, and message"""
+        self._response = ''
+        response_headers = [
+            ('X-Pacifica-Status', str(status[0])),
+            ('X-Pacifica-Message', str(status[1])),
+            ('Content-Type', 'application/json')
+        ]
+
+        start_response('200 OK', response_headers)
         return self._response
 
     def test_response(self, start_response, variable): # pragma: no cover

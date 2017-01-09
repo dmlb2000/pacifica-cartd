@@ -7,7 +7,7 @@ from celery import Celery
 from cart.cart_env_globals import BROKER_URL
 CART_APP = Celery('cart',
                   broker=BROKER_URL,
-                  backend="amqp",
+                  backend='amqp',
                   include=['cart.tasks'])
 
 # Optional configuration, see the application user guide.
@@ -16,4 +16,5 @@ CART_APP.conf.update(
 )
 
 if __name__ == '__main__':
-    CART_APP.start()
+    #doesnt need coverage since implicitly covered by end to end testing
+    CART_APP.start() # pragma: no cover

@@ -1,9 +1,5 @@
-pylint
-MySQL-python
 celery
+MySQL-python
 peewee
 psutil
-coverage
 requests
-httpretty
-codeclimate-test-reporter

@@ -16,6 +16,6 @@ class TestEnvGlobals(unittest.TestCase):
         # first delete the module from the loaded modules
         del sys.modules['cart.cart_env_globals']
         # then we import the module
-        mod = importlib.import_module("cart.cart_env_globals")
+        mod = importlib.import_module('cart.cart_env_globals')
         # make sure the LOGGER attribute in the module exists
         self.assertTrue(getattr(mod, 'LOGGER'))

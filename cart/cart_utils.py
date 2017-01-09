@@ -41,7 +41,7 @@ class Cartutils(object):
         if they do not already exist.
         """
         try:
-            os.makedirs(filepath, 0777)
+            os.makedirs(filepath, 0o777)
         except OSError as exception:
             #dont worry about error if the directory already exists
             #other errors are a problem however so push them up
@@ -55,8 +55,8 @@ class Cartutils(object):
             cart_file_dirs = os.path.dirname(abs_cart_file_path)
             cls.create_bundle_directories(cart_file_dirs)
         except OSError as ex:
-            cart_file.status = "error"
-            cart_file.error = "Failed directory create with error: " + str(ex)
+            cart_file.status = 'error'
+            cart_file.error = 'Failed directory create with error: ' + str(ex)
             cart_file.save()
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
@@ -81,7 +81,7 @@ class Cartutils(object):
             filesize = decoded['filesize']
             return long(filesize)
         except (ValueError, KeyError, TypeError) as ex:
-            cart_file.status = "error"
+            cart_file.status = 'error'
             cart_file.error = """Failed to decode file size
             json with error: """ + str(ex) + """ Response received from the
             Archive is: """ + str(response)
@@ -102,7 +102,7 @@ class Cartutils(object):
             #available space is in bytes
             available_space = long(psutil.disk_usage(self._vol_path).free)
         except psutil.Error as ex:
-            cart_file.status = "error"
+            cart_file.status = 'error'
             cart_file.error = """Failed to get available file
             space with error: """ + str(ex)
             cart_file.save()
@@ -115,8 +115,8 @@ class Cartutils(object):
                 cart_deleted = self.lru_cart_delete(mycart)
                 return self.check_space_requirements(cart_file, mycart,
                                                      size_needed, cart_deleted)
-            cart_file.status = "error"
-            cart_file.error = "Not enough space to download file"
+            cart_file.status = 'error'
+            cart_file.error = 'Not enough space to download file'
             cart_file.save()
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
@@ -153,11 +153,11 @@ class Cartutils(object):
         try:
             decoded = json.loads(response)
             media = decoded['file_storage_media']
-            if media == "disk":
+            if media == 'disk':
                 return True
             return False
         except (ValueError, KeyError, TypeError) as ex:
-            cart_file.status = "error"
+            cart_file.status = 'error'
             cart_file.error = """Failed to decode json for file status
             with error: """ + str(ex) + """ Response received from the
             Archive is: """ + str(response)
@@ -175,7 +175,7 @@ class Cartutils(object):
             mod_time = decoded['mtime']
             return mod_time
         except (ValueError, KeyError, TypeError) as ex:
-            cart_file.status = "error"
+            cart_file.status = 'error'
             cart_file.error = """Failed to decode file mtime
             json with error: """ + str(ex) + """ Response received from the
             Archive is: """ + str(response)
@@ -211,12 +211,11 @@ class Cartutils(object):
                 deleted_flag = False
         Cart.database_close()
         if deleted_flag and iterator > 0:
-            return "Cart Deleted Successfully"
+            return 'Cart Deleted Successfully'
         elif deleted_flag:
-            return "Cart with uid: " + str(uid) + """
-            was previously deleted or no longer exists"""
+            return 'Cart with uid: ' + str(uid) + ' was previously deleted or no longer exists'
         else:
-            return "Error with deleting Cart"
+            return 'Error with deleting Cart'
 
     @staticmethod
     def delete_cart_bundle(cart):
@@ -225,7 +224,7 @@ class Cartutils(object):
         try:
             path_to_files = os.path.join(VOLUME_PATH, str(cart.id))
             shutil.rmtree(path_to_files)
-            cart.status = "deleted"
+            cart.status = 'deleted'
             cart.deleted_date = datetime.datetime.now()
             cart.save()
             return True
@@ -276,7 +275,7 @@ class Cartutils(object):
         except DoesNotExist:
             #case if no record exists yet in database
             mycart = None
-            status = ["error", "No cart with uid " + uid + " found"]
+            status = ['error', 'No cart with uid ' + uid + ' found']
 
         if mycart:
             #send the status and any available error text
@@ -303,7 +302,7 @@ class Cartutils(object):
             #case if no record exists yet in database
             mycart = None
 
-        if mycart and mycart.status == "ready":
+        if mycart and mycart.status == 'ready':
             cart_bundle_path = mycart.bundle_path
         Cart.database_close()
         return cart_bundle_path
@@ -329,8 +328,8 @@ class Cartutils(object):
         """Update the files associated to a cart"""
         with Cart.atomic():
             for f_id in file_ids:
-                filepath = cls.fix_absolute_path(f_id["path"])
+                filepath = cls.fix_absolute_path(f_id['path'])
                 File.create(
-                    cart=cart, file_name=f_id["id"], bundle_path=filepath)
+                    cart=cart, file_name=f_id['id'], bundle_path=filepath)
                 cart.updated_date = datetime.datetime.now()
                 cart.save()

@@ -1,3 +1,3 @@
 #!/bin/bash
-pylint cart
-pylint cartserver
+pylint --rcfile=pylintrc cart
+pylint --rcfile=pylintrc cartserver

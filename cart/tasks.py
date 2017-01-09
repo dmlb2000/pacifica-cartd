@@ -18,7 +18,7 @@ from cart.archive_requests import ArchiveRequests
 def stage_files(file_ids, uid):
     """Tell the files to be staged on the backend system """
     Cart.database_connect()
-    mycart = Cart(cart_uid=uid, status="staging")
+    mycart = Cart(cart_uid=uid, status='staging')
     mycart.save()
     #with update or new, need to add in files
     cart_utils = Cartutils()
@@ -46,22 +46,24 @@ def prepare_bundle(cartid):
     Cart.database_connect()
     bundle_flag = True
     for c_file in File.select().where(File.cart == cartid):
-        if c_file.status == "error":
+        if c_file.status == 'error':
             #error pulling file so set cart error and return
             try:
                 mycart = Cart.get(Cart.id == cartid)
-                mycart.status = "error"
-                mycart.error = "Failed to pull file(s)"
+                mycart.status = 'error'
+                mycart.error = 'Failed to pull file(s)'
                 mycart.updated_date = datetime.datetime.now()
                 mycart.save()
                 Cart.database_close()
                 return
-            except DoesNotExist:
+            except DoesNotExist: # pragma: no cover
                 #case if record no longer exists
+                #creating this case in unit testing requires deletion and creation
+                #occuring nearly simultaneously, as such cant create unit test
                 Cart.database_close()
                 return
 
-        elif c_file.status != "staged":
+        elif c_file.status != 'staged':
             bundle_flag = False
 
     if not bundle_flag:
@@ -82,7 +84,7 @@ def pull_file(file_id, record_error):
         cart_file = File.get(File.id == file_id)
         mycart = cart_file.cart
         cart_utils = Cartutils()
-        cart_utils.set_file_status(cart_file, mycart, "staging", False)
+        cart_utils.set_file_status(cart_file, mycart, 'staging', False)
         #make sure cart wasnt deleted before pulling file
         if mycart.deleted_date:
             return
@@ -95,8 +97,8 @@ def pull_file(file_id, record_error):
     try:
         archive_request.stage_file(cart_file.file_name)
     except requests.exceptions.RequestException as ex:
-        error_msg = "Failed to stage with error: " + str(ex)
-        cart_utils.set_file_status(cart_file, mycart, "error", error_msg)
+        error_msg = 'Failed to stage with error: ' + str(ex)
+        cart_utils.set_file_status(cart_file, mycart, 'error', error_msg)
         Cart.database_close()
         return
 
@@ -104,8 +106,8 @@ def pull_file(file_id, record_error):
     try:
         response = archive_request.status_file(cart_file.file_name)
     except requests.exceptions.RequestException as ex:
-        error_msg = "Failed to status file with error: " + str(ex)
-        cart_utils.set_file_status(cart_file, mycart, "error", error_msg)
+        error_msg = 'Failed to status file with error: ' + str(ex)
+        cart_utils.set_file_status(cart_file, mycart, 'error', error_msg)
         response = 'False'
 
     size_needed = cart_utils.check_file_size_needed(response, cart_file, mycart)
@@ -119,11 +121,11 @@ def pull_file(file_id, record_error):
         response, cart_file, mycart)
 
     #Check to see if ready to pull.  If not recall this to check again
-    # error on less then 0
+    # error on less then 0. No coverage on recall since it just calls the method again
     if ready_to_pull < 0:
         Cart.database_close()
         return
-    elif not ready_to_pull:
+    elif not ready_to_pull: # pragma: no cover
         pull_file.delay(file_id, False)
         Cart.database_close()
         return
@@ -140,15 +142,17 @@ def pull_file(file_id, record_error):
     if path_created and enough_space:
         try:
             archive_request.pull_file(cart_file.file_name, abs_cart_file_path)
-            cart_utils.set_file_status(cart_file, mycart, "staged", False)
+            cart_utils.set_file_status(cart_file, mycart, 'staged', False)
             Cart.database_close()
         except requests.exceptions.RequestException as ex:
             #if request fails...try a second time, if that fails write error
             if record_error:
-                error_msg = "Failed to pull with error: " + str(ex)
+                error_msg = 'Failed to pull with error: ' + str(ex)
                 cart_utils.set_file_status(
-                    cart_file, mycart, "error", error_msg)
+
+                    cart_file, mycart, 'error', error_msg)
                 Cart.database_close()
+
             else:
                 pull_file.delay(file_id, True)
                 Cart.database_close()
@@ -170,7 +174,7 @@ def tar_files(cartid):
         mycart = Cart.get(Cart.id == cartid)
         bundle_path = os.path.join(
             VOLUME_PATH, str(mycart.id), (mycart.cart_uid))
-        mycart.status = "ready"
+        mycart.status = 'ready'
         mycart.bundle_path = bundle_path
         mycart.updated_date = datetime.datetime.now()
         mycart.save()

@@ -92,20 +92,20 @@ class Cart(CartBase):
     """
     id = PrimaryKeyField()
     cart_uid = CharField(default=1)
-    bundle_path = CharField(default="")
+    bundle_path = CharField(default='')
     creation_date = DateTimeField(default=datetime.datetime.now)
     updated_date = DateTimeField(default=datetime.datetime.now)
     deleted_date = DateTimeField(null=True)
-    status = TextField(default="waiting")
-    error = TextField(default="")
+    status = TextField(default='waiting')
+    error = TextField(default='')
 
 class File(CartBase):
     """
     File object model to keep track of what's been downloaded for a cart
     """
     id = PrimaryKeyField()
-    cart = ForeignKeyField(Cart, to_field="id")
-    file_name = CharField(default="")
-    bundle_path = CharField(default="")
-    status = TextField(default="waiting")
-    error = TextField(default="")
+    cart = ForeignKeyField(Cart, to_field='id')
+    file_name = CharField(default='')
+    bundle_path = CharField(default='')
+    status = TextField(default='waiting')
+    error = TextField(default='')
