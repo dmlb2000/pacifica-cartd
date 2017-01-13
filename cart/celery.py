@@ -7,7 +7,7 @@ from celery import Celery
 from cart.cart_env_globals import BROKER_URL
 CART_APP = Celery('cart',
                   broker=BROKER_URL,
-                  backend='amqp',
+                  backend=BROKER_URL,
                   include=['cart.tasks'])
 
 # Optional configuration, see the application user guide.
