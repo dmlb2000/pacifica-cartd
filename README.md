@@ -82,43 +82,31 @@ Head on the cart to find whether its created and ready for download.
 curl -X HEAD http://127.0.0.1:8081/$MY_CART_UUID
 ```
 
-Data returned should be json telling you status of cart.
+Will receive headers back with the specific data needed. These are:
+
+'X-Pacifica-Status'
+'X-Pacifica-Message'
+
+Message will be blank if there is no error.
+The list of possible status:
 
 If the cart is waiting to be processed and there is no current state.
-```
-{
-  "status": "waiting"
-}
-```
+  "X-Pacifica-Status": "waiting"
+
 
 If the cart is being processed and waiting for files to be staged locally.
-```
-{
-  "status": "staging"
-}
-```
+  "X-Pacifica-Status": "staging"
+
 
 If the cart has the files locally and is currently creating the tarfile.
-```
-{
-  "status": "bundling"
-}
-```
+  "X-Pacifica-Status": "bundling"
 
 If the cart is finally ready for download.
-```
-{
-  "status": "ready"
-}
-```
+  "X-Pacifica-Status": "ready"
 
 If the cart has an error (such as no space available to create the tarfile).
-```
-{
-  "status": "error"
-  "message": "No Space Available"
-}
-```
+  "X-Pacifica-Status": "error"
+  "X-Pacifica-Message": "No Space Available"
 
 ## Get a cart
 
