@@ -37,10 +37,12 @@ DATABASE_WAIT = os.getenv('DATABASE_WAIT', 10)
 #amqp addr and port variables
 AMQP_ADDR = os.getenv('AMQP_PORT_5672_TCP_ADDR', 'localhost')
 AMQP_PORT = os.getenv('AMQP_PORT_5672_TCP_PORT', '5672')
+AMQP_VHOST = os.getenv('AMQP_VHOST', '/')
 
 BROKER_URL = 'amqp://guest:guest@'\
              +AMQP_ADDR\
-             +':'+AMQP_PORT+'//'
+             +':'+AMQP_PORT+'/'\
+             +AMQP_VHOST
 
 BROKER_URL = os.getenv('BROKER_URL', BROKER_URL)
 
