@@ -86,7 +86,7 @@ class TestCartInterface(unittest.TestCase):
         """Testing the cart interface get against not valid cart uid"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '200 OK')
+            self.assertEqual(args[0], '400 Bad Request')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
@@ -102,7 +102,7 @@ class TestCartInterface(unittest.TestCase):
         """Testing the cart interface get against not ready cart"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '500 OK')
+            self.assertEqual(args[0], '404 Not Found')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
@@ -123,7 +123,7 @@ class TestCartInterface(unittest.TestCase):
         """Testing the cart interface get against not ready cart"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '500 OK')
+            self.assertEqual(args[0], '202 Accepted')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
@@ -143,7 +143,7 @@ class TestCartInterface(unittest.TestCase):
         """Testing the cart interface get against not ready cart"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '500 OK')
+            self.assertEqual(args[0], '404 Not Found')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
@@ -171,7 +171,7 @@ class TestCartInterface(unittest.TestCase):
         """Testing the cart interface status"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '200 OK')
+            self.assertEqual(args[0], '400 Bad Request')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
@@ -187,7 +187,7 @@ class TestCartInterface(unittest.TestCase):
         """Testing the cart interface stage bad json input"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '500 OK')
+            self.assertEqual(args[0], '400 Bad Request')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         one_up_self = self
@@ -215,7 +215,7 @@ class TestCartInterface(unittest.TestCase):
         """Testing the cart interface stage invalid cart uid"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '200 OK')
+            self.assertEqual(args[0], '400 Bad Request')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         one_up_self = self
@@ -245,7 +245,7 @@ class TestCartInterface(unittest.TestCase):
         """Testing the cart interface stage"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '500 OK')
+            self.assertEqual(args[0], '400 Bad Request')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         one_up_self = self
@@ -297,7 +297,7 @@ class TestCartInterface(unittest.TestCase):
         """Testing the cart interface delete with invalid uid"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '200 OK')
+            self.assertEqual(args[0], '400 Bad Request')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
@@ -378,7 +378,7 @@ class TestCartInterface(unittest.TestCase):
         """test pacifica cart interface throw exception"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '200 OK')
+            self.assertEqual(args[0], '500 Internal Server Error')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         def fake_get(other_self, env, other_start_response):
@@ -399,7 +399,7 @@ class TestCartInterface(unittest.TestCase):
         """test pacifica cart interface bad request method"""
         def start_response(*args):
             """stub for start_response to do some checking"""
-            self.assertEqual(args[0], '200 OK')
+            self.assertEqual(args[0], '501 Not Implemented')
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {

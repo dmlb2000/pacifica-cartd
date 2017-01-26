@@ -54,10 +54,12 @@ class CartGenerator(object):
         #get the bundle path if available
         cart_utils = Cartutils()
         cart_path = cart_utils.available_cart(uid)
-        if not cart_path:
+        if cart_path is False:
             #cart not ready
             self._response = resp.unready_cart(start_response)
-            return self.return_response()
+        elif cart_path is None:
+            #cart not found
+            self._response = resp.cart_not_found(start_response)
         else:
             if os.path.isdir(cart_path):
                 #give back bundle here
@@ -155,7 +157,10 @@ class CartGenerator(object):
 
         cart_utils = Cartutils()
         message = cart_utils.remove_cart(uid)
-        self._response = resp.cart_delete_response(start_response, message)
+        if message is False:
+            self._response = resp.cart_not_found(start_response)
+        else:
+            self._response = resp.cart_delete_response(start_response, message)
         return self.return_response()
 
     def return_response(self):

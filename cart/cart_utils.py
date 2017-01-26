@@ -213,9 +213,9 @@ class Cartutils(object):
         if deleted_flag and iterator > 0:
             return 'Cart Deleted Successfully'
         elif deleted_flag:
-            return 'Cart with uid: ' + str(uid) + ' was previously deleted or no longer exists'
+            return False #already deleted
         else:
-            return 'Error with deleting Cart'
+            return None #unknown error
 
     @staticmethod
     def delete_cart_bundle(cart):
@@ -287,7 +287,7 @@ class Cartutils(object):
     @staticmethod
     def available_cart(uid):
         """Checks if the asked for cart tar is available
-           returns the path to tar if yes, false if not"""
+           returns the path to tar if yes, false if not. None if no cart"""
         Cart.database_connect()
         cart_bundle_path = False
         try:
@@ -301,6 +301,7 @@ class Cartutils(object):
         except DoesNotExist:
             #case if no record exists yet in database
             mycart = None
+            cart_bundle_path = None
 
         if mycart and mycart.status == 'ready':
             cart_bundle_path = mycart.bundle_path

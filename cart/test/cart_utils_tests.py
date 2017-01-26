@@ -263,7 +263,7 @@ class TestCartUtils(unittest.TestCase):
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             cart_utils = Cartutils()
             retval = cart_utils.available_cart('2')
-            self.assertEqual(retval, False)
+            self.assertEqual(retval, None)
 
     @mock.patch.object(Cartutils, 'delete_cart_bundle')
     def test_bad_stage(self, mock_delete_cart):
@@ -283,4 +283,4 @@ class TestCartUtils(unittest.TestCase):
             mock_delete_cart.return_value = False
             cart_util = Cartutils()
             return_val = cart_util.remove_cart(test_cart.id)
-            self.assertEqual(return_val, 'Error with deleting Cart')
+            self.assertEqual(return_val, None)

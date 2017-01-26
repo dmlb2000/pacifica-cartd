@@ -51,7 +51,7 @@ class TestCartEndToEnd(unittest.TestCase):
             resp_status = resp.headers['X-Pacifica-Status']
             resp_message = resp.headers['X-Pacifica-Message']
             resp_code = resp.status_code
-            if resp_code == 200 and resp_status != 'staging':
+            if resp_code == 204 and resp_status != 'staging':
                 break
             time.sleep(2)
 
@@ -80,6 +80,20 @@ class TestCartEndToEnd(unittest.TestCase):
 
         self.assertEqual(data, 'Writing content for first file')
 
+
+    def test_get_noncart(self, cart_id='86'):
+        """test the getting of a cart"""
+
+        session = requests.Session()
+        retries = Retry(total=5, backoff_factor=5.0)
+        session.mount('http://', HTTPAdapter(max_retries=retries))
+
+        resp = session.get('http://127.0.0.1:8081/' + cart_id)
+        data = json.loads(resp.text)
+        resp_code = resp.status_code
+        self.assertEqual(data['message'], 'The cart does not exist or has already been deleted')
+        self.assertEqual(resp_code, 404)
+
     def test_delete_cart(self, cart_id='39'):
         """test the deletion of a cart"""
         self.test_status_cart(cart_id)
@@ -101,7 +115,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
         resp = session.delete('http://127.0.0.1:8081/' + cart_id)
         data = json.loads(resp.text)
-        self.assertEqual(data['message'], 'Cart with uid: 393 was previously deleted or no longer exists')
+        self.assertEqual(data['message'], 'The cart does not exist or has already been deleted')
 
     def test_prepare_bundle(self):
         """test getting bundle files ready"""
@@ -208,3 +222,51 @@ class TestCartEndToEnd(unittest.TestCase):
             pull_file(cart_file.id, False)
         Cart.database_close()
         self.assertEqual(status, 'deleted')
+
+    def test_status_cart_notfound(self):
+        """test the status of a cart with cart not found"""
+        cart_id = '97'
+        session = requests.Session()
+        retries = Retry(total=5, backoff_factor=5.0)
+        session.mount('http://', HTTPAdapter(max_retries=retries))
+
+        resp = session.head('http://127.0.0.1:8081/' + cart_id)
+        resp_status = resp.headers['X-Pacifica-Status']
+        resp_message = resp.headers['X-Pacifica-Message']
+        resp_code = resp.status_code
+
+        self.assertEqual(resp_status, 'error')
+        self.assertEqual(resp_message, 'No cart with uid 97 found')
+        self.assertEqual(resp_code, 404)
+
+    def test_status_cart_error(self):
+        """test the status of a cart with error"""
+        cart_id = '98'
+        with open('/tmp/cart.json', 'a') as cartfile:
+            cartfile.write('{"fileids": [{"id":"mytest.txt", "path":"1/2/3/mytest.txt"}]}')
+
+        session = requests.Session()
+        retries = Retry(total=5, backoff_factor=5.0)
+        session.mount('http://', HTTPAdapter(max_retries=retries))
+
+        resp = session.post('http://127.0.0.1:8081/' + cart_id, data=open('/tmp/cart.json', 'rb'))
+        os.remove('/tmp/cart.json')
+        data = json.loads(resp.text)
+        self.assertEqual(os.path.isfile('/tmp/cart.json'), False)
+        self.assertEqual(data['message'], 'Cart Processing has begun')
+
+        session = requests.Session()
+        retries = Retry(total=5, backoff_factor=5.0)
+        session.mount('http://', HTTPAdapter(max_retries=retries))
+
+        while True:
+            resp = session.head('http://127.0.0.1:8081/' + cart_id)
+            resp_status = resp.headers['X-Pacifica-Status']
+            resp_code = resp.status_code
+            if (resp_code == 204 and resp_status != 'staging') or resp_code == 500:
+                break
+            time.sleep(2)
+
+
+        self.assertEqual(resp_status, 'error')
+        self.assertEqual(resp_code, 500)
