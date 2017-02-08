@@ -30,7 +30,7 @@ def database_setup(attempts=0):
     try:
         Cart.database_connect()
         for cls in [Cart, File]:
-            cls.create_table()
+            cls.create_table(fail_silently=True)
         Cart.database_close()
     except OperationalError:
         #couldnt connect, potentially wait and try again

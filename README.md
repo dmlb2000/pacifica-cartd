@@ -270,3 +270,18 @@ take between trying to reconnect to the database.  Default 10 seconds
 
 The environment variables should be exactly the same as those used for the
 cartworkers container
+
+# Creating database if it doesn't happen on startup
+
+Verify that all docker containers have started.
+You will need to get into the cart server container since it has
+all the environment variable information set
+
+Exec into the cart server: 
+```
+sudo docker exec -i -t cartserver /bin/bash
+```
+once in run the database creation script: 
+```
+python database_create.py
+```
