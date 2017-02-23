@@ -113,16 +113,21 @@ If the cart has an error (such as no space available to create the tarfile).
 To download the tarfile for the cart.
 
 ```
-curl http://127.0.0.1:8081/$MY_CART_UUID
+curl http://127.0.0.1:8081/$MY_CART_UUID?filename=my_cart.tar
+
+In the above url my_cart.tar can be any file name of your choice
+If no filename parameter is present you will get back data_date.tar in the form data_YYYY_MM_DD_HH_MM_SS.tar
 ```
 To save to file
 ```
-curl -O http://127.0.0.1:8081/$MY_CART_UUID
+curl -O -J http://127.0.0.1:8081/$MY_CART_UUID?filename=my_cart.tar
 
-Once this finishes there will be a tar file named $MY_CART_UUID
+-O says to save to a file, and -J says to use the Content-Disposition file name the server is trying to send back
+
+Once this finishes there will be a tar file named my_cart.tar
 Untar by:
 
-tar xf $MY_CART_UUID
+tar xf my_cart.tar
 ```
 
 ## Delete a Cart

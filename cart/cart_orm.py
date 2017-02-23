@@ -11,7 +11,7 @@ import datetime
 import time
 from peewee import MySQLDatabase, PrimaryKeyField, CharField, DateTimeField
 from peewee import ForeignKeyField, TextField
-from peewee import Model, ProgrammingError, OperationalError
+from peewee import Model, OperationalError
 from cart.cart_env_globals import MYSQL_USER, MYSQL_PASS, MYSQL_ADDR
 from cart.cart_env_globals import MYSQL_PORT, MYSQL_DATABASE
 from cart.cart_env_globals import DATABASE_CONNECT_ATTEMPTS, DATABASE_WAIT
@@ -54,23 +54,19 @@ class CartBase(Model):
 
     @classmethod
     def database_connect(cls):
-        """Makes sure database is connected.  Trying to connect a second
-        time doesnt cause any problems"""
+        """Makes sure database is connected.  Dont reopen connection"""
         # pylint: disable=no-member
-        cls._meta.database.connect()
+        if cls._meta.database.is_closed():
+            cls._meta.database.connect()
         # pylint: enable=no-member
 
     @classmethod
     def database_close(cls):
-        """Closes the database connection. Closing already closed database
-        throws an error so catch it and continue on"""
-        try:
-            # pylint: disable=no-member
+        """Closes the database connection. """
+        # pylint: disable=no-member
+        if not cls._meta.database.is_closed():
             cls._meta.database.close()
-            # pylint: enable=no-member
-        except ProgrammingError:
-            #error for closing an already closed database so continue on
-            return
+        # pylint: enable=no-member
 
     class Meta(object):
         """

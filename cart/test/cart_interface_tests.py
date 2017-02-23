@@ -37,7 +37,8 @@ class TestCartInterface(unittest.TestCase):
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/octet-stream')
         env = {
-            'PATH_INFO': '/123'
+            'PATH_INFO': '/123',
+            'QUERY_STRING' : ''
         }
         with test_database(self.sqlite_db, (Cart, File)):
             sample_cart = Cart()
@@ -67,7 +68,8 @@ class TestCartInterface(unittest.TestCase):
             return iter(lambda: rfd.read(blksize), '')
         env = {
             'PATH_INFO': '/123',
-            'wsgi.file_wrapper': file_wrapper
+            'wsgi.file_wrapper': file_wrapper,
+            'QUERY_STRING' : 'filename=my_file.tar'
         }
         with test_database(self.sqlite_db, (Cart, File)):
             sample_cart = Cart()
@@ -90,7 +92,8 @@ class TestCartInterface(unittest.TestCase):
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
-            'PATH_INFO': '/'
+            'PATH_INFO': '/',
+            'QUERY_STRING' : ''
         }
         with test_database(self.sqlite_db, (Cart, File)):
             self.sqlite_db.close()
@@ -106,7 +109,8 @@ class TestCartInterface(unittest.TestCase):
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
-            'PATH_INFO': '/123'
+            'PATH_INFO': '/123',
+            'QUERY_STRING' : ''
         }
         with test_database(self.sqlite_db, (Cart, File)):
             sample_cart = Cart()
@@ -127,7 +131,8 @@ class TestCartInterface(unittest.TestCase):
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
-            'PATH_INFO': '/123'
+            'PATH_INFO': '/123',
+            'QUERY_STRING' : ''
         }
         with test_database(self.sqlite_db, (Cart, File)):
             sample_cart = Cart()
@@ -147,7 +152,8 @@ class TestCartInterface(unittest.TestCase):
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
-            'PATH_INFO': '/123'
+            'PATH_INFO': '/123',
+            'QUERY_STRING' : ''
         }
         with test_database(self.sqlite_db, (Cart, File)):
             sample_cart = Cart()
@@ -175,7 +181,8 @@ class TestCartInterface(unittest.TestCase):
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
-            'PATH_INFO': '/'
+            'PATH_INFO': '/',
+            'QUERY_STRING' : ''
         }
         with test_database(self.sqlite_db, (Cart, File)):
             self.sqlite_db.close()
@@ -203,6 +210,7 @@ class TestCartInterface(unittest.TestCase):
         env = {
             'PATH_INFO': '/123',
             'CONTENT_LENGTH': 'blah',
+            'QUERY_STRING' : '',
             'wsgi.input': FakeReader()
         }
         with test_database(self.sqlite_db, (Cart, File)):
@@ -233,6 +241,7 @@ class TestCartInterface(unittest.TestCase):
         env = {
             'PATH_INFO': '/',
             'CONTENT_LENGTH': len(dumps(FakeReader.sent_content)),
+            'QUERY_STRING' : '',
             'wsgi.input': FakeReader()
         }
         with test_database(self.sqlite_db, (Cart, File)):
@@ -261,6 +270,7 @@ class TestCartInterface(unittest.TestCase):
         env = {
             'PATH_INFO': '/123',
             'CONTENT_LENGTH': FakeReader.size,
+            'QUERY_STRING' : '',
             'wsgi.input': FakeReader()
         }
         with test_database(self.sqlite_db, (Cart, File)):
@@ -277,7 +287,8 @@ class TestCartInterface(unittest.TestCase):
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
-            'PATH_INFO': '/123'
+            'PATH_INFO': '/123',
+            'QUERY_STRING' : ''
         }
         with test_database(self.sqlite_db, (Cart, File)):
             sample_cart = Cart()
@@ -301,7 +312,8 @@ class TestCartInterface(unittest.TestCase):
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
-            'PATH_INFO': '/'
+            'PATH_INFO': '/',
+            'QUERY_STRING' : ''
         }
         with test_database(self.sqlite_db, (Cart, File)):
             self.sqlite_db.close()
@@ -389,6 +401,7 @@ class TestCartInterface(unittest.TestCase):
             raise CartInterfaceError('This is an error')
         env = {
             'REQUEST_METHOD': 'GET',
+            'QUERY_STRING' : ''
         }
         cgen = CartGenerator()
         cgen.get = MethodType(fake_get, cgen)
@@ -403,7 +416,8 @@ class TestCartInterface(unittest.TestCase):
             self.assertEqual(args[1][0][0], 'Content-Type')
             self.assertEqual(args[1][0][1], 'application/json')
         env = {
-            'REQUEST_METHOD': 'BLAH',
+            'REQUEST_METHOD': 'IMNOTREAL',
+            'QUERY_STRING' : ''
         }
         cgen = CartGenerator()
         message = cgen.pacifica_cartinterface(env, start_response)

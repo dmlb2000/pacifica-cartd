@@ -2,9 +2,11 @@
 """Class for the cart interface.  Allows API to file interactions"""
 import json
 import os
+from datetime import datetime
 from sys import stderr
 from tarfile import TarFile
 import doctest
+from urlparse import parse_qs
 import cart.cart_interface_responses as cart_interface_responses
 from cart.tasks import stage_files
 from cart.cart_utils import Cartutils
@@ -20,15 +22,13 @@ class CartInterfaceError(Exception):
     pass
 
 def fix_cart_uid(uid):
-    """Removes / from front of cart_uid
-    """
+    """Removes / from front of cart_uid"""
     if os.path.isabs(uid):
         uid = uid[1:]
     return uid
 
 def is_valid_uid(uid):
-    """checks to see if the uid is valid before using it
-    """
+    """checks to see if the uid is valid before using it"""
     if not uid:
         return False
     return True
@@ -45,6 +45,11 @@ class CartGenerator(object):
     def get(self, env, start_response):
         """Download the tar file created by the cart"""
         resp = cart_interface_responses.Responses()
+        rtn_name = None
+        if 'filename' in parse_qs(env['QUERY_STRING']):
+            rtn_name = os.path.basename(parse_qs(env['QUERY_STRING'])['filename'][0])
+        else:
+            rtn_name = "data_" + datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + ".tar"
         uid = fix_cart_uid(env['PATH_INFO'])
         is_valid = is_valid_uid(uid)
         if not is_valid:
@@ -87,8 +92,9 @@ class CartGenerator(object):
                     os.close(wpipe)
                     #open the pipe as a file
                     rfd = os.fdopen(rpipe, 'rb')
-                    start_response('200 OK', [('Content-Type',
-                                               'application/octet-stream')])
+                    start_response('200 OK', [('Content-Type', 'application/octet-stream'),
+                                              ('Content-Disposition', 'attachement; filename=' +
+                                               str(rtn_name))])
                     if 'wsgi.file_wrapper' in env:
                         return env['wsgi.file_wrapper'](rfd, BLOCK_SIZE)
                     return iter(lambda: rfd.read(BLOCK_SIZE), '')
