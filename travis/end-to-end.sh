@@ -10,4 +10,6 @@ kill $SERVER_PID
 wait $SERVER_PID $CELERY_PID
 coverage combine -a .coverage*
 coverage report -m --fail-under 100
-codeclimate-test-reporter
+if [[ $CODECLIMATE_REPO_TOKEN ]] ; then
+  codeclimate-test-reporter
+fi
