@@ -66,7 +66,7 @@ class TestCartEndToEnd(unittest.TestCase):
         retries = Retry(total=5, backoff_factor=5.0)
         session.mount('http://', HTTPAdapter(max_retries=retries))
 
-        resp = session.get('http://127.0.0.1:8081/' + cart_id)
+        resp = session.get('http://127.0.0.1:8081/' + cart_id + '?filename=' + cart_id)
         with open(cart_id, 'wb') as fdesc:
             for chunk in resp.iter_content(chunk_size=128):
                 fdesc.write(chunk)

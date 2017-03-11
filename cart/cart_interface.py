@@ -80,7 +80,7 @@ class CartGenerator(object):
                         os.close(rpipe)
                         wfd = os.fdopen(wpipe, 'wb')
                         mytar = TarFile.open(fileobj=wfd, mode='w|')
-                        mytar.add(cart_path, arcname=uid)
+                        mytar.add(cart_path, arcname=rtn_name.replace('.tar', ''))
                         mytar.close()
                         #to exit from the fork child without killing the parent
                         #we need to use_exit.  Disabling the pylint for this
@@ -93,7 +93,7 @@ class CartGenerator(object):
                     #open the pipe as a file
                     rfd = os.fdopen(rpipe, 'rb')
                     start_response('200 OK', [('Content-Type', 'application/octet-stream'),
-                                              ('Content-Disposition', 'attachement; filename=' +
+                                              ('Content-Disposition', 'attachment; filename=' +
                                                str(rtn_name))])
                     if 'wsgi.file_wrapper' in env:
                         return env['wsgi.file_wrapper'](rfd, BLOCK_SIZE)
