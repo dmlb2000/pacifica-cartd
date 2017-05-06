@@ -13,6 +13,15 @@ from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
 from cart.tasks import get_files_locally, pull_file, stage_files
 
+def cart_json_helper():
+    """Helper that returns a cart json text string"""
+    return ('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
+            ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
+            '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
+            ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
+            '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
+            ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
+
 class TestCartEndToEnd(unittest.TestCase):
     """
     Contains all the tests for the end to end cart testing
@@ -24,9 +33,7 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_post_cart(self, cart_id='36'):
         """test the creation of a cart"""
         with open('/tmp/cart.json', 'a') as cartfile:
-            cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                           '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                           '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+            cartfile.write(cart_json_helper())
 
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
@@ -52,6 +59,8 @@ class TestCartEndToEnd(unittest.TestCase):
             resp_message = resp.headers['X-Pacifica-Message']
             resp_code = resp.status_code
             if resp_code == 204 and resp_status != 'staging':
+                break
+            if resp_code == 500: # pragma: no cover
                 break
             time.sleep(2)
 
@@ -119,9 +128,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_prepare_bundle(self):
         """test getting bundle files ready"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=117, status='staging')
@@ -140,9 +147,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_prep_bundle_error(self):
         """test getting bundle ready with a file in error state"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=343, status='staging')
@@ -164,9 +169,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_prep_bundle_staging(self):
         """test getting bundle ready with a file in staging state"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=343, status='staging')
@@ -192,7 +195,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_pull_invalid_file(self):
         """test pulling a file id that doesnt exist"""
-        pull_file('8765', False)
+        pull_file('8765', 'some/bad/path', '1111', False)
         #no action happens on invalid file, so no assertion to check
         self.assertEqual(True, True)
 
@@ -205,9 +208,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_cart_deleted_date(self):
         """test getting bundle ready with a file in staging state"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=444, status='staging')
@@ -220,7 +221,7 @@ class TestCartEndToEnd(unittest.TestCase):
         mycart.save()
         status = mycart.status
         for cart_file in File.select().where(File.cart == mycart.id):
-            pull_file(cart_file.id, False)
+            pull_file(cart_file.id, '/tmp/some/Path', '1111', False)
         Cart.database_close()
         self.assertEqual(status, 'deleted')
 
@@ -244,7 +245,8 @@ class TestCartEndToEnd(unittest.TestCase):
         """test the status of a cart with error"""
         cart_id = '98'
         with open('/tmp/cart.json', 'a') as cartfile:
-            cartfile.write('{"fileids": [{"id":"mytest.txt", "path":"1/2/3/mytest.txt"}]}')
+            cartfile.write('{"fileids": [{"id":"mytest.txt", "path":"1/2/3/mytest.txt",' +
+                           '"hashtype":"md5", "hashsum":""}]}')
 
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
@@ -274,9 +276,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_stage_files(self):
         """test getting bundle files ready"""
-        data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt"},' +
-                          '{"id":"bar.csv", "path":"1/2/3/bar.csv"},' +
-                          '{"id":"baz.ini", "path":"2/3/4/baz.ini"}]}')
+        data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
         mycart = Cart(cart_uid=747, status='staging')
@@ -292,3 +292,35 @@ class TestCartEndToEnd(unittest.TestCase):
             status = mycart.status
         Cart.database_close()
         self.assertEqual(status, 'ready')
+
+    def test_post_cart_bad_hash(self, cart_id='1136'):
+        """test the creation of a cart with bad hash"""
+        cartfile = open('/tmp/cart.json', 'a')
+        cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
+                       ' "hashsum":"ac59bb32"},' +
+                       '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
+                       ' "hashsum":"ef39aa7f8df8bdc8b8d4d81f4e0ef566"},' +
+                       '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
+                       ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
+        cartfile.close()
+
+        session = requests.Session()
+        retries = Retry(total=5, backoff_factor=5.0)
+        session.mount('http://', HTTPAdapter(max_retries=retries))
+
+        resp = session.post('http://127.0.0.1:8081/' + cart_id, data=open('/tmp/cart.json', 'rb'))
+        os.remove('/tmp/cart.json')
+        data = json.loads(resp.text)
+        self.assertEqual(data['message'], 'Cart Processing has begun')
+
+        while True:
+            resp = session.head('http://127.0.0.1:8081/' + cart_id)
+            resp_status = resp.headers['X-Pacifica-Status']
+            resp_code = resp.status_code
+            if resp_code == 204 and resp_status != 'staging': # pragma: no cover
+                break
+            if resp_code == 500:
+                break
+            time.sleep(2)
+
+        self.assertEqual(resp_status, 'error')

@@ -3,6 +3,7 @@ File used to unit test the pacifica_cart
 """
 import unittest
 import os
+import json
 from types import MethodType
 import shutil
 import mock
@@ -245,6 +246,34 @@ class TestCartUtils(unittest.TestCase):
             cart_utils.set_file_status(test_file, test_cart, 'error', 'fake error')
             self.assertEqual(test_file.status, 'error')
             self.assertEqual(test_file.error, 'fake error')
+
+    def test_status_details_fail(self):
+        """test status details fail"""
+        with test_database(SqliteDatabase(':memory:'), (Cart, File)):
+
+            test_cart = Cart.create(cart_uid='1', status='staging',
+                                    bundle_path='/tmp/1/')
+            test_file = File.create(cart=test_cart, file_name='1.txt',
+                                    bundle_path='/tmp/1/1.txt')
+            cart_utils = Cartutils()
+
+            #say file is way to big
+            retval = cart_utils.check_status_details(test_cart, test_file, 99999999999999999999999999999, 1)
+            self.assertEqual(retval, -1)
+
+    def test_cart_no_hash_passed(self):
+        """test error with cart with no hash passed"""
+        with test_database(SqliteDatabase(':memory:'), (Cart, File)):
+
+            test_cart = Cart.create(cart_uid='1', status='staging',
+                                    bundle_path='/tmp/1/')
+            cart_utils = Cartutils()
+
+            data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5"}]}')
+
+            file_ids = data['fileids']
+            retval = cart_utils.update_cart_files(test_cart, file_ids)
+            self.assertNotEqual(retval, None)
 
     def test_lru_cart_delete(self):
         """test that trys to delete a cart"""

@@ -63,12 +63,16 @@ id =  the id being used on the Archive
 
 path = internal structure of bundle for file placement
 
+hashtype = hashlib hashtype used to generate hashsum
+
+hashsum = the hash (hex value) of the file using the hashtype listed
+
 ```
 {
   "fileids": [
-    {"id":"foo.txt", "path":"1/2/3/foo.txt"},
-    {"id":"bar.csv", "path":"1/2/3/bar.csv"},
-    {"id":"baz.ini", "path":"2/3/4/baz.ini"}
+    {"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5", "hashsum":""},
+    {"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5", "hashsum":""},
+    {"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5", "hashsum":""}
   ]
 }
 ```
@@ -83,7 +87,7 @@ curl -X POST --upload-file /tmp/foo.json http://127.0.0.1:8081/$MY_CART_UUID
 Head on the cart to find whether its created and ready for download.
 
 ```
-curl -X HEAD http://127.0.0.1:8081/$MY_CART_UUID
+curl -I -X HEAD http://127.0.0.1:8081/$MY_CART_UUID
 ```
 
 Will receive headers back with the specific data needed. These are:
