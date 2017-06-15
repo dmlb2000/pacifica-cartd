@@ -5,8 +5,8 @@ import time
 import datetime
 import json
 from subprocess import call
+from urllib3.util.retry import Retry
 import requests
-from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from cart.celery import CART_APP
 from cart.cart_orm import Cart, File

@@ -9,3 +9,4 @@ psutil
 pylint==1.6.3
 pytest
 requests
+-e git://github.com/pacifica/pacifica-archiveinterface.git#egg=PacificaArchiveInterface

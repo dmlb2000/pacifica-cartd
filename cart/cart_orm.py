@@ -56,8 +56,9 @@ class CartBase(Model):
     def database_connect(cls):
         """Makes sure database is connected.  Dont reopen connection"""
         # pylint: disable=no-member
-        if cls._meta.database.is_closed():
-            cls._meta.database.connect()
+        if not cls._meta.database.is_closed():
+            cls._meta.database.close()
+        cls._meta.database.connect()
         # pylint: enable=no-member
 
     @classmethod
