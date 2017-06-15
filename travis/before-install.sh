@@ -8,5 +8,5 @@ else
   archiveinterfaceserver.py --config travis/config.cfg &
   sleep 3
   python travis/archiveinterfacepreload.py
-  pip install codeclimate-test-reporter coverage nose pytest
+  pip install codeclimate-test-reporter
 fi

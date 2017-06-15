@@ -1,6 +1,6 @@
 celery
 codeclimate-test-reporter
-coverage
+coverage>=4.0,<4.4
 httpretty
 MySQL-python
 peewee
