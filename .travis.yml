@@ -1,12 +1,13 @@
-sudo: required
 services:
- - docker
+ - rabbitmq
+ - mysql
 language: python
 python:
  - 2.7
 
 matrix:
   include:
+    - python: 2.7
     - python: 2.7
       env: RUN_LINTS=true
 cache: pip
