@@ -5,4 +5,5 @@ if [ "$RUN_LINTS" = "true" ] ; then
 else
   bash -xe ./travis/unit-tests.sh
   bash -xe ./travis/end-to-end.sh
+  bash -xe ./travis/test-deploy.sh
 fi
