@@ -1,4 +1,4 @@
-"""File that will tests the requests and coverage of the server and the tasks"""
+"""File that will tests the requests and coverage of the server and the tasks."""
 import unittest
 import os
 import time
@@ -13,8 +13,9 @@ from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
 from cart.tasks import get_files_locally, pull_file, stage_files
 
+
 def cart_json_helper():
-    """Helper that returns a cart json text string"""
+    """Helper that returns a cart json text string."""
     return ('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
             ' "hashsum":"ac59bb32dac432674dd6e620a6b35ff3"},' +
             '{"id":"bar.csv", "path":"1/2/3/bar.csv", "hashtype":"md5",' +
@@ -22,16 +23,16 @@ def cart_json_helper():
             '{"id":"baz.ini", "path":"2/3/4/baz.ini", "hashtype":"md5",' +
             ' "hashsum":"b0c21625a5ef364864191e5907d7afb4"}]}')
 
+
 class TestCartEndToEnd(unittest.TestCase):
-    """
-    Contains all the tests for the end to end cart testing
-    """
+    """Contains all the tests for the end to end cart testing."""
+
     def setUp(self):
-        """Make the tasks not asynchronise for testing"""
+        """Make the tasks not asynchronise for testing."""
         CART_APP.conf.update(CELERY_ALWAYS_EAGER=True)
 
     def test_post_cart(self, cart_id='36'):
-        """test the creation of a cart"""
+        """Test the creation of a cart."""
         with open('/tmp/cart.json', 'a') as cartfile:
             cartfile.write(cart_json_helper())
 
@@ -46,7 +47,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(data['message'], 'Cart Processing has begun')
 
     def test_status_cart(self, cart_id='37'):
-        """test the status of a cart"""
+        """Test the status of a cart."""
         self.test_post_cart(cart_id)
 
         session = requests.Session()
@@ -60,7 +61,7 @@ class TestCartEndToEnd(unittest.TestCase):
             resp_code = resp.status_code
             if resp_code == 204 and resp_status != 'staging':
                 break
-            if resp_code == 500: # pragma: no cover
+            if resp_code == 500:  # pragma: no cover
                 break
             time.sleep(2)
 
@@ -68,7 +69,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(resp_message, '')
 
     def test_get_cart(self, cart_id='38'):
-        """test the getting of a cart"""
+        """Test the getting of a cart."""
         self.test_status_cart(cart_id)
 
         session = requests.Session()
@@ -81,7 +82,7 @@ class TestCartEndToEnd(unittest.TestCase):
                 fdesc.write(chunk)
 
         self.assertEqual(os.path.isfile(cart_id), True)
-        call(["tar", "-x", "-f", cart_id])
+        call(['tar', '-x', '-f', cart_id])
         self.assertEqual(os.path.isdir(cart_id), True)
         self.assertEqual(os.path.isfile(cart_id + '/1/2/3/foo.txt'), True)
         with open(cart_id + '/1/2/3/foo.txt', 'r') as myfile:
@@ -89,10 +90,8 @@ class TestCartEndToEnd(unittest.TestCase):
 
         self.assertEqual(data, 'Writing content for first file')
 
-
     def test_get_noncart(self, cart_id='86'):
-        """test the getting of a cart"""
-
+        """Test the getting of a cart."""
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
         session.mount('http://', HTTPAdapter(max_retries=retries))
@@ -104,7 +103,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(resp_code, 404)
 
     def test_delete_cart(self, cart_id='39'):
-        """test the deletion of a cart"""
+        """Test the deletion of a cart."""
         self.test_status_cart(cart_id)
 
         session = requests.Session()
@@ -116,8 +115,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(data['message'], 'Cart Deleted Successfully')
 
     def test_delete_invalid_cart(self, cart_id='393'):
-        """test the deletion of a invalid cart"""
-
+        """Test the deletion of a invalid cart."""
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
         session.mount('http://', HTTPAdapter(max_retries=retries))
@@ -127,7 +125,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(data['message'], 'The cart does not exist or has already been deleted')
 
     def test_prepare_bundle(self):
-        """test getting bundle files ready"""
+        """Test getting bundle files ready."""
         data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
@@ -146,7 +144,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(status, 'ready')
 
     def test_prep_bundle_error(self):
-        """test getting bundle ready with a file in error state"""
+        """Test getting bundle ready with a file in error state."""
         data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
@@ -168,7 +166,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(status, 'error')
 
     def test_prep_bundle_staging(self):
-        """test getting bundle ready with a file in staging state"""
+        """Test getting bundle ready with a file in staging state."""
         data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
@@ -180,11 +178,11 @@ class TestCartEndToEnd(unittest.TestCase):
         for cart_file in File.select().where(File.cart == mycart.id):
             cart_file.status = 'staging'
             cart_file.save()
-        cart_utils.prepare_bundle(mycart.id) #hitting more coverage, set files to staged
+        cart_utils.prepare_bundle(mycart.id)  # hitting more coverage, set files to staged
         for cart_file in File.select().where(File.cart == mycart.id):
             cart_file.status = 'staged'
             cart_file.save()
-        cart_utils.prepare_bundle(mycart.id) #call again after file update
+        cart_utils.prepare_bundle(mycart.id)  # call again after file update
         status = mycart.status
         cartid = mycart.id
         while status == 'staging':
@@ -194,20 +192,20 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(status, 'ready')
 
     def test_pull_invalid_file(self):
-        """test pulling a file id that doesnt exist"""
+        """Test pulling a file id that doesnt exist."""
         pull_file('8765', 'some/bad/path', '1111', False)
-        #no action happens on invalid file, so no assertion to check
+        # no action happens on invalid file, so no assertion to check
         self.assertEqual(True, True)
 
     def test_tar_invalid_cart(self):
-        """test pulling a file id that doesnt exist"""
+        """Test pulling a file id that doesnt exist."""
         cart_utils = Cartutils()
         cart_utils.tar_files('8765', True)
-        #no action happens on invalid cart to tar, so no assertion to check
+        # no action happens on invalid cart to tar, so no assertion to check
         self.assertEqual(True, True)
 
     def test_cart_deleted_date(self):
-        """test getting bundle ready with a file in staging state"""
+        """Test getting bundle ready with a file in staging state."""
         data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
@@ -226,7 +224,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(status, 'deleted')
 
     def test_status_cart_notfound(self):
-        """test the status of a cart with cart not found"""
+        """Test the status of a cart with cart not found."""
         cart_id = '97'
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
@@ -242,7 +240,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(resp_code, 404)
 
     def test_status_cart_error(self):
-        """test the status of a cart with error"""
+        """Test the status of a cart with error."""
         cart_id = '98'
         with open('/tmp/cart.json', 'a') as cartfile:
             cartfile.write('{"fileids": [{"id":"mytest.txt", "path":"1/2/3/mytest.txt",' +
@@ -270,12 +268,11 @@ class TestCartEndToEnd(unittest.TestCase):
                 break
             time.sleep(2)
 
-
         self.assertEqual(resp_status, 'error')
         self.assertEqual(resp_code, 500)
 
     def test_stage_files(self):
-        """test getting bundle files ready"""
+        """Test getting bundle files ready."""
         data = json.loads(cart_json_helper())
         file_ids = data['fileids']
         Cart.database_connect()
@@ -294,7 +291,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(status, 'ready')
 
     def test_post_cart_bad_hash(self, cart_id='1136'):
-        """test the creation of a cart with bad hash"""
+        """Test the creation of a cart with bad hash."""
         cartfile = open('/tmp/cart.json', 'a')
         cartfile.write('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5",' +
                        ' "hashsum":"ac59bb32"},' +
@@ -317,7 +314,7 @@ class TestCartEndToEnd(unittest.TestCase):
             resp = session.head('http://127.0.0.1:8081/' + cart_id)
             resp_status = resp.headers['X-Pacifica-Status']
             resp_code = resp.status_code
-            if resp_code == 204 and resp_status != 'staging': # pragma: no cover
+            if resp_code == 204 and resp_status != 'staging':  # pragma: no cover
                 break
             if resp_code == 500:
                 break

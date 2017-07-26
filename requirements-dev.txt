@@ -2,12 +2,14 @@ celery
 codeclimate-test-reporter
 coverage>=4.0,<4.4
 httpretty
+mock
 MySQL-python
+-e git://github.com/pacifica/pacifica-archiveinterface.git#egg=PacificaArchiveInterface
 peewee
 pre-commit
 psutil
-pylint==1.6.3
+pylint
 pytest
+radon
 requests
 setuptools
--e git://github.com/pacifica/pacifica-archiveinterface.git#egg=PacificaArchiveInterface

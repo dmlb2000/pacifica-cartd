@@ -1,16 +1,14 @@
-"""
-File used to unit test the pacifica_cart
-"""
+"""File used to unit test the pacifica_cart."""
 import unittest
 import os
 import sys
 
+
 class TestEnvGlobals(unittest.TestCase):
-    """
-    Contains the tests for the global config module
-    """
+    """Contain the tests for the global config module."""
+
     def test_set_logging(self):
-        """test that logging gets set for debugging"""
+        """Test that logging gets set for debugging."""
         os.environ['DATABASE_LOGGING'] = 'True'
         import importlib
         # first delete the module from the loaded modules

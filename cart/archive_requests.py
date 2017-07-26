@@ -1,24 +1,23 @@
-"""Module that is used by the cart to send requests to the
-archive interface
-"""
-
+"""Module that is used by the cart to send requests to the archive interface."""
 from __future__ import absolute_import
 from json import dumps
 import hashlib
 import requests
-from cart.cart_env_globals import  ARCHIVE_INTERFACE_URL
+from cart.cart_env_globals import ARCHIVE_INTERFACE_URL
 
 
 class ArchiveRequests(object):
-    """class that supports all the requests to the archive
-    interface
-    """
+    """Class that supports all the requests to the archive interface."""
 
     def __init__(self):
+        """Constructor for setting the AI URL."""
         self._url = ARCHIVE_INTERFACE_URL
 
     def pull_file(self, archive_filename, cart_filepath, hashval, hashtype):
-        """Performs a request that will attempt to write
+        """
+        Pull file from AI.
+
+        Performs a request that will attempt to write
         the contents of a file from the archive interface
         to the specified cart filepath
         """
@@ -36,16 +35,14 @@ class ArchiveRequests(object):
             raise ValueError('File hash does not match provided hash')
 
     def stage_file(self, file_name):
-        """Sends a post to the archive interface telling it to stage the file
-        """
+        """Send a post to the archive interface telling it to stage the file."""
         resp = requests.post(str(self._url + file_name))
         if str(resp.status_code) == '500':
             raise requests.exceptions.RequestException(str(dumps(resp.text)))
 
-
     @staticmethod
     def _status_dict(headers, file_name):
-        """Return status dictionary from http response headers"""
+        """Return status dictionary from http response headers."""
         return {
             'message': headers['x-pacifica-messsage'],
             'file': file_name,
@@ -57,8 +54,6 @@ class ArchiveRequests(object):
         }
 
     def status_file(self, file_name):
-        """Gets a status from the  archive interface via Head and
-        returns response """
-
+        """Get a status from the  archive interface via Head and returns response."""
         resp = requests.head(str(self._url + file_name))
         return dumps(self._status_dict(resp.headers, file_name))

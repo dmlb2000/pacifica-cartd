@@ -1,8 +1,5 @@
 #!/usr/bin/python
-"""
-Add Unit Tests for archive interface.
-"""
-
+"""Add Unit Tests for archive interface."""
 import unittest
 from json import dumps, loads
 from tempfile import mkdtemp
@@ -10,39 +7,35 @@ import httpretty
 import requests
 from cart.archive_requests import ArchiveRequests
 
+
 class TestArchiveRequests(unittest.TestCase):
-    """
-    Test the archive requests class
-    """
+    """Test the archive requests class."""
+
     endpoint_url = 'http://localhost:8080'
 
     @httpretty.activate
     def test_archive_get(self):
-        """
-        Test pulling a file
-        """
-        response_body = "This is the body of the file in the archive."
-        httpretty.register_uri(httpretty.GET, '%s/1'%(self.endpoint_url),
+        """Test pulling a file."""
+        response_body = 'This is the body of the file in the archive.'
+        httpretty.register_uri(httpretty.GET, '{}/1'.format(self.endpoint_url),
                                body=response_body,
                                content_type='application/octet-stream')
         temp_dir = mkdtemp()
         archreq = ArchiveRequests()
         hashval = '5bf018b3c598df19b5f4363fc55f2f89'
         hashtype = 'md5'
-        archreq.pull_file('1', '%s/1'%(temp_dir), hashval, hashtype)
-        testfd = open('%s/1'%(temp_dir), 'r')
+        archreq.pull_file('1', '{}/1'.format(temp_dir), hashval, hashtype)
+        testfd = open('{}/1'.format(temp_dir), 'r')
         self.assertEqual(testfd.read(), response_body)
 
     @httpretty.activate
     def test_archive_stage(self):
-        """
-        Test staging a file
-        """
+        """Test staging a file."""
         response_body = {
             'message': 'File was staged',
             'file': '1'
         }
-        httpretty.register_uri(httpretty.POST, '%s/1'%(self.endpoint_url),
+        httpretty.register_uri(httpretty.POST, '{}/1'.format(self.endpoint_url),
                                body=dumps(response_body),
                                content_type='application/json')
         archreq = ArchiveRequests()
@@ -51,9 +44,7 @@ class TestArchiveRequests(unittest.TestCase):
 
     @httpretty.activate
     def test_archive_status(self):
-        """
-        Test pulling a file
-        """
+        """Test pulling a file."""
         stage_file_obj = {
             'bytes_per_level': '0',
             'ctime': 'Sun, 06 Nov 1994 08:49:37 GMT',
@@ -70,7 +61,7 @@ class TestArchiveRequests(unittest.TestCase):
             'x-pacifica-file-storage-media': '0',
             'last-modified': 'Sun, 06 Nov 1994 08:49:37 GMT'
         }
-        httpretty.register_uri(httpretty.HEAD, '%s/1'%(self.endpoint_url),
+        httpretty.register_uri(httpretty.HEAD, '{}/1'.format(self.endpoint_url),
                                status=200,
                                body='blahblah',
                                adding_headers=adding_headers)
@@ -82,14 +73,12 @@ class TestArchiveRequests(unittest.TestCase):
 
     @httpretty.activate
     def test_archive_stage_fail(self):
-        """
-        Test staging a file failure
-        """
+        """Test staging a file failure."""
         response_body = {
             'message': 'error',
             'file': '1'
         }
-        httpretty.register_uri(httpretty.POST, '%s/1'%(self.endpoint_url),
+        httpretty.register_uri(httpretty.POST, '{}/1'.format(self.endpoint_url),
                                status=500,
                                body=dumps(response_body),
                                content_type='application/json')
@@ -99,11 +88,9 @@ class TestArchiveRequests(unittest.TestCase):
 
     @httpretty.activate
     def test_archive_get_bad_hash(self):
-        """
-        Test pulling a file with a bad hash value
-        """
-        response_body = "This is the body of the file in the archive."
-        httpretty.register_uri(httpretty.GET, '%s/1'%(self.endpoint_url),
+        """Test pulling a file with a bad hash value."""
+        response_body = 'This is the body of the file in the archive.'
+        httpretty.register_uri(httpretty.GET, '{}/1'.format(self.endpoint_url),
                                body=response_body,
                                content_type='application/octet-stream')
         temp_dir = mkdtemp()
@@ -111,4 +98,4 @@ class TestArchiveRequests(unittest.TestCase):
         hashval = '5b'
         hashtype = 'md5'
         with self.assertRaises(ValueError):
-            archreq.pull_file('1', '%s/1'%(temp_dir), hashval, hashtype)
+            archreq.pull_file('1', '{}/1'.format(temp_dir), hashval, hashtype)

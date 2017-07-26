@@ -290,11 +290,11 @@ Verify that all docker containers have started.
 You will need to get into the cart server container since it has
 all the environment variable information set
 
-Exec into the cart server: 
+Exec into the cart server:
 ```
 sudo docker exec -i -t cartserver /bin/bash
 ```
-once in run the database creation script: 
+once in run the database creation script:
 ```
 python database_create.py
 ```

@@ -1,6 +1,5 @@
-"""
-File used to unit test the pacifica_cart
-"""
+#!/usr/bin/python
+"""File used to unit test the pacifica_cart."""
 import unittest
 import os
 import json
@@ -14,13 +13,12 @@ from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
 import cart.cart_orm
 
+
 class TestCartUtils(unittest.TestCase):
-    """
-    Contains all the tests for the CartUtils class
-    """
+    """Contains all the tests for the CartUtils class."""
 
     def test_create_download_path(self):
-        """test the creation of the download path for a cart file"""
+        """Test the creation of the download path for a cart file."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             test_cart = Cart.create(cart_uid='1', status='staging')
             test_file = File.create(cart=test_cart, file_name='1.txt',
@@ -37,7 +35,7 @@ class TestCartUtils(unittest.TestCase):
 
     @mock.patch.object(Cartutils, 'create_bundle_directories')
     def test_bad_create_download_path(self, mock_create_bundle):
-        """test the creation of the download path for a cart file"""
+        """Test the creation of the download path for a cart file."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             test_cart = Cart.create(cart_uid='1', status='staging')
             test_file = File.create(cart=test_cart, file_name='1.txt',
@@ -48,9 +46,8 @@ class TestCartUtils(unittest.TestCase):
                                                       test_file.bundle_path)
             self.assertEqual(success, False)
 
-
     def test_create_bundle_directories(self):
-        """test the  creation of directories where files will be saved"""
+        """Test the  creation of directories where files will be saved."""
         directory_name = '/tmp/fakedir/'
         cart_utils = Cartutils()
         cart_utils.create_bundle_directories(directory_name)
@@ -60,13 +57,13 @@ class TestCartUtils(unittest.TestCase):
 
     @mock.patch.object(os, 'makedirs')
     def test_bad_makedirs(self, mock_makedirs):
-        """test a error return from a file not ready to pull"""
+        """Test a error return from a file not ready to pull."""
         mock_makedirs.side_effect = OSError(mock.Mock(), 'Error')
         c_util = Cartutils()
-        self.assertRaises(OSError, c_util.create_bundle_directories, "fakepath")
+        self.assertRaises(OSError, c_util.create_bundle_directories, 'fakepath')
 
     def test_fix_absolute_path(self):
-        """test the correct creation of paths by removing absolute paths"""
+        """Test the correct creation of paths by removing absolute paths."""
         cart_utils = Cartutils()
         return_one = cart_utils.fix_absolute_path('tmp/foo.text')
         return_two = cart_utils.fix_absolute_path('/tmp/foo.text')
@@ -76,7 +73,7 @@ class TestCartUtils(unittest.TestCase):
         self.assertNotEqual(return_three, '/tmp/foo.text')
 
     def test_check_file_size_needed(self):
-        """test that the file size returned from the archive is parsed right"""
+        """Test that the file size returned from the archive is parsed right."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             response = """{
                             "bytes_per_level": "(24L, 0L, 0L, 0L, 0L)",
@@ -96,14 +93,14 @@ class TestCartUtils(unittest.TestCase):
             self.assertEqual(file_size, 24)
             self.assertNotEqual(test_file.status, 'error')
 
-            #now check for an error by sending a bad response
+            # now check for an error by sending a bad response
             file_size = cart_utils.check_file_size_needed('', test_file,
                                                           test_cart)
             self.assertEqual(file_size, -1)
             self.assertEqual(test_file.status, 'error')
 
     def test_check_space_requirements(self):
-        """test that there is enough space on the volume for the file"""
+        """Test that there is enough space on the volume for the file."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
 
             test_cart = Cart.create(cart_uid='1', status='staging')
@@ -115,7 +112,7 @@ class TestCartUtils(unittest.TestCase):
             self.assertEqual(rtn, True)
             self.assertNotEqual(test_file.status, 'error')
 
-            #now check for an error by sending a way to large size needed number
+            # now check for an error by sending a way to large size needed number
             rtn = cart_utils.check_space_requirements(test_file, test_cart,
                                                       9999999999999999999999, True)
             self.assertEqual(rtn, False)
@@ -123,7 +120,7 @@ class TestCartUtils(unittest.TestCase):
 
     @mock.patch.object(psutil, 'disk_usage')
     def test_check_space_bad_path(self, mock_disk_usage):
-        """test that the error when a bad path"""
+        """Test that the error when a bad path."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
 
             test_cart = Cart.create(cart_uid='1', status='staging')
@@ -137,16 +134,14 @@ class TestCartUtils(unittest.TestCase):
             self.assertEqual(test_file.status, 'error')
 
     def test_get_path_size(self):
-        """test to see if the path size of a directory is returned"""
-
+        """Test to see if the path size of a directory is returned."""
         cart_utils = Cartutils()
         path = os.path.dirname(os.path.realpath(__file__))
         rtn = cart_utils.get_path_size(path + '/../')
         self.assertNotEqual(rtn, 0)
 
     def test_check_file_not_ready_pull(self):
-        """test that checks to see if a file is not ready to pull
-        by checking the archive response"""
+        """Test that checks to see if a file is not ready to pull by checking the archive response."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             response = """{
                             "bytes_per_level": "(0L, 24L, 0L, 0L, 0L)",
@@ -173,19 +168,18 @@ class TestCartUtils(unittest.TestCase):
                                                      test_cart)
             self.assertEqual(ready, False)
 
-            #now check for an error by sending a bad response
+            # now check for an error by sending a bad response
             ready = cart_utils.check_file_ready_pull('', test_file, test_cart)
             self.assertEqual(ready, -1)
             self.assertEqual(test_file.status, 'error')
 
-            #now check for an error with storage media
+            # now check for an error with storage media
             ready = cart_utils.check_file_ready_pull(resp_bad, test_file, test_cart)
             self.assertEqual(ready, -1)
             self.assertEqual(test_file.status, 'error')
 
     def test_check_file_ready_pull(self):
-        """test that checks to see if a file is ready to pull
-        by checking the archive response"""
+        """Test that checks to see if a file is ready to pull by checking the archive response."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             response = """{
                             "bytes_per_level": "(24L, 0L, 0L, 0L, 0L)",
@@ -206,7 +200,7 @@ class TestCartUtils(unittest.TestCase):
             self.assertNotEqual(test_file.status, 'error')
 
     def test_delete_cart_bundle(self):
-        """test that trys to delete a cart bundle"""
+        """Test that trys to delete a cart bundle."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
 
             test_cart = Cart.create(cart_uid='1', status='staging',
@@ -220,7 +214,7 @@ class TestCartUtils(unittest.TestCase):
 
     @mock.patch.object(shutil, 'rmtree')
     def test_delete_cart_bundle_fail(self, mock_rmtree):
-        """test that trys to delete a cart bundle but fails"""
+        """Test that trys to delete a cart bundle but fails."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
 
             test_cart = Cart.create(cart_uid='1', status='staging',
@@ -234,7 +228,7 @@ class TestCartUtils(unittest.TestCase):
             self.assertEqual(os.path.isdir(test_cart.bundle_path), True)
 
     def test_set_file_status(self):
-        """test that trys to set a specific files status"""
+        """Test that trys to set a specific files status."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
 
             test_cart = Cart.create(cart_uid='1', status='staging',
@@ -248,7 +242,7 @@ class TestCartUtils(unittest.TestCase):
             self.assertEqual(test_file.error, 'fake error')
 
     def test_status_details_fail(self):
-        """test status details fail"""
+        """Test status details fail."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
 
             test_cart = Cart.create(cart_uid='1', status='staging',
@@ -257,12 +251,12 @@ class TestCartUtils(unittest.TestCase):
                                     bundle_path='/tmp/1/1.txt')
             cart_utils = Cartutils()
 
-            #say file is way to big
+            # say file is way to big
             retval = cart_utils.check_status_details(test_cart, test_file, 99999999999999999999999999999, 1)
             self.assertEqual(retval, -1)
 
     def test_cart_no_hash_passed(self):
-        """test error with cart with no hash passed"""
+        """Test error with cart with no hash passed."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
 
             test_cart = Cart.create(cart_uid='1', status='staging',
@@ -276,7 +270,7 @@ class TestCartUtils(unittest.TestCase):
             self.assertNotEqual(retval, None)
 
     def test_lru_cart_delete(self):
-        """test that trys to delete a cart"""
+        """Test that trys to delete a cart."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
 
             test_cart = Cart.create(cart_uid='1', status='staging',
@@ -289,19 +283,19 @@ class TestCartUtils(unittest.TestCase):
             self.assertEqual(retval, True)
             test_c2 = Cart.get(Cart.id == test_cart2.id)
             self.assertEqual(test_c2.status, 'deleted')
-            #also hit error block when nothing to delete
+            # also hit error block when nothing to delete
             retval = cart_utils.lru_cart_delete(test_cart)
             self.assertEqual(retval, False)
 
     def test_bad_cart_status(self):
-        """test getting a status of a cart that doesnt exist"""
+        """Test getting a status of a cart that doesnt exist."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             cart_utils = Cartutils()
             retval = cart_utils.cart_status('2')
             self.assertEqual(retval[0], 'error')
 
     def test_bad_available_cart(self):
-        """test getting a cart that doesnt exist"""
+        """Test getting a cart that doesnt exist."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             cart_utils = Cartutils()
             retval = cart_utils.available_cart('2')
@@ -309,15 +303,16 @@ class TestCartUtils(unittest.TestCase):
 
     @mock.patch.object(Cartutils, 'delete_cart_bundle')
     def test_bad_stage(self, mock_delete_cart):
-        """test the bad stage of a archive file"""
+        """Test the bad stage of a archive file."""
         with test_database(SqliteDatabase(':memory:'), (Cart, File)):
             test_cart = Cart.create(cart_uid='1', status='staging')
+
             def fake_database_connect(cls_name):
-                """no error"""
+                """No error."""
                 return cls_name
 
             def fake_database_close(cls_name):
-                """no error"""
+                """No error."""
                 return cls_name
             cart.cart_orm.CartBase.database_connect = MethodType(fake_database_connect, cart.cart_orm.CartBase)
             cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
