@@ -1,3 +1,9 @@
-FROM python:2-onbuild
+FROM python:2
+
+WORKDIR /usr/src/app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir uwsgi
+COPY . .
 EXPOSE 8081
-CMD [ "python", "-u", "CartServer.py", "--port", "8081", "--address", "0.0.0.0" ]
+ENTRYPOINT ["/bin/bash", "/usr/src/app/entrypoint.sh"]
