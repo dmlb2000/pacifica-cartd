@@ -8,6 +8,7 @@ import os
 import logging
 
 
+# this is intended to be a specific config separate from other temporary files
 VOLUME_PATH = os.getenv('VOLUME_PATH', '/tmp/')
 
 # see if archive interface is specified.  If not build it from
@@ -40,8 +41,10 @@ AMQP_PASS = os.getenv('AMQP_PASS', 'guest')
 AMQP_ADDR = os.getenv('AMQP_PORT_5672_TCP_ADDR', 'localhost')
 AMQP_PORT = os.getenv('AMQP_PORT_5672_TCP_PORT', '5672')
 AMQP_VHOST = os.getenv('AMQP_VHOST', '/')
+AMQP_TRANSPORT = os.getenv('AMQP_TRANSPORT', 'amqp')
 
-BROKER_URL = 'amqp://{user}:{passwd}@{addr}:{port}/{vhost}'.format(
+BROKER_URL = '{trans}://{user}:{passwd}@{addr}:{port}/{vhost}'.format(
+    trans=AMQP_TRANSPORT,
     user=AMQP_USER,
     passwd=AMQP_PASS,
     addr=AMQP_ADDR,

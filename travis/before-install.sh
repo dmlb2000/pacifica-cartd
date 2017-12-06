@@ -5,7 +5,7 @@ if [ "$RUN_LINTS" = "true" ]; then
 else
   mysql -e 'CREATE DATABASE pacifica_cart;'
   pip install -e git://github.com/pacifica/pacifica-archiveinterface.git#egg=PacificaArchiveInterface
-  archiveinterfaceserver.py --config travis/config.cfg &
+  ArchiveInterfaceServer.py --config travis/config.cfg &
   sleep 3
   python travis/archiveinterfacepreload.py
   pip install codeclimate-test-reporter

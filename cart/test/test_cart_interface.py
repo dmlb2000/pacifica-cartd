@@ -19,7 +19,7 @@ CART_APP.conf.CELERY_ALWAYS_EAGER = True
 class TestCartInterface(unittest.TestCase):
     """Contain all the tests for the Cart Interface."""
 
-    endpoint_url = 'http://localhost:8080'
+    endpoint_url = 'http://localhost:8081'
 
     def setUp(self):
         """Create a new sqlite3 db."""
