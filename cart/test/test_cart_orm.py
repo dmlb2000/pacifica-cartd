@@ -25,7 +25,7 @@ class TestCartOrm(unittest.TestCase):
     def test_cart_orm_db_setup(self):
         """Call database_setup."""
         with test_database(self.sqlite_db, (Cart, File), create_tables=False):
-            database_setup(2)
+            database_setup(8)
             self.assertTrue(Cart.table_exists())
             self.assertTrue(File.table_exists())
 

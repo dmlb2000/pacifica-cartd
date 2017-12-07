@@ -13,4 +13,7 @@ setup(name='PacificaCartd',
       author_email='david.brown@pnnl.gov',
       packages=['cart'],
       scripts=['CartServer.py', 'DatabaseCreate.py'],
+      entry_point={
+          'console_scripts': ['CartServer=cart:main']
+      },
       install_requires=[str(ir.req) for ir in INSTALL_REQS])
