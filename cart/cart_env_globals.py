@@ -8,6 +8,9 @@ import os
 import logging
 
 
+# cherrypy config for the server
+CHERRYPY_CONFIG = os.getenv('CHERRYPY_CONFIG', 'server.conf')
+
 # this is intended to be a specific config separate from other temporary files
 VOLUME_PATH = os.getenv('VOLUME_PATH', '/tmp/')
 
