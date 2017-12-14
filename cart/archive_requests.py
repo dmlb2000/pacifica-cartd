@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """Module that is used by the cart to send requests to the archive interface."""
 from __future__ import absolute_import
 from json import dumps

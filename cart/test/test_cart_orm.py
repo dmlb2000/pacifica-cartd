@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 """This tests some of the cart orm class."""
 import unittest
 import os

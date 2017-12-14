@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 """
 Class for the cart interface.
 
@@ -44,7 +45,8 @@ class CartRoot(object):
     @cherrypy.config(**{'response.stream': True})
     def GET(uid, **kwargs):
         """Download the tar file created by the cart."""
-        rtn_name = kwargs.get('filename', 'data_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.tar')
+        rtn_name = kwargs.get(
+            'filename', 'data_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.tar')
         # get the bundle path if available
         cart_utils = Cartutils()
         cart_path = cart_utils.available_cart(uid)
@@ -54,7 +56,8 @@ class CartRoot(object):
             return 'The cart is not ready for download.'
         elif cart_path is None:
             # cart not found
-            raise cherrypy.HTTPError(404, 'The cart does not exist or has already been deleted')
+            raise cherrypy.HTTPError(
+                404, 'The cart does not exist or has already been deleted')
         if os.path.isdir(cart_path):
             # give back bundle here
             stderr.flush()
@@ -74,7 +77,8 @@ class CartRoot(object):
             wthread.daemon = True
             wthread.start()
             cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
-            cherrypy.response.headers['Content-Disposition'] = 'attachment; filename={}'.format(rtn_name)
+            cherrypy.response.headers['Content-Disposition'] = 'attachment; filename={}'.format(
+                rtn_name)
 
             def read():
                 """read some size from rfd."""

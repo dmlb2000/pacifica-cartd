@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """
 Used to load in all the carts environment variables.
 
@@ -20,7 +22,8 @@ ARCHIVE_INTERFACE_ADDR = os.getenv('ARCHIVEI_PORT_8080_TCP_ADDR', 'localhost')
 ARCHIVE_INTERFACE_PORT = os.getenv('ARCHIVEI_PORT_8080_TCP_PORT', '8080')
 ARCHIVE_INTERFACE_URL = ('http://' + ARCHIVE_INTERFACE_ADDR +
                          ':' + ARCHIVE_INTERFACE_PORT + '/')
-ARCHIVE_INTERFACE_URL = os.getenv('ARCHIVE_INTERFACE_URL', ARCHIVE_INTERFACE_URL)
+ARCHIVE_INTERFACE_URL = os.getenv(
+    'ARCHIVE_INTERFACE_URL', ARCHIVE_INTERFACE_URL)
 
 # buffer used for least recently used delete
 LRU_BUFFER_TIME = os.getenv('LRU_BUFFER_TIME', 0)

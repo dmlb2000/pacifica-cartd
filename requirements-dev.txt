@@ -7,6 +7,7 @@ mock
 MySQL-python
 -e git://github.com/pacifica/pacifica-archiveinterface.git#egg=PacificaArchiveInterface
 peewee
+pep257
 pre-commit
 psutil
 pylint

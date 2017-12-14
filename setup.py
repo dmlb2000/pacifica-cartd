@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 """Setup and install the cart."""
 from pip.req import parse_requirements
 from setuptools import setup
@@ -14,6 +15,6 @@ setup(name='PacificaCartd',
       packages=['cart'],
       scripts=['CartServer.py', 'DatabaseCreate.py'],
       entry_point={
-          'console_scripts': ['CartServer=cart:main']
+          'console_scripts': ['CartServer=cart.__main__:main']
       },
       install_requires=[str(ir.req) for ir in INSTALL_REQS])

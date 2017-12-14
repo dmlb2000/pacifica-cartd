@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 """Add Unit Tests for archive interface."""
 import unittest
 from json import dumps, loads

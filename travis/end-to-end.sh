@@ -10,6 +10,12 @@ coverage run --include='cart/*' -a -m pytest cart/test/cart_end_to_end_tests.py 
 sleep 4
 celery control shutdown || true
 kill $SERVER_PID
+wait $SERVER_PID
+# run the server from the module
+coverage run --include='cart/*' -p -m cart &
+SERVER_PID=$!
+sleep 1
+kill $SERVER_PID
 wait $SERVER_PID $CELERY_PID
 coverage combine -a .coverage*
 coverage report -m --fail-under 100

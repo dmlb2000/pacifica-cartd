@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """File that will tests the requests and coverage of the server and the tasks."""
 import unittest
 import os
@@ -60,7 +62,8 @@ class TestCartEndToEnd(unittest.TestCase):
                 'Content-Type': 'application/json'
             }
         )
-        self.assertEqual(resp.status_code, 201, 'Setup good cart for test failed.')
+        self.assertEqual(resp.status_code, 201,
+                         'Setup good cart for test failed.')
         return resp
 
     def test_post_cart(self, cart_id='36'):
@@ -73,7 +76,8 @@ class TestCartEndToEnd(unittest.TestCase):
         self.test_post_cart(cart_id)
 
         while True:
-            resp = self.session.head('http://127.0.0.1:8081/{}'.format(cart_id))
+            resp = self.session.head(
+                'http://127.0.0.1:8081/{}'.format(cart_id))
             resp_status = resp.headers['X-Pacifica-Status']
             resp_message = resp.headers['X-Pacifica-Message']
             resp_code = resp.status_code
@@ -90,7 +94,8 @@ class TestCartEndToEnd(unittest.TestCase):
         """Test the getting of a cart."""
         self.test_status_cart(cart_id)
 
-        resp = self.session.get('http://127.0.0.1:8081/{}?filename={}'.format(cart_id, cart_id))
+        resp = self.session.get(
+            'http://127.0.0.1:8081/{}?filename={}'.format(cart_id, cart_id))
         with open(cart_id, 'wb') as fdesc:
             for chunk in resp.iter_content(chunk_size=128):
                 fdesc.write(chunk)
@@ -98,14 +103,17 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(os.path.isfile(cart_id), True)
         saved_tar = tarfile.open(cart_id)
         tar_members = saved_tar.getnames()
-        self.assertTrue('38/1/2/3/foo.txt' in tar_members, '{} should have foo.txt in it'.format(tar_members))
-        data = saved_tar.extractfile(saved_tar.getmember('38/1/2/3/foo.txt')).read()
+        self.assertTrue('38/1/2/3/foo.txt' in tar_members,
+                        '{} should have foo.txt in it'.format(tar_members))
+        data = saved_tar.extractfile(
+            saved_tar.getmember('38/1/2/3/foo.txt')).read()
         self.assertEqual(data, 'Writing content for first file')
 
     def test_get_noncart(self, cart_id='86'):
         """Test the getting of a cart."""
         resp = self.session.get('http://127.0.0.1:8081/{}'.format(cart_id))
-        self.assertEqual(resp.json()['message'], 'The cart does not exist or has already been deleted')
+        self.assertEqual(
+            resp.json()['message'], 'The cart does not exist or has already been deleted')
         self.assertEqual(resp.status_code, 404)
 
     def test_delete_cart(self, cart_id='39'):
@@ -174,7 +182,8 @@ class TestCartEndToEnd(unittest.TestCase):
         for cart_file in File.select().where(File.cart == mycart.id):
             cart_file.status = 'staging'
             cart_file.save()
-        cart_utils.prepare_bundle(mycart.id)  # hitting more coverage, set files to staged
+        # hitting more coverage, set files to staged
+        cart_utils.prepare_bundle(mycart.id)
         for cart_file in File.select().where(File.cart == mycart.id):
             cart_file.status = 'staged'
             cart_file.save()
@@ -255,7 +264,8 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(resp.json()['message'], 'Cart Processing has begun')
 
         while True:
-            resp = self.session.head('http://127.0.0.1:8081/{}'.format(cart_id))
+            resp = self.session.head(
+                'http://127.0.0.1:8081/{}'.format(cart_id))
             resp_status = resp.headers['X-Pacifica-Status']
             resp_code = resp.status_code
             if (resp_code == 204 and resp_status != 'staging') or resp_code == 500:
@@ -318,7 +328,8 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(resp.json()['message'], 'Cart Processing has begun')
 
         while True:
-            resp = self.session.head('http://127.0.0.1:8081/{}'.format(cart_id))
+            resp = self.session.head(
+                'http://127.0.0.1:8081/{}'.format(cart_id))
             resp_status = resp.headers['X-Pacifica-Status']
             resp_code = resp.status_code
             if resp_code == 204 and resp_status != 'staging':  # pragma: no cover

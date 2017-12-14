@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """Preload the archive interface for testing."""
 import os
 import requests
@@ -33,10 +35,10 @@ def remove():
 
 def push2archive(filename):
     """Push the files to the archive using requests."""
-    f = open(filename, 'rb')
+    readfile = open(filename, 'rb')
 
-    requests.put(str(ARCHIVEURL + filename), data=f)
-    f.close()
+    requests.put(str(ARCHIVEURL + filename), data=readfile)
+    readfile.close()
 
 
 write()

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 """File used to unit test the pacifica_cart."""
 import unittest
 import os
@@ -60,7 +61,8 @@ class TestCartUtils(unittest.TestCase):
         """Test a error return from a file not ready to pull."""
         mock_makedirs.side_effect = OSError(mock.Mock(), 'Error')
         c_util = Cartutils()
-        self.assertRaises(OSError, c_util.create_bundle_directories, 'fakepath')
+        self.assertRaises(
+            OSError, c_util.create_bundle_directories, 'fakepath')
 
     def test_fix_absolute_path(self):
         """Test the correct creation of paths by removing absolute paths."""
@@ -174,7 +176,8 @@ class TestCartUtils(unittest.TestCase):
             self.assertEqual(test_file.status, 'error')
 
             # now check for an error with storage media
-            ready = cart_utils.check_file_ready_pull(resp_bad, test_file, test_cart)
+            ready = cart_utils.check_file_ready_pull(
+                resp_bad, test_file, test_cart)
             self.assertEqual(ready, -1)
             self.assertEqual(test_file.status, 'error')
 
@@ -237,7 +240,8 @@ class TestCartUtils(unittest.TestCase):
                                     bundle_path='/tmp/1/1.txt')
             cart_utils = Cartutils()
 
-            cart_utils.set_file_status(test_file, test_cart, 'error', 'fake error')
+            cart_utils.set_file_status(
+                test_file, test_cart, 'error', 'fake error')
             self.assertEqual(test_file.status, 'error')
             self.assertEqual(test_file.error, 'fake error')
 
@@ -252,7 +256,8 @@ class TestCartUtils(unittest.TestCase):
             cart_utils = Cartutils()
 
             # say file is way to big
-            retval = cart_utils.check_status_details(test_cart, test_file, 99999999999999999999999999999, 1)
+            retval = cart_utils.check_status_details(
+                test_cart, test_file, 99999999999999999999999999999, 1)
             self.assertEqual(retval, -1)
 
     def test_cart_no_hash_passed(self):
@@ -263,7 +268,8 @@ class TestCartUtils(unittest.TestCase):
                                     bundle_path='/tmp/1/')
             cart_utils = Cartutils()
 
-            data = json.loads('{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5"}]}')
+            data = json.loads(
+                '{"fileids": [{"id":"foo.txt", "path":"1/2/3/foo.txt", "hashtype":"md5"}]}')
 
             file_ids = data['fileids']
             retval = cart_utils.update_cart_files(test_cart, file_ids)
@@ -314,8 +320,10 @@ class TestCartUtils(unittest.TestCase):
             def fake_database_close(cls_name):
                 """No error."""
                 return cls_name
-            cart.cart_orm.CartBase.database_connect = MethodType(fake_database_connect, cart.cart_orm.CartBase)
-            cart.cart_orm.CartBase.database_close = MethodType(fake_database_close, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.database_close = MethodType(
+                fake_database_close, cart.cart_orm.CartBase)
+            cart.cart_orm.CartBase.database_connect = MethodType(
+                fake_database_connect, cart.cart_orm.CartBase)
             cart.cart_orm.CartBase.throw_error = False
             mock_delete_cart.return_value = False
             cart_util = Cartutils()

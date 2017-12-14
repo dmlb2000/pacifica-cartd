@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """File used to unit test the pacifica_cart."""
 import os
 import logging
@@ -7,7 +9,7 @@ from cherrypy.test import helper
 from playhouse.test_utils import test_database
 from peewee import SqliteDatabase
 import requests
-from cart import error_page_default
+from cart.__main__ import error_page_default
 from cart.cart_orm import Cart, File
 from cart.cart_interface import CartRoot
 from cart.celery import CART_APP
@@ -75,7 +77,8 @@ class TestCartInterface(helper.CPWebCase):
             self.assertEqual(req.status_code, 204)
             req = requests.get('{}/123'.format(self.url))
             self.assertEqual(req.status_code, 202)
-            self.assertEqual(req.text, 'The cart is not ready for download.', 'the right text came out.')
+            self.assertEqual(
+                req.text, 'The cart is not ready for download.', 'the right text came out.')
 
     def test_status_invalid_uid(self):
         """Testing the cart interface status."""

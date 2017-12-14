@@ -1,8 +1,9 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 """Run the Cart Server."""
 import cherrypy
-from cart import main
-from cart import CartRoot, error_page_default
+from cart.__main__ import main, error_page_default
+from cart.cart_interface import CartRoot
 from cart.cart_env_globals import CHERRYPY_CONFIG
 
 cherrypy.config.update({'error_page.default': error_page_default})

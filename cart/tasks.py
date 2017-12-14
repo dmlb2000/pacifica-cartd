@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """Module that contains all the amqp tasks that support the cart infrastructure."""
 from __future__ import absolute_import
 import os
@@ -32,7 +34,8 @@ def stage_files(file_ids, mycart_id):
         get_files_locally.delay(mycart.id)
     else:
         mycart.status = 'error'
-        mycart.error = 'Error parsing file Ids with error: ' + str(file_id_error)
+        mycart.error = 'Error parsing file Ids with error: ' + \
+            str(file_id_error)
         mycart.updated_date = datetime.datetime.now()
         mycart.save()
     Cart.database_close()
@@ -135,7 +138,8 @@ def pull_file(file_id, filepath, modtime, record_error):
 
     archive_request = ArchiveRequests()
     try:
-        archive_request.pull_file(cart_file.file_name, filepath, cart_file.hash_value, cart_file.hash_type)
+        archive_request.pull_file(
+            cart_file.file_name, filepath, cart_file.hash_value, cart_file.hash_type)
         cart_utils.set_file_status(cart_file, mycart, 'staged', False)
         os.utime(filepath, (int(float(modtime)), int(float(modtime))))
         Cart.database_close()

@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """Module that has the utility functionality for the cart."""
 from __future__ import absolute_import
 import os
@@ -174,9 +176,11 @@ class Cartutils(object):
         # set up saving path and return dictionary
         abs_cart_file_path = os.path.join(
             VOLUME_PATH, str(mycart.id), mycart.cart_uid, cart_file.bundle_path)
-        path_created = self.create_download_path(cart_file, mycart, abs_cart_file_path)
+        path_created = self.create_download_path(
+            cart_file, mycart, abs_cart_file_path)
         # Check size here and make sure enough space is available.
-        enough_space = self.check_space_requirements(cart_file, mycart, size_needed, True)
+        enough_space = self.check_space_requirements(
+            cart_file, mycart, size_needed, True)
         if path_created and enough_space:
             return {'modtime': mod_time, 'filepath': abs_cart_file_path,
                     'path_created': path_created, 'enough_space': enough_space}

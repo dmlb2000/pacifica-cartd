@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 """File used to unit test the pacifica_cart."""
 import unittest
 import os
