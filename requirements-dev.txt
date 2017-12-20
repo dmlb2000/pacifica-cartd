@@ -10,7 +10,7 @@ peewee
 pep257
 pre-commit
 psutil
-pylint
+pylint<1.8
 pytest
 radon
 requests
