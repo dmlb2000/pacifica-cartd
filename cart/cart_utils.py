@@ -387,7 +387,8 @@ class Cartutils(object):
                 try:
                     mycart = Cart.get(Cart.id == cartid)
                     mycart.status = 'error'
-                    mycart.error = 'Failed to pull file(s)'
+                    mycart.error = 'Failed to pull file({})'.format(
+                        c_file.error)
                     mycart.updated_date = datetime.datetime.now()
                     mycart.save()
                     Cart.database_close()

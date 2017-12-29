@@ -21,7 +21,11 @@ class TestCartOrm(unittest.TestCase):
 
     def tearDown(self):
         """Delete the sqlite3 db."""
-        os.unlink(self.sqlite_db_path)
+        try:
+            os.unlink(self.sqlite_db_path)
+        except OSError:  # pragma: no cover
+            # if this fails we don't really care...
+            pass
 
     def test_cart_orm_db_setup(self):
         """Call database_setup."""

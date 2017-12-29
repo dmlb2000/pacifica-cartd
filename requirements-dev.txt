@@ -4,13 +4,13 @@ codeclimate-test-reporter
 coverage>=4.0,<4.4
 httpretty
 mock
-MySQL-python
 -e git://github.com/pacifica/pacifica-archiveinterface.git#egg=PacificaArchiveInterface
 peewee
 pep257
 pre-commit
 psutil
 pylint<1.8
+pymysql
 pytest
 radon
 requests

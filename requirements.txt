@@ -1,7 +1,7 @@
 celery
 cherrypy
-MySQL-python
 peewee
 psutil
+pymysql
 requests
 setuptools

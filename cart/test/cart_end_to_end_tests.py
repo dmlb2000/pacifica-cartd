@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """File that will tests the requests and coverage of the server and the tasks."""
+from __future__ import print_function
 import unittest
+import sys
 import os
 import time
 import datetime
@@ -84,6 +86,7 @@ class TestCartEndToEnd(unittest.TestCase):
             if resp_code == 204 and resp_status != 'staging':
                 break
             if resp_code == 500:  # pragma: no cover
+                print(resp_message, file=sys.stderr)
                 break
             time.sleep(2)
 
@@ -224,7 +227,8 @@ class TestCartEndToEnd(unittest.TestCase):
         mycart.save()
         status = mycart.status
         for cart_file in File.select().where(File.cart == mycart.id):
-            pull_file(cart_file.id, '/tmp/some/Path', '1111', False)
+            pull_file(cart_file.id, '{}{}'.format(
+                os.path.sep, os.path.join('tmp', 'some', 'Path')), '1111', False)
         Cart.database_close()
         self.assertEqual(status, 'deleted')
 

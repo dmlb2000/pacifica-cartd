@@ -26,7 +26,7 @@ class TestArchiveRequests(unittest.TestCase):
         hashval = '5bf018b3c598df19b5f4363fc55f2f89'
         hashtype = 'md5'
         archreq.pull_file('1', '{}/1'.format(temp_dir), hashval, hashtype)
-        testfd = open('{}/1'.format(temp_dir), 'r')
+        testfd = open('{}/1'.format(temp_dir), 'rb')
         self.assertEqual(testfd.read(), response_body)
 
     @httpretty.activate

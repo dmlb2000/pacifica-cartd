@@ -1,5 +1,6 @@
 # Pacifica Data Cart
 [![Build Status](https://travis-ci.org/pacifica/pacifica-cartd.svg?branch=master)](https://travis-ci.org/pacifica/pacifica-cartd)
+[![Build status](https://ci.appveyor.com/api/projects/status/d6fd3fugytxeh5qp?svg=true)](https://ci.appveyor.com/project/dmlb2000/pacifica-cartd)
 [![Code Climate](https://codeclimate.com/github/pacifica/pacifica-cartd/badges/gpa.svg)](https://codeclimate.com/github/pacifica/pacifica-cartd)
 [![Test Coverage](https://codeclimate.com/github/pacifica/pacifica-cartd/badges/coverage.svg)](https://codeclimate.com/github/pacifica/pacifica-cartd/coverage)
 [![Issue Count](https://codeclimate.com/github/pacifica/pacifica-cartd/badges/issue_count.svg)](https://codeclimate.com/github/pacifica/pacifica-cartd)
