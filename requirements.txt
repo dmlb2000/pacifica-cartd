@@ -1,6 +1,6 @@
 celery
 cherrypy
-peewee
+peewee<3.0
 psutil
 pymysql
 requests

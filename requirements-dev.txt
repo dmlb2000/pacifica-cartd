@@ -5,7 +5,7 @@ coverage>=4.0,<4.4
 httpretty
 mock
 -e git://github.com/pacifica/pacifica-archiveinterface.git#egg=PacificaArchiveInterface
-peewee
+peewee<3.0
 pep257
 pre-commit
 psutil
