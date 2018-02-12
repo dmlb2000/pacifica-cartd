@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Setup and install the cart."""
 from pip.req import parse_requirements
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
 INSTALL_REQS = parse_requirements('requirements.txt', session='hack')
@@ -14,9 +14,9 @@ setup(
     description='Pacifica Cartd',
     author='David Brown',
     author_email='david.brown@pnnl.gov',
-    packages=['cart'],
+    packages=find_packages(),
     scripts=['CartServer.py', 'DatabaseCreate.py'],
-    entry_point={
+    entry_points={
         'console_scripts': ['CartServer=cart.__main__:main']
     },
     install_requires=[str(ir.req) for ir in INSTALL_REQS]
