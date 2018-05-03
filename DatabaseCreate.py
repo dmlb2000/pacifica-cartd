@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
 """Pacifica Cart Interface database creation."""
 from cart.cart_orm import database_setup
 

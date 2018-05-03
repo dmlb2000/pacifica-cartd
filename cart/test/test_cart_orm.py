@@ -2,48 +2,30 @@
 # -*- coding: utf-8 -*-
 """This tests some of the cart orm class."""
 import unittest
-import os
-from tempfile import mkstemp
-from types import MethodType
-from playhouse.test_utils import test_database
-from peewee import SqliteDatabase, OperationalError
+import mock
+from peewee import OperationalError
 from cart.cart_orm import database_setup, Cart, File
-import cart.cart_orm
+from cart.test.cart_db_setup import cart_dbsetup_gen
 
 
-class TestCartOrm(unittest.TestCase):
+class TestCartOrm(cart_dbsetup_gen(unittest.TestCase)):
     """Contains the cart orm tests."""
-
-    def setUp(self):
-        """Create a new sqlite3 db."""
-        self.sqlite_db_path = mkstemp(suffix='.orm.sqlite3')[1]
-        self.sqlite_db = SqliteDatabase(self.sqlite_db_path)
-
-    def tearDown(self):
-        """Delete the sqlite3 db."""
-        try:
-            os.unlink(self.sqlite_db_path)
-        except OSError:  # pragma: no cover
-            # if this fails we don't really care...
-            pass
 
     def test_cart_orm_db_setup(self):
         """Call database_setup."""
-        with test_database(self.sqlite_db, (Cart, File), create_tables=False):
-            database_setup(8)
-            self.assertTrue(Cart.table_exists())
-            self.assertTrue(File.table_exists())
+        database_setup(8)
+        self.assertTrue(Cart.table_exists())
+        self.assertTrue(File.table_exists())
 
-    def test_cart_orm_db_setup_error(self):
+    @mock.patch.object(Cart, 'database_connect')
+    @mock.patch.object(File, 'database_connect')
+    def test_cart_orm_db_setup_error(self, mock_cart_dbcon, mock_file_dbcon):
         """Call database_setup."""
-        def fake_database_connect(cls):
-            """Throw error during connect."""
-            cls.throw_error = True
-            raise OperationalError('Failing')
-        cart.cart_orm.CartBase.orig_database_connect = cart.cart_orm.CartBase.database_connect
-        cart.cart_orm.CartBase.database_connect = \
-            MethodType(fake_database_connect, cart.cart_orm.CartBase)
-        cart.cart_orm.CartBase.throw_error = False
-        with test_database(self.sqlite_db, (Cart, File), create_tables=False):
-            database_setup(2)
-        self.assertTrue(cart.cart_orm.CartBase.throw_error)
+        mock_cart_dbcon.side_effect = OperationalError('Failing')
+        mock_file_dbcon.side_effect = OperationalError('Failing')
+        hit_exception = False
+        try:
+            database_setup(8)
+        except OperationalError:
+            hit_exception = True
+        self.assertTrue(hit_exception)

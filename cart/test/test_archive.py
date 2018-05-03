@@ -27,7 +27,7 @@ class TestArchiveRequests(unittest.TestCase):
         hashtype = 'md5'
         archreq.pull_file('1', '{}/1'.format(temp_dir), hashval, hashtype)
         testfd = open('{}/1'.format(temp_dir), 'rb')
-        self.assertEqual(testfd.read(), response_body)
+        self.assertEqual(testfd.read().decode('UTF-8'), response_body)
 
     @httpretty.activate
     def test_archive_stage(self):
@@ -60,6 +60,7 @@ class TestArchiveRequests(unittest.TestCase):
             'x-pacifica-ctime': 'Sun, 06 Nov 1994 08:49:37 GMT',
             'x-pacifica-bytes-per-level': '0',
             'x-pacifica-file-storage-media': '0',
+            'x-content-length': '8',
             'last-modified': 'Sun, 06 Nov 1994 08:49:37 GMT'
         }
         httpretty.register_uri(httpretty.HEAD, '{}/1'.format(self.endpoint_url),

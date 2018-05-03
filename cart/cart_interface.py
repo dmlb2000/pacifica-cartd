@@ -10,10 +10,21 @@ from threading import Thread
 from datetime import datetime
 from sys import stderr
 from tarfile import TarFile
+from six import PY2
 import cherrypy
 from cart.tasks import create_cart
 from cart.cart_utils import Cartutils
 
+if PY2:  # pragma: no cover only works with one version of python
+    # pylint: disable=invalid-name
+    bytes_type = str
+    # pylint: enable=invalid-name
+else:  # pragma: no cover only will work on one version of python
+    # pylint: disable=invalid-name
+    def bytes_type(unicode_obj):
+        """Convert the unicode object into bytes."""
+        return bytes(unicode_obj, 'UTF-8')
+    # pylint: enable=invalid-name
 
 BLOCK_SIZE = 1 << 20
 
@@ -52,8 +63,8 @@ class CartRoot(object):
         cart_path = cart_utils.available_cart(uid)
         if cart_path is False:
             # cart not ready
-            cherrypy.response.status = 202
-            return 'The cart is not ready for download.'
+            cherrypy.response.status = '202 Accepted'
+            return bytes_type('The cart is not ready for download.')
         elif cart_path is None:
             # cart not found
             raise cherrypy.HTTPError(

@@ -108,7 +108,7 @@ def status_file_task(file_id):
 
     # Check to see if ready to pull.  If not recall this to check again
     # error on less then 0. No coverage on recall since it just calls the method again
-    if ready < 0:
+    if isinstance(ready, int) and ready < 0:
         Cart.database_close()
         cart_utils.prepare_bundle(mycart.id)
         return

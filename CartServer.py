@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+# pylint: disable=invalid-name
 """Run the Cart Server."""
 import cherrypy
 from cart.__main__ import main, error_page_default

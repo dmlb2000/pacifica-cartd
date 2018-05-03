@@ -6,11 +6,17 @@ import os
 import json
 import datetime
 import errno
+from math import floor
 import shutil
 import psutil
+import six
 from peewee import DoesNotExist
 from cart.cart_orm import Cart, File
 from cart.cart_env_globals import VOLUME_PATH, LRU_BUFFER_TIME
+
+# pylint: disable=invalid-name
+int_type = six.integer_types[-1]
+# pylint: enable=invalid-name
 
 
 class Cartutils(object):
@@ -73,7 +79,7 @@ class Cartutils(object):
         try:
             decoded = json.loads(response)
             filesize = decoded['filesize']
-            return long(filesize)
+            return int_type(filesize)
         except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = 'error'
             cart_file.error = """Failed to decode file size
@@ -94,7 +100,7 @@ class Cartutils(object):
         """
         try:
             # available space is in bytes
-            available_space = long(psutil.disk_usage(self._vol_path).free)
+            available_space = int_type(psutil.disk_usage(self._vol_path).free)
         except psutil.Error as ex:
             cart_file.status = 'error'
             cart_file.error = """Failed to get available file
@@ -195,7 +201,7 @@ class Cartutils(object):
         """
         try:
             decoded = json.loads(response)
-            mod_time = decoded['mtime']
+            mod_time = floor(float(decoded['mtime']))
             return mod_time
         except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = 'error'

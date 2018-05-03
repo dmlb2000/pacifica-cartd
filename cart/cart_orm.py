@@ -17,12 +17,13 @@ from cart.cart_env_globals import MYSQL_USER, MYSQL_PASS, MYSQL_ADDR
 from cart.cart_env_globals import MYSQL_PORT, MYSQL_DATABASE
 from cart.cart_env_globals import DATABASE_CONNECT_ATTEMPTS, DATABASE_WAIT
 
-
-DB = MySQLDatabase(MYSQL_DATABASE,
-                   host=MYSQL_ADDR,
-                   port=int(MYSQL_PORT),
-                   user=MYSQL_USER,
-                   passwd=MYSQL_PASS)
+DB = MySQLDatabase(
+    MYSQL_DATABASE,
+    user=MYSQL_USER,
+    password=MYSQL_PASS,
+    host=MYSQL_ADDR,
+    port=int(MYSQL_PORT)
+)
 
 
 def database_setup(attempts=0):
@@ -39,6 +40,7 @@ def database_setup(attempts=0):
             time.sleep(DATABASE_WAIT)
             attempts += 1
             database_setup(attempts)
+        raise OperationalError('Failed database connect retry.')
 
 
 class CartBase(Model):
@@ -79,7 +81,8 @@ class CartBase(Model):
 
     def reload(self):
         """Reload my current state from the DB."""
-        newer_self = self.get(self._meta.primary_key == self._get_pk_value())
+        newer_self = self.get(self._meta.primary_key == getattr(
+            self, self._meta.primary_key.name))
         for field_name in self._meta.fields.keys():
             val = getattr(newer_self, field_name)
             setattr(self, field_name, val)
