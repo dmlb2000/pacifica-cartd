@@ -15,6 +15,7 @@ from requests.adapters import HTTPAdapter
 from cart.celery import CART_APP
 from cart.cart_orm import Cart, File
 from cart.cart_utils import Cartutils
+from cart.cart_interface import bytes_type
 from cart.tasks import get_files_locally, pull_file, stage_files
 
 
@@ -110,7 +111,7 @@ class TestCartEndToEnd(unittest.TestCase):
                         '{} should have foo.txt in it'.format(tar_members))
         data = saved_tar.extractfile(
             saved_tar.getmember('38/1/2/3/foo.txt')).read()
-        self.assertEqual(data, 'Writing content for first file')
+        self.assertEqual(data, bytes_type('Writing content for first file'))
 
     def test_get_noncart(self, cart_id='86'):
         """Test the getting of a cart."""

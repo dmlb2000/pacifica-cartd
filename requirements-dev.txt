@@ -5,11 +5,11 @@ coverage>=4.0,<4.4
 httpretty
 mock
 -e git://github.com/pacifica/pacifica-archiveinterface.git#egg=PacificaArchiveInterface
-peewee<3.0
+peewee>2
 pep257
 pre-commit
 psutil
-pylint<1.8
+pylint
 pymysql
 pytest
 radon

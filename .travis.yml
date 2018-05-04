@@ -1,15 +1,15 @@
 services:
- - rabbitmq
- - mysql
+- rabbitmq
+- mysql
 language: python
 python:
- - 2.7
+- 2.7
+- 3.6
 
-matrix:
-  include:
-    - python: 2.7
-    - python: 2.7
-      env: RUN_LINTS=true
+env:
+- RUN_LINTS=true
+- RUN_LINTS=
+
 cache: pip
 
 before_install: bash -xe travis/before-install.sh

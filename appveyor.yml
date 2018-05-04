@@ -15,6 +15,7 @@ environment:
 
   matrix:
     - PYTHON: C:\Python27-x64
+    - PYTHON: C:\Python36-x64
 
 services:
   - mysql
@@ -24,7 +25,7 @@ before_test:
   - mysqladmin --host=%MYSQL_HOST% --user=%MYSQL_USER% --password=%MYSQL_PASSWORD% create pacifica_cart
   - mkdir C:\tmp
   - ps: >
-      Start-Process $env:PYTHON\python.exe -ArgumentList "$env:PYTHON\scripts\ArchiveInterfaceServer.py --config travis/config.cfg" -RedirectStandardError archive-error.log -RedirectStandardOutput archive-output.log;
+      Start-Process $env:PYTHON\python.exe -WorkingDirectory travis -ArgumentList "$env:PYTHON\scripts\ArchiveInterfaceServer.py --config config.cfg" -RedirectStandardError archive-error.log -RedirectStandardOutput archive-output.log;
       sleep 1;
       & "$env:PYTHON\python.exe" travis\archiveinterfacepreload.py;
       nuget install redis-64 -excludeversion;

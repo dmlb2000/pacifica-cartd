@@ -48,7 +48,7 @@ class ArchiveRequests(object):
         return {
             'message': headers['x-pacifica-messsage'],
             'file': file_name,
-            'filesize': headers['content-length'],
+            'filesize': headers['x-content-length'],
             'ctime': headers['x-pacifica-ctime'],
             'mtime': headers['last-modified'],
             'bytes_per_level': headers['x-pacifica-bytes-per-level'],
