@@ -1,4 +1,5 @@
 #!/bin/bash
+python /usr/src/app/DatabaseCreate.py
 uwsgi \
   --http-socket 0.0.0.0:8081 \
   --master \
