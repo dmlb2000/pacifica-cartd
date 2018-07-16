@@ -9,7 +9,7 @@ peewee>2
 pep257
 pre-commit
 psutil
-pylint
+pylint<2.0
 pymysql
 pytest
 radon
