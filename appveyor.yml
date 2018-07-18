@@ -15,7 +15,9 @@ environment:
 
   matrix:
     - PYTHON: C:\Python27-x64
+      MSVC_VERSION: "Visual Studio 10 Win64"
     - PYTHON: C:\Python36-x64
+      MSVC_VERSION: "Visual Studio 10 Win64"
 
 services:
   - mysql
@@ -33,8 +35,21 @@ before_test:
       redis-64\tools\redis-server.exe --service-start;
 
 install:
-  - '%PYTHON%\python.exe -m pip install -r requirements-dev.txt'
-  - '%PYTHON%\python.exe -m pip install celery[redis] eventlet'
+- ps: >
+    $env:PATH = "${env:PYTHON}\Scripts;${env:PATH}";
+    Invoke-WebRequest -OutFile sqlite.zip https://www.sqlite.org/2018/sqlite-dll-win64-x64-3240000.zip;
+    Invoke-WebRequest -OutFile sqlite-devel.zip https://www.sqlite.org/2018/sqlite-amalgamation-3240000.zip;
+    Expand-Archive sqlite.zip -DestinationPath sqlite3;
+    Expand-Archive sqlite-devel.zip -DestinationPath sqlite3;
+    cd sqlite3;
+    & "C:\Users\appveyor\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0\VC\Bin\amd64\link.exe" /lib /def:sqlite3.def;
+    cd ..;
+    cp sqlite3\sqlite3.dll "$env:PYTHON\DLLs\sqlite3.dll";
+    cp sqlite3\sqlite3.lib "$env:PYTHON\libs\sqlite3.lib";
+    cp sqlite3\sqlite-amalgamation-3240000\sqlite3.h "$env:PYTHON\include\sqlite3.h";
+    cp "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\stdint.h" "C:\Users\appveyor\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0\VC\include\stdint.h";
+    & $env:PYTHON\python.exe -m pip install -r requirements-dev.txt;
+    & $env:PYTHON\python.exe -m pip install celery[redis] eventlet;
 
 build: off
 
