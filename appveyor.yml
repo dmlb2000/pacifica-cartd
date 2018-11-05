@@ -3,13 +3,6 @@ pull_requests:
   do_not_increment_build_number: true
 
 environment:
-  MYSQL_HOST: localhost
-  MYSQL_USER: root
-  MYSQL_PASSWORD: Password12!
-  MYSQL_PATH: C:\Program Files\MySQL\MySQL Server 5.7
-  PGSQL_PATH: C:\Program Files\PostgreSQL\9.6
-  MYSQL_ENV_MYSQL_USER: root
-  MYSQL_ENV_MYSQL_PASSWORD: Password12!
   BROKER_URL: redis://127.0.0.1:6379/0
   BACKEND_URL: redis://127.0.0.1:6379/0
 
@@ -19,24 +12,26 @@ environment:
     - PYTHON: C:\Python36-x64
       MSVC_VERSION: "Visual Studio 10 Win64"
 
-services:
-  - mysql
-
 before_test:
-  - SET PATH=%MYSQL_PATH%\bin;%PATH%
-  - mysqladmin --host=%MYSQL_HOST% --user=%MYSQL_USER% --password=%MYSQL_PASSWORD% create pacifica_cart
-  - mkdir C:\tmp
-  - ps: >
-      Start-Process $env:PYTHON\python.exe -WorkingDirectory travis -ArgumentList "$env:PYTHON\scripts\ArchiveInterfaceServer.py --config config.cfg" -RedirectStandardError archive-error.log -RedirectStandardOutput archive-output.log;
-      sleep 1;
-      & "$env:PYTHON\python.exe" travis\archiveinterfacepreload.py;
-      nuget install redis-64 -excludeversion;
-      redis-64\tools\redis-server.exe --service-install;
-      redis-64\tools\redis-server.exe --service-start;
+- ps: >
+    . C:\pacifica\Scripts\activate.ps1;
+    $env:PATH = "${env:MYSQL_PATH}\bin;C:\pacifica\Scripts;${env:PATH}";
+    mkdir ~/.pacifica-cartd; Set-Content -Path ~/.pacifica-cartd/config.ini -Value "[database]\npeewee_url = sqliteext:///db.sqlite3\n";
+    $env:CART_CPCONFIG = "$PWD/server.conf";
+    $env:ARCHIVEINTERFACE_CPCONFIG = "$PWD/travis/server.conf";
+    mkdir C:\tmp;
+    Start-Process C:\pacifica\Scripts\pacifica-archiveinterface.exe -WorkingDirectory travis -ArgumentList "--config config.cfg" -RedirectStandardError archive-error.log -RedirectStandardOutput archive-output.log;
+    sleep 1;
+    python travis\archiveinterfacepreload.py;
+    nuget install redis-64 -excludeversion;
+    redis-64\tools\redis-server.exe --service-install;
+    redis-64\tools\redis-server.exe --service-start;
 
 install:
 - ps: >
-    $env:PATH = "${env:PYTHON}\Scripts;${env:PATH}";
+    & "$env:PYTHON\python.exe" -m virtualenv C:\pacifica;
+    . C:\pacifica\Scripts\activate.ps1;
+    python -m pip install --upgrade pip setuptools wheel;
     Invoke-WebRequest -OutFile sqlite.zip https://www.sqlite.org/2018/sqlite-dll-win64-x64-3240000.zip;
     Invoke-WebRequest -OutFile sqlite-devel.zip https://www.sqlite.org/2018/sqlite-amalgamation-3240000.zip;
     Expand-Archive sqlite.zip -DestinationPath sqlite3;
@@ -48,39 +43,44 @@ install:
     cp sqlite3\sqlite3.lib "$env:PYTHON\libs\sqlite3.lib";
     cp sqlite3\sqlite-amalgamation-3240000\sqlite3.h "$env:PYTHON\include\sqlite3.h";
     cp "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\stdint.h" "C:\Users\appveyor\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0\VC\include\stdint.h";
-    & $env:PYTHON\python.exe -m pip install -r requirements-dev.txt;
-    & $env:PYTHON\python.exe -m pip install celery[redis] eventlet;
+    pip install -r requirements-dev.txt;
+    pip install celery[redis] eventlet;
 
 build: off
 
 test_script:
-  - ps: >
-      & "$env:PYTHON\python.exe" -m coverage run --include="cart/*" -m pytest -v cart\test;
-      $env:ARCHIVEI_PORT_8080_TCP_ADDR = '127.0.0.1';
-      $back_proc = Start-Process $env:PYTHON\python.exe -ArgumentList "-m coverage run --include='cart/*' -p -m celery -A cart worker -l info -P eventlet" -PassThru -RedirectStandardError celery-error.log -RedirectStandardOutput celery-output.log;
-      $front_proc = Start-Process $env:PYTHON\python.exe -ArgumentList "-m coverage run --include='cart/*' -p -m cart --stop-after-a-moment" -PassThru -RedirectStandardError server-error.log -RedirectStandardOutput server-output.log;
-      sleep 1;
-      & "$env:PYTHON\python.exe" -m coverage run --include='cart/*' -a -m pytest cart/test/cart_end_to_end_tests.py -v;
-      $test_rc = $?;
-      if ( ! $test_rc ) {
+- ps: >
+    . C:\pacifica\Scripts\activate.ps1;
+    pre-commit run -a;
+    pip install .;
+    md5sum C:\tmp\foo.txt; md5sum C:\tmp\baz.ini; md5sum C:\tmp\bar.csv;
+    cd tests;
+    coverage run --include="*/site-packages/pacifica/cart/*" -p -m pytest -xv test;
+    python -c 'from pacifica.cart.orm import database_setup; database_setup()';
+    $back_proc = Start-Process C:\pacifica\Scripts\coverage.exe -ArgumentList "run --include='*/site-packages/pacifica/cart/*' -p -m celery -A pacifica.cart.tasks worker -l info -P solo -c 1" -PassThru -RedirectStandardError celery-error.log -RedirectStandardOutput celery-output.log;
+    $front_proc = Start-Process C:\pacifica\Scripts\coverage.exe -ArgumentList "run --include='*/site-packages/pacifica/cart/*' -p -m pacifica.cart --stop-after-a-moment" -PassThru -RedirectStandardError server-error.log -RedirectStandardOutput server-output.log;
+    sleep 1;
+    coverage run --include="*/site-packages/pacifica/cart/*" -p -m pytest -xv e2e;
+    $test_rc = $?;
+    if ( ! $test_rc ) {
               echo "================ Server Error ================";
               cat server-error.log;
               echo "================ Celery Error ================";
               cat celery-error.log;
               echo "================ Archive Error ================";
-              cat archive-error.log;
+              cat ../travis/archive-error.log;
               echo "================ Server Output ================";
               cat server-output.log;
               echo "================ Celery Output ================";
               cat celery-output.log;
               echo "================ Archive Output ================";
-              cat archive-output.log;
+              cat ../travis/archive-output.log;
               echo "================ End Logs ================";
               exit $test_rc;
-      }
-      echo 'Asking Celery to Shutdown';
-      & "$env:PYTHON\python.exe" -m celery -A cart control shutdown;
-      echo "Waiting for Server to Exit";
-      $front_proc | Wait-Process;
-      ls .coverage* | %{ & "$env:PYTHON\python.exe" -m coverage combine -a $_.name };
-      & "$env:PYTHON\python.exe" -m coverage report -m --fail-under=100;
+    }
+    echo 'Asking Celery to Shutdown';
+    celery -A pacifica.cart.tasks control shutdown;
+    echo "Waiting for Server to Exit";
+    $front_proc | Wait-Process;
+    ls .coverage* | %{ coverage combine -a $_.name };
+    coverage report -m --fail-under=100;

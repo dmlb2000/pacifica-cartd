@@ -7,18 +7,18 @@ from tempfile import mkdtemp
 import cherrypy
 from cherrypy.test import helper
 import requests
-from cart.__main__ import error_page_default
-from cart.cart_orm import Cart
-from cart.cart_interface import CartRoot
-from cart.celery import CART_APP
-from cart.test.cart_db_setup import cart_dbsetup_gen
+from pacifica.cart.orm import Cart
+from pacifica.cart.rest import CartRoot, error_page_default
+from pacifica.cart.tasks import CART_APP
+from pacifica.cart.globals import CHERRYPY_CONFIG
+from cart_db_setup_test import cart_dbsetup_gen
 
 CART_APP.conf.CELERY_ALWAYS_EAGER = True
 
 
 # there's a lot of testing with this class suckit pylint
 # pylint: disable=too-many-public-methods
-class TestCartInterface(cart_dbsetup_gen(helper.CPWebCase)):
+class TestRest(cart_dbsetup_gen(helper.CPWebCase)):
     """Contain all the tests for the Cart Interface."""
 
     PORT = 8081
@@ -34,8 +34,8 @@ class TestCartInterface(cart_dbsetup_gen(helper.CPWebCase)):
         logger.addHandler(logging.StreamHandler())
         os.environ['VOLUME_PATH'] = '{}{}'.format(mkdtemp(), os.path.sep)
         cherrypy.config.update({'error_page.default': error_page_default})
-        cherrypy.config.update('server.conf')
-        cherrypy.tree.mount(CartRoot(), '/', 'server.conf')
+        cherrypy.config.update(CHERRYPY_CONFIG)
+        cherrypy.tree.mount(CartRoot(), '/', CHERRYPY_CONFIG)
 
     def test_cart_int_get(self):
         """Testing the cart interface get method w/o file_wrapper."""

@@ -10,10 +10,12 @@ from threading import Thread
 from datetime import datetime
 from sys import stderr
 from tarfile import TarFile
+from json import dumps
 from six import PY2
 import cherrypy
-from cart.tasks import create_cart
-from cart.cart_utils import Cartutils
+from pacifica.cart.tasks import create_cart
+from pacifica.cart.utils import Cartutils
+from pacifica.cart.orm import Cart
 
 if PY2:  # pragma: no cover only works with one version of python
     # pylint: disable=invalid-name
@@ -27,6 +29,17 @@ else:  # pragma: no cover only will work on one version of python
     # pylint: enable=invalid-name
 
 BLOCK_SIZE = 1 << 20
+
+
+def error_page_default(**kwargs):
+    """The default error page should always enforce json."""
+    cherrypy.response.headers['Content-Type'] = 'application/json'
+    return dumps({
+        'status': kwargs['status'],
+        'message': kwargs['message'],
+        'traceback': kwargs['traceback'],
+        'version': kwargs['version']
+    })
 
 
 class CartInterfaceError(Exception):
@@ -60,7 +73,9 @@ class CartRoot(object):
             'filename', 'data_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.tar')
         # get the bundle path if available
         cart_utils = Cartutils()
+        Cart.database_connect()
         cart_path = cart_utils.available_cart(uid)
+        Cart.database_close()
         if cart_path is False:
             # cart not ready
             cherrypy.response.status = '202 Accepted'
@@ -108,7 +123,9 @@ class CartRoot(object):
     def HEAD(uid):
         """Get the status of a carts tar file."""
         cart_utils = Cartutils()
+        Cart.database_connect()
         status, message = cart_utils.cart_status(uid)
+        Cart.database_close()
         cherrypy.response.headers['X-Pacifica-Status'] = status
         cherrypy.response.headers['X-Pacifica-Message'] = message
         if status == 'error':
@@ -128,7 +145,9 @@ class CartRoot(object):
         """Get all the files locally and bundled."""
         data = cherrypy.request.json
         file_ids = data['fileids']
+        Cart.database_connect()
         create_cart(file_ids, uid)
+        Cart.database_close()
         cherrypy.response.status = '201 Created'
         return {'message': 'Cart Processing has begun'}
 
@@ -139,7 +158,9 @@ class CartRoot(object):
     def DELETE(uid):
         """Delete a cart that has been created."""
         cart_utils = Cartutils()
+        Cart.database_connect()
         message = cart_utils.remove_cart(uid)
+        Cart.database_close()
         if message is False:
             raise cherrypy.HTTPError(404, 'Not Found')
         return {'message': str(message)}

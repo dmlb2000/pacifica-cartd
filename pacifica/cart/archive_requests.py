@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from json import dumps
 import hashlib
 import requests
-from cart.cart_env_globals import ARCHIVE_INTERFACE_URL
+from pacifica.cart.config import get_config
 
 
 class ArchiveRequests(object):
@@ -13,7 +13,7 @@ class ArchiveRequests(object):
 
     def __init__(self):
         """Constructor for setting the AI URL."""
-        self._url = ARCHIVE_INTERFACE_URL
+        self._url = get_config().get('archiveinterface', 'url')
 
     def pull_file(self, archive_filename, cart_filepath, hashval, hashtype):
         """

@@ -1,14 +1,14 @@
 #!/bin/bash
-export MYSQL_ENV_MYSQL_PASSWORD=
-export MYSQL_ENV_MYSQL_USER=travis
-coverage run --include='cart/*' -p -m celery -A cart worker -l info &
+
+export CART_CPCONFIG="server.conf"
+python -c 'from pacifica.cart.orm import database_setup; database_setup()'
+coverage run --include='pacifica/*' -p -m celery -A pacifica.cart.tasks worker -l info -P solo -c 1 &
 CELERY_PID=$!
-coverage run --include='cart/*' -p -m cart --stop-after-a-moment &
+coverage run --include='pacifica/*' -p -m pacifica.cart --stop-after-a-moment &
 SERVER_PID=$!
 sleep 1
-coverage run --include='cart/*' -a -m pytest cart/test/cart_end_to_end_tests.py -v
-sleep 4
-celery -A cart control shutdown || true
+coverage run --include='pacifica/*' -a -m pytest pacifica/cart/test/cart_end_to_end_tests.py -xv
+celery -A pacifica.cart.tasks control shutdown || true
 wait $SERVER_PID $CELERY_PID
 coverage combine -a .coverage*
 coverage report -m --fail-under 100

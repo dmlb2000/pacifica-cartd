@@ -6,13 +6,13 @@ from json import dumps, loads
 from tempfile import mkdtemp
 import httpretty
 import requests
-from cart.archive_requests import ArchiveRequests
+from pacifica.cart.archive_requests import ArchiveRequests
 
 
 class TestArchiveRequests(unittest.TestCase):
     """Test the archive requests class."""
 
-    endpoint_url = 'http://localhost:8080'
+    endpoint_url = 'http://127.0.0.1:8080'
 
     @httpretty.activate
     def test_archive_get(self):

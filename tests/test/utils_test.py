@@ -8,13 +8,13 @@ from types import MethodType
 import shutil
 import mock
 import psutil
-from cart.cart_orm import Cart
-from cart.cart_utils import Cartutils
-import cart.cart_orm
-from cart.test.cart_db_setup import cart_dbsetup_gen
+from pacifica.cart.orm import Cart
+from pacifica.cart.utils import Cartutils
+import pacifica.cart.orm
+from cart_db_setup_test import cart_dbsetup_gen
 
 
-class TestCartUtils(cart_dbsetup_gen(unittest.TestCase)):
+class TestUtils(cart_dbsetup_gen(unittest.TestCase)):
     """Contains all the tests for the CartUtils class."""
 
     def test_create_download_path(self):
@@ -322,18 +322,18 @@ class TestCartUtils(cart_dbsetup_gen(unittest.TestCase)):
         """Test the bad stage of a archive file."""
         test_cart = Cart.create(cart_uid='1', status='staging')
 
-        def fake_database_connect(cls_name):
+        def fake_database_connect(cls_name):  # pragma: no cover testing code
             """No error."""
             return cls_name
 
-        def fake_database_close(cls_name):
+        def fake_database_close(cls_name):  # pragma: no cover testing code
             """No error."""
             return cls_name
-        cart.cart_orm.CartBase.database_close = MethodType(
-            fake_database_close, cart.cart_orm.CartBase)
-        cart.cart_orm.CartBase.database_connect = MethodType(
-            fake_database_connect, cart.cart_orm.CartBase)
-        cart.cart_orm.CartBase.throw_error = False
+        pacifica.cart.orm.CartBase.database_close = MethodType(
+            fake_database_close, pacifica.cart.orm.CartBase)
+        pacifica.cart.orm.CartBase.database_connect = MethodType(
+            fake_database_connect, pacifica.cart.orm.CartBase)
+        pacifica.cart.orm.CartBase.throw_error = False
         mock_delete_cart.return_value = False
         cart_util = Cartutils()
         return_val = cart_util.remove_cart(test_cart.id)
