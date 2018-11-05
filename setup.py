@@ -11,16 +11,16 @@ from setuptools import setup, find_packages
 INSTALL_REQS = parse_requirements('requirements.txt', session='hack')
 
 setup(
-    name='PacificaCartd',
+    name='pacifica-cartd',
     use_scm_version=True,
     setup_requires=['setuptools_scm'],
     description='Pacifica Cartd',
     author='David Brown',
-    author_email='david.brown@pnnl.gov',
+    author_email='dmlb2000@gmail.com',
     packages=find_packages(),
-    scripts=['CartServer.py', 'DatabaseCreate.py'],
+    namespace_packages=['pacifica'],
     entry_points={
-        'console_scripts': ['CartServer=cart.__main__:main']
+        'console_scripts': ['cart-server=pacifica.cart.__main__:main']
     },
     install_requires=[str(ir.req) for ir in INSTALL_REQS]
 )

@@ -3,20 +3,21 @@
 """File used to unit test the pacifica_cart tasks."""
 import os
 import unittest
+import datetime
 import json
 import mock
 import requests
-from cart.cart_orm import Cart, File
-from cart.tasks import stage_file_task, stage_files, status_file_task, pull_file
-from cart.archive_requests import ArchiveRequests
-from cart.cart_utils import Cartutils
-from cart.celery import CART_APP
-from cart.test.cart_db_setup import cart_dbsetup_gen
+from pacifica.cart.orm import Cart, File
+from pacifica.cart.tasks import stage_file_task, stage_files, status_file_task, pull_file
+from pacifica.cart.archive_requests import ArchiveRequests
+from pacifica.cart.utils import Cartutils
+from pacifica.cart.tasks import CART_APP
+from cart_db_setup_test import cart_dbsetup_gen
 
 CART_APP.conf.CELERY_ALWAYS_EAGER = True
 
 
-class TestCartTasks(cart_dbsetup_gen(unittest.TestCase)):
+class TestTasks(cart_dbsetup_gen(unittest.TestCase)):
     """Contains tests for tasks that dont need all services stood up."""
 
     @mock.patch.object(ArchiveRequests, 'stage_file')
@@ -189,3 +190,13 @@ class TestCartTasks(cart_dbsetup_gen(unittest.TestCase)):
         cart_after = Cart.get(Cart.id == test_cart.id)
         status = cart_after.status
         self.assertEqual(status, 'error')
+
+    @mock.patch.object(ArchiveRequests, 'pull_file')
+    def test_bad_deleted_cart(self, mock_pull):
+        """Test a error return from a file not ready to pull."""
+        test_cart = self.create_sample_cart()
+        test_file = self.create_sample_file(test_cart)
+        test_cart.deleted_date = datetime.datetime.now()
+        test_cart.save()
+        pull_file(test_file.id, '/tmp/1/1.txt', '9999999', False)
+        mock_pull.assert_not_called()

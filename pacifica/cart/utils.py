@@ -11,8 +11,8 @@ import shutil
 import psutil
 import six
 from peewee import DoesNotExist
-from cart.cart_orm import Cart, File
-from cart.cart_env_globals import VOLUME_PATH, LRU_BUFFER_TIME
+from pacifica.cart.orm import Cart, File
+from pacifica.cart.globals import VOLUME_PATH, LRU_BUFFER_TIME
 
 # pylint: disable=invalid-name
 int_type = six.integer_types[-1]
@@ -228,7 +228,6 @@ class Cartutils(object):
         """
         deleted_flag = True
         iterator = 0  # used to verify at least one cart deleted
-        Cart.database_connect()
         carts = (Cart
                  .select()
                  .where(
@@ -239,7 +238,6 @@ class Cartutils(object):
             success = cls.delete_cart_bundle(cart)
             if not success:
                 deleted_flag = False
-        Cart.database_close()
         if deleted_flag and iterator > 0:
             return 'Cart Deleted Successfully'
         elif deleted_flag:
@@ -295,7 +293,6 @@ class Cartutils(object):
     @staticmethod
     def cart_status(uid):
         """Get the status of a specified cart."""
-        Cart.database_connect()
         status = None
         try:
             mycart = (Cart
@@ -314,7 +311,6 @@ class Cartutils(object):
             # send the status and any available error text
             status = [mycart.status, mycart.error]
 
-        Cart.database_close()
         return status
 
     @staticmethod
@@ -324,7 +320,6 @@ class Cartutils(object):
 
         Returns the path to tar if yes, false if not. None if no cart.
         """
-        Cart.database_connect()
         cart_bundle_path = False
         try:
             mycart = (Cart
@@ -341,7 +336,6 @@ class Cartutils(object):
 
         if mycart and mycart.status == 'ready':
             cart_bundle_path = mycart.bundle_path
-        Cart.database_close()
         return cart_bundle_path
 
     ###########################################################################
@@ -385,7 +379,6 @@ class Cartutils(object):
         Before calling the bundling action.  If not will call
         itself to continue the waiting process
         """
-        Cart.database_connect()
         bundle_flag = True
         for c_file in File.select().where(File.cart == cartid):
             if c_file.status == 'error':
@@ -410,7 +403,6 @@ class Cartutils(object):
                 bundle_flag = False
 
         cls.tar_files(cartid, bundle_flag)
-        Cart.database_close()
 
     @staticmethod
     def tar_files(cartid, bundle_flag):
@@ -421,7 +413,6 @@ class Cartutils(object):
         everything together
         """
         if bundle_flag:
-            Cart.database_connect()
             try:
                 mycart = Cart.get(Cart.id == cartid)
                 bundle_path = os.path.join(
@@ -434,5 +425,3 @@ class Cartutils(object):
                 # case if record no longer exists
                 Cart.database_close()
                 return
-
-            Cart.database_close()

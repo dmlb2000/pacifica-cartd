@@ -1,5 +1,7 @@
 #!/bin/bash -xe
-pip install requests
+mkdir ~/.pacifica-cartd
+touch ~/.pacifica-cartd/config.ini
+pip install requests eventlet
 if [ "$RUN_LINTS" = "true" ]; then
   pip install pre-commit
 else

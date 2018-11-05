@@ -2,14 +2,21 @@
 # -*- coding: utf-8 -*-
 """Module that contains all the amqp tasks that support the cart infrastructure."""
 from __future__ import absolute_import
-import os
+from os import utime, getenv
 import datetime
 import requests
+from celery import Celery
 from peewee import DoesNotExist
-from cart.celery import CART_APP
-from cart.cart_orm import Cart, File
-from cart.cart_utils import Cartutils
-from cart.archive_requests import ArchiveRequests
+from pacifica.cart.orm import Cart, File
+from pacifica.cart.utils import Cartutils
+from pacifica.cart.archive_requests import ArchiveRequests
+
+
+CART_APP = Celery(
+    'cart',
+    broker=getenv('BROKER_URL', 'pyamqp://'),
+    backend=getenv('BACKEND_URL', 'rpc://')
+)
 
 
 @CART_APP.task(ignore_result=True)
@@ -141,7 +148,7 @@ def pull_file(file_id, filepath, modtime, record_error):
         archive_request.pull_file(
             cart_file.file_name, filepath, cart_file.hash_value, cart_file.hash_type)
         cart_utils.set_file_status(cart_file, mycart, 'staged', False)
-        os.utime(filepath, (int(float(modtime)), int(float(modtime))))
+        utime(filepath, (int(float(modtime)), int(float(modtime))))
         Cart.database_close()
     except requests.exceptions.RequestException as ex:
         # if request fails...try a second time, if that fails write error

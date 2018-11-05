@@ -6,17 +6,15 @@ import unittest
 import sys
 import os
 import time
-import datetime
 import tarfile
 import json
 from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
-from cart.celery import CART_APP
-from cart.cart_orm import Cart, File
-from cart.cart_utils import Cartutils
-from cart.cart_interface import bytes_type
-from cart.tasks import get_files_locally, pull_file, stage_files
+from pacifica.cart.tasks import CART_APP
+from pacifica.cart.utils import Cartutils
+from pacifica.cart.rest import bytes_type
+from pacifica.cart.tasks import pull_file
 
 
 def cart_json_helper():
@@ -132,74 +130,6 @@ class TestCartEndToEnd(unittest.TestCase):
         resp = self.session.delete('http://127.0.0.1:8081/{}'.format(cart_id))
         self.assertEqual(resp.json()['message'], 'Not Found')
 
-    def test_prepare_bundle(self):
-        """Test getting bundle files ready."""
-        data = json.loads(cart_json_helper())
-        file_ids = data['fileids']
-        Cart.database_connect()
-        mycart = Cart(cart_uid=117, status='staging')
-        mycart.save()
-        cart_utils = Cartutils()
-        cart_utils.update_cart_files(mycart, file_ids)
-        get_files_locally(mycart.id)
-        cart_utils.prepare_bundle(mycart.id)
-        status = mycart.status
-        cartid = mycart.id
-        while status == 'staging':
-            mycart = Cart.get(Cart.id == cartid)
-            status = mycart.status
-        Cart.database_close()
-        self.assertEqual(status, 'ready')
-
-    def test_prep_bundle_error(self):
-        """Test getting bundle ready with a file in error state."""
-        data = json.loads(cart_json_helper())
-        file_ids = data['fileids']
-        Cart.database_connect()
-        mycart = Cart(cart_uid=343, status='staging')
-        mycart.save()
-        cart_utils = Cartutils()
-        cart_utils.update_cart_files(mycart, file_ids)
-        get_files_locally(mycart.id)
-        for cart_file in File.select().where(File.cart == mycart.id):
-            cart_file.status = 'error'
-            cart_file.save()
-        cart_utils.prepare_bundle(mycart.id)
-        status = mycart.status
-        cartid = mycart.id
-        while status == 'staging':
-            mycart = Cart.get(Cart.id == cartid)
-            status = mycart.status
-        Cart.database_close()
-        self.assertEqual(status, 'error')
-
-    def test_prep_bundle_staging(self):
-        """Test getting bundle ready with a file in staging state."""
-        data = json.loads(cart_json_helper())
-        file_ids = data['fileids']
-        Cart.database_connect()
-        mycart = Cart(cart_uid=343, status='staging')
-        mycart.save()
-        cart_utils = Cartutils()
-        cart_utils.update_cart_files(mycart, file_ids)
-        get_files_locally(mycart.id)
-        for cart_file in File.select().where(File.cart == mycart.id):
-            cart_file.status = 'staging'
-            cart_file.save()
-        # hitting more coverage, set files to staged
-        cart_utils.prepare_bundle(mycart.id)
-        for cart_file in File.select().where(File.cart == mycart.id):
-            cart_file.status = 'staged'
-            cart_file.save()
-        cart_utils.prepare_bundle(mycart.id)  # call again after file update
-        status = mycart.status
-        cartid = mycart.id
-        while status == 'staging':
-            mycart = Cart.get(Cart.id == cartid)
-            status = mycart.status
-        Cart.database_close()
-        self.assertEqual(status, 'ready')
-
     def test_pull_invalid_file(self):
         """Test pulling a file id that doesnt exist."""
         pull_file('8765', 'some/bad/path', '1111', False)
@@ -212,26 +142,6 @@ class TestCartEndToEnd(unittest.TestCase):
         cart_utils.tar_files('8765', True)
         # no action happens on invalid cart to tar, so no assertion to check
         self.assertEqual(True, True)
-
-    def test_cart_deleted_date(self):
-        """Test getting bundle ready with a file in staging state."""
-        data = json.loads(cart_json_helper())
-        file_ids = data['fileids']
-        Cart.database_connect()
-        mycart = Cart(cart_uid=444, status='staging')
-        mycart.save()
-        cart_utils = Cartutils()
-        cart_utils.update_cart_files(mycart, file_ids)
-        get_files_locally(mycart.id)
-        mycart.status = 'deleted'
-        mycart.deleted_date = datetime.datetime.now()
-        mycart.save()
-        status = mycart.status
-        for cart_file in File.select().where(File.cart == mycart.id):
-            pull_file(cart_file.id, '{}{}'.format(
-                os.path.sep, os.path.join('tmp', 'some', 'Path')), '1111', False)
-        Cart.database_close()
-        self.assertEqual(status, 'deleted')
 
     def test_status_cart_notfound(self):
         """Test the status of a cart with cart not found."""
@@ -268,7 +178,7 @@ class TestCartEndToEnd(unittest.TestCase):
         )
         self.assertEqual(resp.json()['message'], 'Cart Processing has begun')
 
-        while True:
+        while True:  # pragma: no cover
             resp = self.session.head(
                 'http://127.0.0.1:8081/{}'.format(cart_id))
             resp_status = resp.headers['X-Pacifica-Status']
@@ -279,25 +189,6 @@ class TestCartEndToEnd(unittest.TestCase):
 
         self.assertEqual(resp_status, 'error')
         self.assertEqual(resp_code, 500)
-
-    def test_stage_files(self):
-        """Test getting bundle files ready."""
-        data = json.loads(cart_json_helper())
-        file_ids = data['fileids']
-        Cart.database_connect()
-        mycart = Cart(cart_uid=747, status='staging')
-        mycart.save()
-        cart_utils = Cartutils()
-        cart_utils.update_cart_files(mycart, file_ids)
-        stage_files(file_ids, mycart.id)
-        cart_utils.prepare_bundle(mycart.id)
-        status = mycart.status
-        cartid = mycart.id
-        while status == 'staging':
-            mycart = Cart.get(Cart.id == cartid)
-            status = mycart.status
-        Cart.database_close()
-        self.assertEqual(status, 'ready')
 
     def test_post_cart_bad_hash(self, cart_id='1136'):
         """Test the creation of a cart with bad hash."""

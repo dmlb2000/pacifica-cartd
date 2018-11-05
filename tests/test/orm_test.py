@@ -4,11 +4,11 @@
 import unittest
 import mock
 from peewee import OperationalError
-from cart.cart_orm import database_setup, Cart, File
-from cart.test.cart_db_setup import cart_dbsetup_gen
+from pacifica.cart.orm import database_setup, Cart, File
+from cart_db_setup_test import cart_dbsetup_gen
 
 
-class TestCartOrm(cart_dbsetup_gen(unittest.TestCase)):
+class TestOrm(cart_dbsetup_gen(unittest.TestCase)):
     """Contains the cart orm tests."""
 
     def test_cart_orm_db_setup(self):

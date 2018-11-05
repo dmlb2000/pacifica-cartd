@@ -1,57 +1,65 @@
-cartrabbit:
-  image: rabbitmq
-  container_name: cartrabbit
-  ports:
+version: '2'
+
+volumes:
+  archivedata:
+  cartdata:
+
+services:
+  cartrabbit:
+    image: rabbitmq
+    ports:
     - 5672:5672
 
-cartmysql:
-  image: mysql
-  container_name: cartmysql
-  environment:
-    MYSQL_ROOT_PASSWORD: root
-    MYSQL_DATABASE: pacifica_cart
-    MYSQL_USER: cartd
-    MYSQL_PASSWORD: cartd
-  ports:
+  cartmysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: pacifica_cartd
+      MYSQL_USER: cartd
+      MYSQL_PASSWORD: cartd
+    ports:
     - 3306:3306
 
-archiveinterface:
-  image: pacifica/archiveinterface
-  container_name: archiveinterface
-  ports:
+  archiveinterface:
+    image: pacifica/archiveinterface
+    ports:
     - 8080:8080
-  volumes:
-    - /srv:/srv
+    volumes:
+    - archivedata:/srv
 
 
-cartworkers:
-  container_name: cartworkers
-  build: .
-  dockerfile: Dockerfile
-  links:
+  cartworkers:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    links:
     - cartrabbit:amqp
     - cartmysql:mysql
     - archiveinterface:archivei
-  volumes:
-    - /shared:/shared
-  environment:
-    VOLUME_PATH: /shared/
-    LRU_BUFFER_TIME: 0
-    #ARCHIVE_INTERFACE_URL: None
+    volumes:
+    - cartdata:/shared
+    environment:
+      PEEWEE_ADDR: mysql
+      BROKER_URL: pyamqp://guest:guest@amqp:5672//
+      ARCHIVE_INTERFACE_URL: http://archivei:8080/
+      VOLUME_PATH: /shared/
+      LRU_BUFFER_TIME: 0
 
-cartserver:
-  container_name: cartserver
-  build: .
-  dockerfile: Dockerfile.wsgi
-  ports:
+  cartserver:
+    build:
+      context: .
+      dockerfile: Dockerfile.uwsgi
+    ports:
     - 8081:8081
-  links:
+    links:
     - cartrabbit:amqp
     - cartmysql:mysql
     - archiveinterface:archivei
-  volumes:
-    - /shared:/shared
-  environment:
-    VOLUME_PATH: /shared/
-    LRU_BUFFER_TIME: 0
-    #ARCHIVE_INTERFACE_URL: None
+    volumes:
+    - cartdata:/shared
+    environment:
+      PEEWEE_ADDR: mysql
+      BROKER_URL: pyamqp://guest:guest@amqp:5672//
+      ARCHIVE_INTERFACE_URL: http://archivei:8080/
+      VOLUME_PATH: /shared/
+      LRU_BUFFER_TIME: 0

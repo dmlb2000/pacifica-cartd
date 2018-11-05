@@ -1,17 +1,13 @@
-celery
-cherrypy
+-r requirements.txt
 codeclimate-test-reporter
 coverage>=4.0,<4.4
 httpretty
 mock
--e git://github.com/pacifica/pacifica-archiveinterface.git#egg=PacificaArchiveInterface
-peewee>2
+pacifica-archiveinterface
 pep257
 pre-commit
 psutil
 pylint<2.0
-pymysql
 pytest
 radon
-requests
-setuptools
+redis

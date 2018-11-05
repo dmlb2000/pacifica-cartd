@@ -1,17 +1,74 @@
-services:
-- rabbitmq
-- mysql
 language: python
-python:
-- 2.7
-- 3.6
-
+services:
+- redis-server
 env:
-- RUN_LINTS=true
-- RUN_LINTS=
-
-cache: pip
-
-before_install: bash -xe travis/before-install.sh
-install: pip install -r requirements-dev.txt
-script: bash -xe travis/test-script.sh
+  BROKER_URL: redis://127.0.0.1:6379/0
+  BACKEND_URL: redis://127.0.0.1:6379/0
+stages:
+- lint
+- test
+- deploy
+".script": &1
+- pip install .
+- export CART_CPCONFIG=$PWD/server.conf
+- cd tests
+- coverage run --include '*/site-packages/pacifica/cart/*' -p -m pytest -xv test
+- coverage run --include '*/site-packages/pacifica/cart/*' -p -m celery -A pacifica.cart.tasks worker -l info -c 1 -P solo & echo $! > celery.pid
+- coverage run --include '*/site-packages/pacifica/cart/*' -p -m pacifica.cart --stop-after-a-moment & echo $! > server.pid
+- sleep 1
+- coverage run --include '*/site-packages/pacifica/cart/*' -p -m pytest -xv e2e
+- kill `cat ../archive.pid`
+- celery -A pacifica.cart.tasks control shutdown || true
+- wait
+- coverage combine -a .coverage*
+- coverage report -m --fail-under 100
+".before_script": &2
+- export ARCHIVEINTERFACE_CPCONFIG="$PWD/travis/server.conf"
+- pacifica-archiveinterface --config travis/config.cfg & echo $! > archive.pid
+- sleep 1
+- python travis/archiveinterfacepreload.py
+jobs:
+  include:
+  - stage: lint
+    python: 3.6
+    before_script: skip
+    script: pre-commit run -a
+  - python: 2.7
+    before_script: skip
+    script: pre-commit run -a
+  - stage: test
+    script: *1
+    before_script: *2
+    python: 3.6
+  - script: *1
+    before_script: *2
+    python: 2.7
+  - stage: deploy
+    language: python
+    script: skip
+    before_script: skip
+    python: 3.6
+    deploy:
+      skip_cleanup: true
+      provider: pypi
+      user: dmlb2000
+      distributions: sdist bdist_wheel
+      password:
+        secure: XOS7c9h0d+WOQjGFgTSKnOK1jQQ1Rva0p0dtDXsoT58HMtpmdk/XHTdQeZZkBUlZ5FjjBlm6NRPQv/ZEoT8maRwOLBZpVsLp98DZjM84wNE7lxM3m3VxWbKHdMni5ZXKGKnU15u3WxA12FTjvMMUiwkDCi3sOeuOaFSS88QzZ3eL02/aOYc+/6ebUVjoU8yP7fU5u0wSK/9Ch/ne84liN0pxf+MlTWacYw4yvX1Wl2eKRmFta+PyXrJLsyJ5GKIhenP6uj2qvA06WH+O3AaaPr34/ZVCMxABmG/jp8qa/FmQwiXBZ9tfzNvBZclEaRpwjml6cMnSa1SC0G+qX1k6THdQAp2sSl4Gsl6HKLOQ7cDANKkHMDswjIFBqtFyokpVx6++6YaN/+KhWgYhh/vIITFxL972UE+aQMnSCbW+QPs0ljq2eyyErnpd4d4vV3SR4p71xBmJW/xmP6OdJChPMFv+wyzLFSe7f2eBBucFT/b3msci+NMwexZiCRs8/9/fRQ+s4hqHd69ofFfQfXE3UZxxF3Pc42whIdJ8v3xAtPkfZ3iEG8Gf4HuHqHvcMkMhmFL/2jD/fj3LYf3GqvC94I8GaZXvQ9EvJmqA6hDvoqFc6UokZ22rn//gmXNFrQz9/kdXdQOfgBNHq2rCiqp6JccR6Roty5hq0ZDxqQ0Q3fM=
+      on:
+        tags: true
+  - language: python
+    python: 2.7
+    script: skip
+    before_script: skip
+    deploy:
+      skip_cleanup: true
+      provider: pypi
+      user: dmlb2000
+      distributions: bdist_wheel
+      password:
+        secure: XOS7c9h0d+WOQjGFgTSKnOK1jQQ1Rva0p0dtDXsoT58HMtpmdk/XHTdQeZZkBUlZ5FjjBlm6NRPQv/ZEoT8maRwOLBZpVsLp98DZjM84wNE7lxM3m3VxWbKHdMni5ZXKGKnU15u3WxA12FTjvMMUiwkDCi3sOeuOaFSS88QzZ3eL02/aOYc+/6ebUVjoU8yP7fU5u0wSK/9Ch/ne84liN0pxf+MlTWacYw4yvX1Wl2eKRmFta+PyXrJLsyJ5GKIhenP6uj2qvA06WH+O3AaaPr34/ZVCMxABmG/jp8qa/FmQwiXBZ9tfzNvBZclEaRpwjml6cMnSa1SC0G+qX1k6THdQAp2sSl4Gsl6HKLOQ7cDANKkHMDswjIFBqtFyokpVx6++6YaN/+KhWgYhh/vIITFxL972UE+aQMnSCbW+QPs0ljq2eyyErnpd4d4vV3SR4p71xBmJW/xmP6OdJChPMFv+wyzLFSe7f2eBBucFT/b3msci+NMwexZiCRs8/9/fRQ+s4hqHd69ofFfQfXE3UZxxF3Pc42whIdJ8v3xAtPkfZ3iEG8Gf4HuHqHvcMkMhmFL/2jD/fj3LYf3GqvC94I8GaZXvQ9EvJmqA6hDvoqFc6UokZ22rn//gmXNFrQz9/kdXdQOfgBNHq2rCiqp6JccR6Roty5hq0ZDxqQ0Q3fM=
+      on:
+        tags: true
+install:
+- pip install -r requirements-dev.txt

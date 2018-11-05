@@ -10,20 +10,14 @@ Using PeeWee to implement the ORM.
 # pylint: disable=invalid-name
 import datetime
 import time
-from peewee import MySQLDatabase, PrimaryKeyField, CharField, DateTimeField
+from peewee import PrimaryKeyField, CharField, DateTimeField
 from peewee import ForeignKeyField, TextField
 from peewee import Model, OperationalError
-from cart.cart_env_globals import MYSQL_USER, MYSQL_PASS, MYSQL_ADDR
-from cart.cart_env_globals import MYSQL_PORT, MYSQL_DATABASE
-from cart.cart_env_globals import DATABASE_CONNECT_ATTEMPTS, DATABASE_WAIT
+from playhouse.db_url import connect
+from pacifica.cart.config import get_config
+from pacifica.cart.globals import DATABASE_CONNECT_ATTEMPTS, DATABASE_WAIT
 
-DB = MySQLDatabase(
-    MYSQL_DATABASE,
-    user=MYSQL_USER,
-    password=MYSQL_PASS,
-    host=MYSQL_ADDR,
-    port=int(MYSQL_PORT)
-)
+DB = connect(get_config().get('database', 'peewee_url'))
 
 
 def database_setup(attempts=0):

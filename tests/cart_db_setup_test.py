@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Test cart database setup class."""
 from peewee import SqliteDatabase
-from cart.cart_orm import Cart, File
+from pacifica.cart.orm import Cart, File
 
 
 def cart_dbsetup_gen(parent_cls):
