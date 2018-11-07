@@ -227,8 +227,8 @@ class TestUtils(cart_dbsetup_gen(unittest.TestCase)):
         cart_utils = Cartutils()
         os.makedirs(test_cart.bundle_path, 0o777)
         deleted = cart_utils.delete_cart_bundle(test_cart)
-        self.assertEqual(test_cart.status, 'deleted')
         self.assertEqual(deleted, True)
+        self.assertEqual(test_cart.status, 'deleted')
         self.assertEqual(os.path.isdir(test_cart.bundle_path), False)
 
     @mock.patch.object(shutil, 'rmtree')

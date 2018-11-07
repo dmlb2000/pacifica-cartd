@@ -18,4 +18,4 @@ class TestEnvGlobals(unittest.TestCase):
         # then we import the module
         mod = importlib.import_module('pacifica.cart.globals')
         # make sure the LOGGER attribute in the module exists
-        self.assertTrue(getattr(mod, 'LOGGER'))
+        self.assertTrue(getattr(mod, 'CHERRYPY_CONFIG'))

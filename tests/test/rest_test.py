@@ -26,6 +26,13 @@ class TestRest(cart_dbsetup_gen(helper.CPWebCase)):
     url = 'http://{0}:{1}'.format(HOST, PORT)
     headers = {'content-type': 'application/json'}
 
+    # pylint: disable=invalid-name
+    @classmethod
+    def tearDownClass(cls):
+        """Unset the VOLUME_PATH for future tests."""
+        del os.environ['VOLUME_PATH']
+    # pylint: enable=invalid-name
+
     @staticmethod
     def setup_server():
         """Start all the services."""

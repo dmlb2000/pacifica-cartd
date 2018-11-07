@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 """Configuration reading and validation module."""
 from os import getenv
+import logging
 try:
     from ConfigParser import SafeConfigParser
 except ImportError:  # pragma: no cover python 2 vs 3 issue
-    from configparser import SafeConfigParser
+    from configparser import ConfigParser as SafeConfigParser
 from pacifica.cart.globals import CONFIG_FILE
 
 
@@ -20,8 +21,21 @@ def get_config():
     configparser.add_section('database')
     configparser.set('database', 'peewee_url', getenv(
         'PEEWEE_URL', 'sqliteext:///db.sqlite3'))
+    configparser.set('database', 'debug_logging', getenv(
+        'DATABASE_DEBUG_LOGGING', 'False'))
+    configparser.set('database', 'connect_attempts', getenv(
+        'DATABASE_CONNECT_ATTEMPTS', '10'))
+    configparser.set('database', 'connect_wait', getenv(
+        'DATABASE_CONNECT_WAIT', '20'))
     configparser.add_section('archiveinterface')
     configparser.set('archiveinterface', 'url', getenv(
         'ARCHIVE_INTERFACE_URL', 'http://127.0.0.1:8080/'))
+    configparser.add_section('celery')
     configparser.read(CONFIG_FILE)
     return configparser
+
+
+if get_config().getboolean('database', 'debug_logging'):  # pragma: no cover used for debugging
+    LOGGER = logging.getLogger('peewee')
+    LOGGER.setLevel(logging.DEBUG)
+    LOGGER.addHandler(logging.StreamHandler())

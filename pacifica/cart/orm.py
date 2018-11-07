@@ -15,13 +15,14 @@ from peewee import ForeignKeyField, TextField
 from peewee import Model, OperationalError
 from playhouse.db_url import connect
 from pacifica.cart.config import get_config
-from pacifica.cart.globals import DATABASE_CONNECT_ATTEMPTS, DATABASE_WAIT
 
 DB = connect(get_config().get('database', 'peewee_url'))
 
 
 def database_setup(attempts=0):
     """Setup and create the database from the db connection."""
+    dbcon_attempts = get_config().getint('database', 'connect_attempts')
+    dbcon_wait = get_config().getint('database', 'connect_wait')
     try:
         Cart.database_connect()
         for cls in [Cart, File]:
@@ -29,9 +30,9 @@ def database_setup(attempts=0):
         Cart.database_close()
     except OperationalError:
         # couldnt connect, potentially wait and try again
-        if attempts < DATABASE_CONNECT_ATTEMPTS:
+        if attempts < dbcon_attempts:
             # wait specified time to try reconnecting
-            time.sleep(DATABASE_WAIT)
+            time.sleep(dbcon_wait)
             attempts += 1
             database_setup(attempts)
         raise OperationalError('Failed database connect retry.')

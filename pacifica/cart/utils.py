@@ -12,7 +12,7 @@ import psutil
 import six
 from peewee import DoesNotExist
 from pacifica.cart.orm import Cart, File
-from pacifica.cart.globals import VOLUME_PATH, LRU_BUFFER_TIME
+from pacifica.cart.config import get_config
 
 # pylint: disable=invalid-name
 int_type = six.integer_types[-1]
@@ -24,8 +24,8 @@ class Cartutils(object):
 
     def __init__(self):
         """Default constructor setting environment variable defaults."""
-        self._vol_path = VOLUME_PATH
-        self._lru_buff = LRU_BUFFER_TIME
+        self._vol_path = get_config().get('cart', 'volume_path')
+        self._lru_buff = get_config().get('cart', 'lru_buffer_time')
 
     ###########################################################################
     #
@@ -181,7 +181,7 @@ class Cartutils(object):
             return -1
         # set up saving path and return dictionary
         abs_cart_file_path = os.path.join(
-            VOLUME_PATH, str(mycart.id), mycart.cart_uid, cart_file.bundle_path)
+            self._vol_path, str(mycart.id), mycart.cart_uid, cart_file.bundle_path)
         path_created = self.create_download_path(
             cart_file, mycart, abs_cart_file_path)
         # Check size here and make sure enough space is available.
@@ -219,8 +219,7 @@ class Cartutils(object):
     #
     ###########################################################################
 
-    @classmethod
-    def remove_cart(cls, uid):
+    def remove_cart(self, uid):
         """
         Call when a DELETE request comes in.
 
@@ -235,7 +234,7 @@ class Cartutils(object):
                      (Cart.deleted_date.is_null(True))))
         for cart in carts:
             iterator += 1
-            success = cls.delete_cart_bundle(cart)
+            success = self.delete_cart_bundle(cart)
             if not success:
                 deleted_flag = False
         if deleted_flag and iterator > 0:
@@ -244,15 +243,14 @@ class Cartutils(object):
             return False  # already deleted
         return None  # unknown error
 
-    @staticmethod
-    def delete_cart_bundle(cart):
+    def delete_cart_bundle(self, cart):
         """
         Get the path to where a carts file are.
 
         Also attempt to delete the file tree.
         """
         try:
-            path_to_files = os.path.join(VOLUME_PATH, str(cart.id))
+            path_to_files = os.path.join(self._vol_path, str(cart.id))
             shutil.rmtree(path_to_files)
             cart.status = 'deleted'
             cart.deleted_date = datetime.datetime.now()
@@ -261,8 +259,7 @@ class Cartutils(object):
         except OSError:
             return False
 
-    @classmethod
-    def lru_cart_delete(cls, mycart):
+    def lru_cart_delete(self, mycart):
         """
         Delete the least recently used cart that isnt this one.
 
@@ -270,7 +267,7 @@ class Cartutils(object):
         """
         try:
             lru_time = datetime.datetime.now() - datetime.timedelta(
-                seconds=int(LRU_BUFFER_TIME))
+                seconds=int(self._lru_buff))
             del_cart = (Cart
                         .select()
                         .where(
@@ -279,7 +276,7 @@ class Cartutils(object):
                             (Cart.updated_date < lru_time))
                         .order_by(Cart.creation_date)
                         .get())
-            return cls.delete_cart_bundle(del_cart)
+            return self.delete_cart_bundle(del_cart)
         except DoesNotExist:
             # case if no cart exists that can be deleted
             return False
@@ -371,8 +368,7 @@ class Cartutils(object):
                     return ex  # return error so that the cart can be updated
             return None
 
-    @classmethod
-    def prepare_bundle(cls, cartid):
+    def prepare_bundle(self, cartid):
         """
         Check to see if all the files are staged locally.
 
@@ -402,10 +398,9 @@ class Cartutils(object):
             elif c_file.status != 'staged':
                 bundle_flag = False
 
-        cls.tar_files(cartid, bundle_flag)
+        self.tar_files(cartid, bundle_flag)
 
-    @staticmethod
-    def tar_files(cartid, bundle_flag):
+    def tar_files(self, cartid, bundle_flag):
         """
         Start to bundle all the files together.
 
@@ -416,7 +411,7 @@ class Cartutils(object):
             try:
                 mycart = Cart.get(Cart.id == cartid)
                 bundle_path = os.path.join(
-                    VOLUME_PATH, str(mycart.id), (mycart.cart_uid))
+                    self._vol_path, str(mycart.id), (mycart.cart_uid))
                 mycart.status = 'ready'
                 mycart.bundle_path = bundle_path
                 mycart.updated_date = datetime.datetime.now()
