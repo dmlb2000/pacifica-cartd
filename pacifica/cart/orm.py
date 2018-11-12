@@ -10,32 +10,86 @@ Using PeeWee to implement the ORM.
 # pylint: disable=invalid-name
 import datetime
 import time
-from peewee import PrimaryKeyField, CharField, DateTimeField
+from peewee import PrimaryKeyField, IntegerField, CharField, DateTimeField
 from peewee import ForeignKeyField, TextField
 from peewee import Model, OperationalError
 from playhouse.db_url import connect
 from pacifica.cart.config import get_config
 
+SCHEMA_MAJOR = 0
+SCHEMA_MINOR = 1
 DB = connect(get_config().get('database', 'peewee_url'))
 
 
-def database_setup(attempts=0):
-    """Setup and create the database from the db connection."""
-    dbcon_attempts = get_config().getint('database', 'connect_attempts')
-    dbcon_wait = get_config().getint('database', 'connect_wait')
-    try:
-        Cart.database_connect()
-        for cls in [Cart, File]:
-            cls.create_table(fail_silently=True)
-        Cart.database_close()
-    except OperationalError:
-        # couldnt connect, potentially wait and try again
-        if attempts < dbcon_attempts:
-            # wait specified time to try reconnecting
-            time.sleep(dbcon_wait)
-            attempts += 1
-            database_setup(attempts)
+class orm_sync(object):
+    """
+    Special module for syncing the orm.
+
+    This module should incorporate a schema migration strategy.
+
+    The supported versions migrating forward must be in a versions array
+    containing tuples for major and minor versions.
+
+    The version tuples are directly translated to method names in the
+    orm_update class for the update between those versions.
+
+    class orm_update:
+        versions = [
+            (0, 1),
+            (0, 2),
+            (1, 0),
+            (1, 1)
+        ]
+
+        def update_0_1_to_0_2():
+            ...
+        def update_0_2_to_1_0():
+            ...
+        ...
+
+    The body of the update should follow peewee migration practices.
+    http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#migrate
+    """
+
+    versions = [
+        (0, 1)
+    ]
+
+    @staticmethod
+    def dbconn_blocking():
+        """Wait for the db connection."""
+        dbcon_attempts = get_config().getint('database', 'connect_attempts')
+        dbcon_wait = get_config().getint('database', 'connect_wait')
+        while dbcon_attempts:
+            try:
+                Cart.database_connect()
+                return
+            except OperationalError:
+                # couldnt connect, potentially wait and try again
+                time.sleep(dbcon_wait)
+                dbcon_attempts -= 1
         raise OperationalError('Failed database connect retry.')
+
+    @staticmethod
+    def create_tables():
+        """Create the tables if they don't exist."""
+        for cls in [CartSystem, Cart, File]:
+            if not cls.table_exists():
+                cls.create_table()
+        CartSystem.get_or_create_version()
+
+    @classmethod
+    def update_tables(cls):  # pragma: no cover need to have at least two versions to update
+        """Update the database to the current version."""
+        verlist = cls.versions
+        db_ver = CartSystem.get_version()
+        if verlist.index(verlist[-1]) == verlist.index(db_ver):
+            # we have the current version don't update
+            return
+        for db_ver in verlist[verlist.index(db_ver):-1]:
+            next_db_ver = verlist[verlist.index(db_ver)+1]
+            getattr(cls, 'update_{}_to_{}'.format(
+                '_'.join(db_ver), '_'.join(next_db_ver)))()
 
 
 class CartBase(Model):
@@ -82,6 +136,37 @@ class CartBase(Model):
             val = getattr(newer_self, field_name)
             setattr(self, field_name, val)
         self._dirty.clear()
+
+
+class CartSystem(CartBase):
+    """Cart Schema Version Model."""
+
+    part = CharField(primary_key=True)
+    value = IntegerField(default=-1)
+
+    @classmethod
+    def get_or_create_version(cls):
+        """Set or create the current version of the schema."""
+        major = cls.get_or_create(part='major', value=SCHEMA_MAJOR)
+        minor = cls.get_or_create(part='minor', value=SCHEMA_MINOR)
+        return (major, minor)
+
+    @classmethod
+    def get_version(cls):
+        """Get the current version as a tuple."""
+        return (cls.get(part='major').value, cls.get(part='minor').value)
+
+    @classmethod
+    def is_equal(cls):
+        """Check to see if schema version matches code version."""
+        major, minor = cls.get_version()
+        return major == SCHEMA_MAJOR and minor == SCHEMA_MINOR
+
+    @classmethod
+    def is_safe(cls):
+        """Check to see if the schema version is safe for the code."""
+        major, _minor = cls.get_version()
+        return major == SCHEMA_MAJOR
 
 
 class Cart(CartBase):

@@ -10,7 +10,8 @@ from time import sleep
 from argparse import ArgumentParser, SUPPRESS
 from threading import Thread
 import cherrypy
-from pacifica.cart.orm import database_setup
+from peewee import OperationalError
+from pacifica.cart.orm import orm_sync, CartSystem, SCHEMA_MAJOR, SCHEMA_MINOR
 from pacifica.cart.rest import CartRoot, error_page_default
 from pacifica.cart.globals import CHERRYPY_CONFIG, CONFIG_FILE
 
@@ -52,7 +53,12 @@ def main():
                         default=False, dest='stop_later',
                         action='store_true')
     args = parser.parse_args()
-    database_setup()
+    orm_sync.dbconn_blocking()
+    if not CartSystem.is_safe():  # pragma: no cover until we have two versions this isn't able to be covered
+        raise OperationalError('Database version too old {} update to {}'.format(
+            '.'.join(CartSystem.get_version()),
+            '{}.{}'.format(SCHEMA_MAJOR, SCHEMA_MINOR)
+        ))
     stop_later(args.stop_later)
     cherrypy.config.update({'error_page.default': error_page_default})
     cherrypy.config.update({
@@ -60,6 +66,51 @@ def main():
         'server.socket_port': args.port
     })
     cherrypy.quickstart(CartRoot(), '/', args.cpconfig)
+
+
+def cmd():
+    """Main admin command line tool."""
+    parser = ArgumentParser(description='Cart admin tool.')
+    parser.add_argument(
+        '-c', '--config', metavar='CONFIG', type=str, default=CONFIG_FILE,
+        dest='config', help='cart config file'
+    )
+    subparsers = parser.add_subparsers(help='sub-command help')
+    db_parser = subparsers.add_parser(
+        'dbsync',
+        description='Update or Create the Database.'
+    )
+    db_parser.set_defaults(func=dbsync)
+    dbchk_parser = subparsers.add_parser(
+        'dbchk',
+        description='Check database against current version.'
+    )
+    dbchk_parser.add_argument(
+        '--equal', default=False,
+        dest='check_equal', action='store_true'
+    )
+    dbchk_parser.set_defaults(func=dbchk)
+    args = parser.parse_args()
+    args.func(args)
+
+
+def dbchk(args):
+    """Check the database for the version running."""
+    orm_sync.dbconn_blocking()
+    if args.check_equal:
+        return CartSystem.is_equal()
+    return CartSystem.is_safe()
+
+
+def dbsync(_args):
+    """Create or update the database."""
+    orm_sync.dbconn_blocking()
+    try:
+        CartSystem.get_version()
+    except OperationalError:
+        orm_sync.create_tables()
+        return
+    orm_sync.update_tables()  # pragma: no cover until we have two versions we can't cover this
 
 
 if __name__ == '__main__':

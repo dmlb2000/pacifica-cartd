@@ -12,7 +12,7 @@ if [[ -z $PEEWEE_DATABASE_URL ]] ; then
 fi
 mkdir ~/.pacifica-cartd/
 printf '[database]\npeewee_url = '${PEEWEE_DATABASE_URL}'\n' > ~/.pacifica-cartd/config.ini
-python -c 'from pacifica.cart.orm import database_setup; database_setup()'
+python -c 'from pacifica.cart.__main__ import cmd; cmd()' dbsync
 uwsgi \
   --http-socket 0.0.0.0:8081 \
   --master \
