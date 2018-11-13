@@ -12,17 +12,17 @@ stages:
 - pip install .
 - export CART_CPCONFIG=$PWD/server.conf
 - cd tests
-- coverage run --include '*/site-packages/pacifica/cart/*' -p -m pytest -xv test
+- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pytest -xv test
 - rm -f db.sqlite3
-- coverage run --include '*/site-packages/pacifica/cart/*' -p test/cmd_test.py dbsync
-- coverage run --include '*/site-packages/pacifica/cart/*' -p test/cmd_test.py dbchk --equal
-- coverage run --include '*/site-packages/pacifica/cart/*' -p test/cmd_test.py dbchk
-- coverage run --include '*/site-packages/pacifica/cart/*' -p -m celery -A pacifica.cart.tasks worker -l info -c 1 -P solo & echo $! > celery.pid
-- coverage run --include '*/site-packages/pacifica/cart/*' -p -m pacifica.cart --stop-after-a-moment & echo $! > server.pid
+- coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbsync
+- coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk --equal
+- coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk
+- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m celery -A pacifica.cartd.tasks worker -l info -c 1 -P solo & echo $! > celery.pid
+- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pacifica.cartd --stop-after-a-moment & echo $! > server.pid
 - sleep 1
-- coverage run --include '*/site-packages/pacifica/cart/*' -p -m pytest -xv e2e
+- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pytest -xv e2e
 - kill `cat ../archive.pid`
-- celery -A pacifica.cart.tasks control shutdown || true
+- celery -A pacifica.cartd.tasks control shutdown || true
 - wait
 - coverage combine -a .coverage*
 - coverage report -m --fail-under 100

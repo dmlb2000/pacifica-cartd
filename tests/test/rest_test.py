@@ -7,10 +7,10 @@ from tempfile import mkdtemp
 import cherrypy
 from cherrypy.test import helper
 import requests
-from pacifica.cart.orm import Cart
-from pacifica.cart.rest import CartRoot, error_page_default
-from pacifica.cart.tasks import CART_APP
-from pacifica.cart.globals import CHERRYPY_CONFIG
+from pacifica.cartd.orm import Cart
+from pacifica.cartd.rest import CartRoot, error_page_default
+from pacifica.cartd.tasks import CART_APP
+from pacifica.cartd.globals import CHERRYPY_CONFIG
 from cart_db_setup_test import cart_dbsetup_gen
 
 CART_APP.conf.CELERY_ALWAYS_EAGER = True

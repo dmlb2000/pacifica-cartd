@@ -6,7 +6,7 @@ from json import dumps, loads
 from tempfile import mkdtemp
 import httpretty
 import requests
-from pacifica.cart.archive_requests import ArchiveRequests
+from pacifica.cartd.archive_requests import ArchiveRequests
 
 
 class TestArchiveRequests(unittest.TestCase):

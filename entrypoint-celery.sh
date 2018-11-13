@@ -12,4 +12,4 @@ if [[ -z $PEEWEE_DATABASE_URL ]] ; then
 fi
 mkdir ~/.pacifica-cartd/
 printf '[database]\npeewee_url = '${PEEWEE_DATABASE_URL}'\n' > ~/.pacifica-cartd/config.ini
-celery -A pacifica.cart.tasks worker --loglevel=info
+celery -A pacifica.cartd.tasks worker --loglevel=info

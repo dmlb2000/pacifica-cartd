@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from json import dumps
 import hashlib
 import requests
-from pacifica.cart.config import get_config
+from .config import get_config
 
 
 class ArchiveRequests(object):

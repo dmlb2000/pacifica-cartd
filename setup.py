@@ -21,8 +21,8 @@ setup(
     namespace_packages=['pacifica'],
     entry_points={
         'console_scripts': [
-            'pacifica-cart=pacifica.cart.__main__:main',
-            'pacifica-cart-cmd=pacifica.cart.__main__:cmd'
+            'pacifica-cart=pacifica.cartd.__main__:main',
+            'pacifica-cart-cmd=pacifica.cartd.__main__:cmd'
         ]
     },
     install_requires=[str(ir.req) for ir in INSTALL_REQS]

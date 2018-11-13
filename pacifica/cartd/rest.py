@@ -13,9 +13,9 @@ from tarfile import TarFile
 from json import dumps
 from six import PY2
 import cherrypy
-from pacifica.cart.tasks import create_cart
-from pacifica.cart.utils import Cartutils
-from pacifica.cart.orm import Cart
+from .tasks import create_cart
+from .utils import Cartutils
+from .orm import Cart
 
 if PY2:  # pragma: no cover only works with one version of python
     # pylint: disable=invalid-name

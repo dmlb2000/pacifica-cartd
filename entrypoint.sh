@@ -12,9 +12,9 @@ if [[ -z $PEEWEE_DATABASE_URL ]] ; then
 fi
 mkdir ~/.pacifica-cartd/
 printf '[database]\npeewee_url = '${PEEWEE_DATABASE_URL}'\n' > ~/.pacifica-cartd/config.ini
-python -c 'from pacifica.cart.__main__ import cmd; cmd()' dbsync
+python -c 'from pacifica.cartd.__main__ import cmd; cmd()' dbsync
 uwsgi \
   --http-socket 0.0.0.0:8081 \
   --master \
   --die-on-term \
-  --wsgi-file /usr/src/app/pacifica/cart/wsgi.py "$@"
+  --wsgi-file /usr/src/app/pacifica/cartd/wsgi.py "$@"

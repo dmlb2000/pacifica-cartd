@@ -11,8 +11,8 @@ import shutil
 import psutil
 import six
 from peewee import DoesNotExist
-from pacifica.cart.orm import Cart, File
-from pacifica.cart.config import get_config
+from .orm import Cart, File
+from .config import get_config
 
 # pylint: disable=invalid-name
 int_type = six.integer_types[-1]

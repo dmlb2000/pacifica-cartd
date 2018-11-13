@@ -8,9 +8,9 @@ from types import MethodType
 import shutil
 import mock
 import psutil
-from pacifica.cart.orm import Cart
-from pacifica.cart.utils import Cartutils
-import pacifica.cart.orm
+from pacifica.cartd.orm import Cart
+from pacifica.cartd.utils import Cartutils
+import pacifica.cartd.orm
 from cart_db_setup_test import cart_dbsetup_gen
 
 
@@ -329,11 +329,11 @@ class TestUtils(cart_dbsetup_gen(unittest.TestCase)):
         def fake_database_close(cls_name):  # pragma: no cover testing code
             """No error."""
             return cls_name
-        pacifica.cart.orm.CartBase.database_close = MethodType(
-            fake_database_close, pacifica.cart.orm.CartBase)
-        pacifica.cart.orm.CartBase.database_connect = MethodType(
-            fake_database_connect, pacifica.cart.orm.CartBase)
-        pacifica.cart.orm.CartBase.throw_error = False
+        pacifica.cartd.orm.CartBase.database_close = MethodType(
+            fake_database_close, pacifica.cartd.orm.CartBase)
+        pacifica.cartd.orm.CartBase.database_connect = MethodType(
+            fake_database_connect, pacifica.cartd.orm.CartBase)
+        pacifica.cartd.orm.CartBase.throw_error = False
         mock_delete_cart.return_value = False
         cart_util = Cartutils()
         return_val = cart_util.remove_cart(test_cart.id)

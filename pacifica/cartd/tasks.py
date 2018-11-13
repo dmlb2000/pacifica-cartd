@@ -7,9 +7,9 @@ import datetime
 import requests
 from celery import Celery
 from peewee import DoesNotExist
-from pacifica.cart.orm import Cart, File
-from pacifica.cart.utils import Cartutils
-from pacifica.cart.archive_requests import ArchiveRequests
+from .orm import Cart, File
+from .utils import Cartutils
+from .archive_requests import ArchiveRequests
 
 
 CART_APP = Celery(

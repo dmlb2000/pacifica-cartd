@@ -11,9 +11,9 @@ from argparse import ArgumentParser, SUPPRESS
 from threading import Thread
 import cherrypy
 from peewee import OperationalError
-from pacifica.cart.orm import orm_sync, CartSystem, SCHEMA_MAJOR, SCHEMA_MINOR
-from pacifica.cart.rest import CartRoot, error_page_default
-from pacifica.cart.globals import CHERRYPY_CONFIG, CONFIG_FILE
+from .orm import orm_sync, CartSystem, SCHEMA_MAJOR, SCHEMA_MINOR
+from .rest import CartRoot, error_page_default
+from .globals import CHERRYPY_CONFIG, CONFIG_FILE
 
 
 def stop_later(doit=False):

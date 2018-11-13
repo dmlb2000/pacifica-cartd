@@ -14,7 +14,7 @@ from peewee import PrimaryKeyField, IntegerField, CharField, DateTimeField
 from peewee import ForeignKeyField, TextField
 from peewee import Model, OperationalError
 from playhouse.db_url import connect
-from pacifica.cart.config import get_config
+from .config import get_config
 
 SCHEMA_MAJOR = 0
 SCHEMA_MINOR = 1

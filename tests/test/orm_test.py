@@ -5,8 +5,8 @@ import os
 import unittest
 import mock
 from peewee import OperationalError
-from pacifica.cart.__main__ import dbsync
-from pacifica.cart.orm import Cart, File, orm_sync
+from pacifica.cartd.__main__ import dbsync
+from pacifica.cartd.orm import Cart, File, orm_sync
 from cart_db_setup_test import cart_dbsetup_gen
 
 
