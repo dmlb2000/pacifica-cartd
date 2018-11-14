@@ -10,7 +10,7 @@ from time import sleep
 from argparse import ArgumentParser, SUPPRESS
 from threading import Thread
 import cherrypy
-from peewee import OperationalError
+from peewee import OperationalError, PeeweeException
 from .orm import orm_sync, CartSystem, SCHEMA_MAJOR, SCHEMA_MINOR
 from .rest import CartRoot, error_page_default
 from .globals import CHERRYPY_CONFIG, CONFIG_FILE
@@ -114,7 +114,7 @@ def dbsync(_args):
     orm_sync.dbconn_blocking()
     try:
         CartSystem.get_version()
-    except OperationalError:
+    except PeeweeException:
         return orm_sync.create_tables()
     return orm_sync.update_tables()
 

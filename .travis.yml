@@ -11,7 +11,7 @@ stages:
 ".script": &1
 - export CARTD_CPCONFIG=$PWD/server.conf
 - cd tests
-- pip install pacifica-cartd
+- pip install pacifica-cartd==0.2.0
 - pacifica-cart-cmd dbsync
 - pip install ..
 - >
