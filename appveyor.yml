@@ -21,7 +21,7 @@ before_test:
     $env:ARCHIVEINTERFACE_CPCONFIG = "$PWD/travis/server.conf";
     mkdir C:\tmp;
     Start-Process C:\pacifica\Scripts\pacifica-archiveinterface.exe -WorkingDirectory travis -ArgumentList "--config config.cfg" -RedirectStandardError archive-error.log -RedirectStandardOutput archive-output.log;
-    sleep 1;
+    sleep 3;
     python travis\archiveinterfacepreload.py;
     nuget install redis-64 -excludeversion;
     redis-64\tools\redis-server.exe --service-install;
@@ -51,12 +51,21 @@ build: off
 test_script:
 - ps: >
     . C:\pacifica\Scripts\activate.ps1;
+    $env:CARTD_CPCONFIG = "$PWD/server.conf";
     pre-commit run -a;
-    pip install .;
-    $env:CART_CPCONFIG = "$PWD/server.conf";
-    md5sum C:\tmp\foo.txt; md5sum C:\tmp\baz.ini; md5sum C:\tmp\bar.csv;
     cd tests;
-    coverage run --include="*/site-packages/pacifica/cartd/*" -p -m pytest -xv test;
+    pip install pacifica-cartd;
+    pacifica-cart-cmd dbsync;
+    pip install ..;
+    echo "This command should fail";
+    coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pacifica.cartd;
+    if ($LastExitCode -eq 0) { $host.SetShouldExit(-1); };
+    coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk --equal;
+    if ($LastExitCode -eq 0) { $host.SetShouldExit(-1); };
+    coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk;
+    if ($LastExitCode -eq 0) { $host.SetShouldExit(-1); };
+    coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbsync;
+    coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pytest -xv test;
     rm -Force db.sqlite3;
     coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbsync;
     coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk --equal;

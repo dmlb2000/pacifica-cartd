@@ -6,6 +6,7 @@ import os
 import json
 import datetime
 import errno
+import tarfile
 from math import floor
 import shutil
 import psutil
@@ -24,8 +25,8 @@ class Cartutils(object):
 
     def __init__(self):
         """Default constructor setting environment variable defaults."""
-        self._vol_path = get_config().get('cart', 'volume_path')
-        self._lru_buff = get_config().get('cart', 'lru_buffer_time')
+        self._vol_path = get_config().get('cartd', 'volume_path')
+        self._lru_buff = get_config().get('cartd', 'lru_buffer_time')
 
     ###########################################################################
     #
@@ -398,25 +399,45 @@ class Cartutils(object):
             elif c_file.status != 'staged':
                 bundle_flag = False
 
-        self.tar_files(cartid, bundle_flag)
+        if bundle_flag:
+            self.tar_files(cartid)
 
-    def tar_files(self, cartid, bundle_flag):
+    def tar_files(self, cartid):
         """
         Start to bundle all the files together.
 
-        Due to streaming the tar we dont need to try and bundle
-        everything together
+        The option to do streaming download or not is
+        based on a system configuration.
         """
-        if bundle_flag:
-            try:
-                mycart = Cart.get(Cart.id == cartid)
+        try:
+            mycart = Cart.get(Cart.id == cartid)
+            if mycart.bundle:
                 bundle_path = os.path.join(
-                    self._vol_path, str(mycart.id), (mycart.cart_uid))
-                mycart.status = 'ready'
-                mycart.bundle_path = bundle_path
-                mycart.updated_date = datetime.datetime.now()
-                mycart.save()
-            except DoesNotExist:
+                    self._vol_path,
+                    str(mycart.id),
+                    mycart.cart_uid
+                )
+                bundle_tar = '{}.tar'.format(bundle_path)
+                cart_tar = tarfile.open(
+                    bundle_tar,
+                    mode='w'
+                )
+                cart_tar.add(
+                    bundle_path, arcname=os.path.basename(bundle_path))
+                cart_tar.close()
+                shutil.rmtree(bundle_path)
+                bundle_path = bundle_tar
+            else:
+                bundle_path = os.path.join(
+                    self._vol_path,
+                    str(mycart.id),
+                    mycart.cart_uid
+                )
+            mycart.status = 'ready'
+            mycart.bundle_path = bundle_path
+            mycart.updated_date = datetime.datetime.now()
+            mycart.save()
+        except DoesNotExist:
                 # case if record no longer exists
-                Cart.database_close()
-                return
+            Cart.database_close()
+            return

@@ -20,10 +20,10 @@ CART_APP = Celery(
 
 
 @CART_APP.task(ignore_result=True)
-def create_cart(file_ids, uid):
+def create_cart(file_ids, uid, bundle):
     """Create the cart or update previous."""
     Cart.database_connect()
-    mycart = Cart(cart_uid=uid, status='staging')
+    mycart = Cart(cart_uid=uid, status='staging', bundle=bundle)
     mycart.save()
     stage_files.delay(file_ids, mycart.id)
     Cart.database_close()

@@ -72,6 +72,34 @@ class TestCartEndToEnd(unittest.TestCase):
         resp = self.setup_good_cart(cart_id)
         self.assertEqual(resp.json()['message'], 'Cart Processing has begun')
 
+    def test_post_cart_bundle(self, cart_id='36a'):
+        """Test the creation of a cart."""
+        cart_data = json.loads(cart_json_helper())
+        cart_data['bundle'] = True
+        resp = self.session.post(
+            'http://127.0.0.1:8081/{}'.format(cart_id),
+            data=json.dumps(cart_data),
+            headers={
+                'Content-Type': 'application/json'
+            }
+        )
+        self.assertEqual(
+            resp.status_code, 201,
+            'Setup good cart for test failed.'
+        )
+        self.assertEqual(resp.json()['message'], 'Cart Processing has begun')
+        time.sleep(5)
+        resp = self.session.get(
+            'http://127.0.0.1:8081/{}?filename={}'.format(cart_id, cart_id))
+        with open(cart_id, 'wb') as fdesc:
+            for chunk in resp.iter_content(chunk_size=128):
+                fdesc.write(chunk)
+        self.assertEqual(os.path.isfile(cart_id), True)
+        saved_tar = tarfile.open(cart_id)
+        tar_members = saved_tar.getnames()
+        self.assertTrue('36a/1/2/3/foo.txt' in tar_members,
+                        '{} should have foo.txt in it'.format(tar_members))
+
     def test_status_cart(self, cart_id='37'):
         """Test the status of a cart."""
         self.test_post_cart(cart_id)
@@ -139,7 +167,7 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_tar_invalid_cart(self):
         """Test pulling a file id that doesnt exist."""
         cart_utils = Cartutils()
-        cart_utils.tar_files('8765', True)
+        cart_utils.tar_files('8765')
         # no action happens on invalid cart to tar, so no assertion to check
         self.assertEqual(True, True)
 

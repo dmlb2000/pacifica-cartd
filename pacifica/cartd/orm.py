@@ -11,13 +11,14 @@ Using PeeWee to implement the ORM.
 import datetime
 import time
 from peewee import PrimaryKeyField, IntegerField, CharField, DateTimeField
-from peewee import ForeignKeyField, TextField
+from peewee import ForeignKeyField, TextField, BooleanField
 from peewee import Model, OperationalError
+from playhouse.migrate import SchemaMigrator, migrate
 from playhouse.db_url import connect
 from .config import get_config
 
-SCHEMA_MAJOR = 0
-SCHEMA_MINOR = 1
+SCHEMA_MAJOR = 1
+SCHEMA_MINOR = 0
 DB = connect(get_config().get('database', 'peewee_url'))
 
 
@@ -52,7 +53,8 @@ class orm_sync(object):
     """
 
     versions = [
-        (0, 1)
+        (0, 1),
+        (1, 0)
     ]
 
     @staticmethod
@@ -79,17 +81,36 @@ class orm_sync(object):
         CartSystem.get_or_create_version()
 
     @classmethod
-    def update_tables(cls):  # pragma: no cover need to have at least two versions to update
+    def update_0_1_to_1_0(cls):
+        """Update by adding the boolean column."""
+        migrator = SchemaMigrator(DB)
+        migrate(
+            migrator.add_column(
+                'cart',
+                'bundle',
+                BooleanField(default=False, null=True)
+            )
+        )
+
+    @classmethod
+    def update_tables(cls):
         """Update the database to the current version."""
         verlist = cls.versions
         db_ver = CartSystem.get_version()
         if verlist.index(verlist[-1]) == verlist.index(db_ver):
             # we have the current version don't update
             return
-        for db_ver in verlist[verlist.index(db_ver):-1]:
-            next_db_ver = verlist[verlist.index(db_ver)+1]
-            getattr(cls, 'update_{}_to_{}'.format(
-                '_'.join(db_ver), '_'.join(next_db_ver)))()
+        with Cart.atomic():
+            for db_ver in verlist[verlist.index(db_ver):-1]:
+                next_db_ver = verlist[verlist.index(db_ver)+1]
+                method_name = 'update_{}_to_{}'.format(
+                    '{}_{}'.format(*db_ver),
+                    '{}_{}'.format(*next_db_ver)
+                )
+                getattr(cls, method_name)()
+            CartSystem.drop_table()
+            CartSystem.create_table()
+            CartSystem.get_or_create_version()
 
 
 class CartBase(Model):
@@ -175,6 +196,7 @@ class Cart(CartBase):
     id = PrimaryKeyField()
     cart_uid = CharField(default=1)
     bundle_path = CharField(default='')
+    bundle = BooleanField(default=False, null=True)
     creation_date = DateTimeField(default=datetime.datetime.now)
     updated_date = DateTimeField(default=datetime.datetime.now)
     deleted_date = DateTimeField(null=True)

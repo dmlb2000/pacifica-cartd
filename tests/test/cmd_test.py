@@ -4,4 +4,4 @@
 from pacifica.cartd.__main__ import cmd
 
 if __name__ == '__main__':
-    cmd()
+    exit(cmd())

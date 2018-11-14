@@ -27,7 +27,7 @@ def stop_later(doit=False):
 
         Hopefully this is long enough for the end-to-end tests to finish
         """
-        sleep(60)
+        sleep(90)
         cherrypy.engine.exit()
     sleep_thread = Thread(target=sleep_then_exit)
     sleep_thread.daemon = True
@@ -54,9 +54,9 @@ def main():
                         action='store_true')
     args = parser.parse_args()
     orm_sync.dbconn_blocking()
-    if not CartSystem.is_safe():  # pragma: no cover until we have two versions this isn't able to be covered
+    if not CartSystem.is_safe():
         raise OperationalError('Database version too old {} update to {}'.format(
-            '.'.join(CartSystem.get_version()),
+            '{}.{}'.format(*(CartSystem.get_version())),
             '{}.{}'.format(SCHEMA_MAJOR, SCHEMA_MINOR)
         ))
     stop_later(args.stop_later)
@@ -91,15 +91,22 @@ def cmd():
     )
     dbchk_parser.set_defaults(func=dbchk)
     args = parser.parse_args()
-    args.func(args)
+    return args.func(args)
+
+
+def bool2cmdint(command_bool):
+    """Convert a boolean to either 0 for true  or -1 for false."""
+    if command_bool:
+        return 0
+    return -1
 
 
 def dbchk(args):
     """Check the database for the version running."""
     orm_sync.dbconn_blocking()
     if args.check_equal:
-        return CartSystem.is_equal()
-    return CartSystem.is_safe()
+        return bool2cmdint(CartSystem.is_equal())
+    return bool2cmdint(CartSystem.is_safe())
 
 
 def dbsync(_args):
@@ -108,9 +115,8 @@ def dbsync(_args):
     try:
         CartSystem.get_version()
     except OperationalError:
-        orm_sync.create_tables()
-        return
-    orm_sync.update_tables()  # pragma: no cover until we have two versions we can't cover this
+        return orm_sync.create_tables()
+    return orm_sync.update_tables()
 
 
 if __name__ == '__main__':

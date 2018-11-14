@@ -13,9 +13,11 @@ from tarfile import TarFile
 from json import dumps
 from six import PY2
 import cherrypy
+from cherrypy.lib import static
 from .tasks import create_cart
 from .utils import Cartutils
 from .orm import Cart
+from .config import get_config
 
 if PY2:  # pragma: no cover only works with one version of python
     # pylint: disable=invalid-name
@@ -66,7 +68,6 @@ class CartRoot(object):
     # Cherrypy requires these named methods.
     # pylint: disable=invalid-name
     @staticmethod
-    @cherrypy.config(**{'response.stream': True})
     def GET(uid, **kwargs):
         """Download the tar file created by the cart."""
         rtn_name = kwargs.get(
@@ -102,6 +103,7 @@ class CartRoot(object):
             wthread = Thread(target=do_work)
             wthread.daemon = True
             wthread.start()
+            cherrypy.response.stream = True
             cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
             cherrypy.response.headers['Content-Disposition'] = 'attachment; filename={}'.format(
                 rtn_name)
@@ -114,6 +116,13 @@ class CartRoot(object):
                     buf = rfd.read(BLOCK_SIZE)
                 wthread.join()
             return read()
+        elif os.path.isfile(cart_path):
+            return static.serve_file(
+                cart_path,
+                'application/octet-stream',
+                'attachment',
+                rtn_name
+            )
         raise cherrypy.HTTPError(404, 'Not Found')
 
     # Cherrypy requires these named methods.
@@ -145,8 +154,15 @@ class CartRoot(object):
         """Get all the files locally and bundled."""
         data = cherrypy.request.json
         file_ids = data['fileids']
+        bundle = data.get(
+            'bundle',
+            get_config().getboolean(
+                'cartd',
+                'bundle_task'
+            )
+        )
         Cart.database_connect()
-        create_cart(file_ids, uid)
+        create_cart(file_ids, uid, bundle)
         Cart.database_close()
         cherrypy.response.status = '201 Created'
         return {'message': 'Cart Processing has begun'}
