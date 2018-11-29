@@ -115,6 +115,7 @@ def dbsync(_args):
     try:
         CartSystem.get_version()
     except PeeweeException:
+        orm_sync.dbconn_blocking()
         return orm_sync.create_tables()
     return orm_sync.update_tables()
 
