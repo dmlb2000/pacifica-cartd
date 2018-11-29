@@ -297,5 +297,5 @@ sudo docker exec -i -t cartserver /bin/bash
 ```
 once in run the database creation script:
 ```
-python database_create.py
+pacifica-cartd-cmd dbsync
 ```
