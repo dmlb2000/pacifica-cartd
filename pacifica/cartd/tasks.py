@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Module that contains all the amqp tasks that support the cart infrastructure."""
 from __future__ import absolute_import
-from os import utime, getenv
+from os import utime
 import datetime
 import requests
 from celery import Celery
@@ -10,12 +10,13 @@ from peewee import DoesNotExist
 from .orm import Cart, File
 from .utils import Cartutils
 from .archive_requests import ArchiveRequests
+from .config import get_config
 
 
 CART_APP = Celery(
     'cart',
-    broker=getenv('BROKER_URL', 'pyamqp://'),
-    backend=getenv('BACKEND_URL', 'rpc://')
+    broker=get_config().get('celery', 'broker_url'),
+    backend=get_config().get('celery', 'backend_url')
 )
 
 

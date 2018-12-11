@@ -33,6 +33,10 @@ def get_config():
     configparser.set('archiveinterface', 'url', getenv(
         'ARCHIVE_INTERFACE_URL', 'http://127.0.0.1:8080/'))
     configparser.add_section('celery')
+    configparser.set('celery', 'broker_url', getenv(
+        'BROKER_URL', 'pyamqp://'))
+    configparser.set('celery', 'backend_url', getenv(
+        'BACKEND_URL', 'rpc://'))
     configparser.read(CONFIG_FILE)
     return configparser
 
