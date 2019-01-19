@@ -11,7 +11,9 @@ import psutil
 from pacifica.cartd.orm import Cart
 from pacifica.cartd.utils import Cartutils
 import pacifica.cartd.orm
+# pylint: disable=import-error
 from cart_db_setup_test import cart_dbsetup_gen
+# pylint: enable=import-error
 
 
 class TestUtils(cart_dbsetup_gen(unittest.TestCase)):

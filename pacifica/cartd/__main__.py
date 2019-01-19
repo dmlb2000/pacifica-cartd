@@ -11,7 +11,7 @@ from argparse import ArgumentParser, SUPPRESS
 from threading import Thread
 import cherrypy
 from peewee import OperationalError, PeeweeException
-from .orm import orm_sync, CartSystem, SCHEMA_MAJOR, SCHEMA_MINOR
+from .orm import OrmSync, CartSystem, SCHEMA_MAJOR, SCHEMA_MINOR
 from .rest import CartRoot, error_page_default
 from .globals import CHERRYPY_CONFIG, CONFIG_FILE
 
@@ -53,7 +53,7 @@ def main():
                         default=False, dest='stop_later',
                         action='store_true')
     args = parser.parse_args()
-    orm_sync.dbconn_blocking()
+    OrmSync.dbconn_blocking()
     if not CartSystem.is_safe():
         raise OperationalError('Database version too old {} update to {}'.format(
             '{}.{}'.format(*(CartSystem.get_version())),
@@ -103,7 +103,7 @@ def bool2cmdint(command_bool):
 
 def dbchk(args):
     """Check the database for the version running."""
-    orm_sync.dbconn_blocking()
+    OrmSync.dbconn_blocking()
     if args.check_equal:
         return bool2cmdint(CartSystem.is_equal())
     return bool2cmdint(CartSystem.is_safe())
@@ -111,13 +111,13 @@ def dbchk(args):
 
 def dbsync(_args):
     """Create or update the database."""
-    orm_sync.dbconn_blocking()
+    OrmSync.dbconn_blocking()
     try:
         CartSystem.get_version()
     except PeeweeException:
-        orm_sync.dbconn_blocking()
-        return orm_sync.create_tables()
-    return orm_sync.update_tables()
+        OrmSync.dbconn_blocking()
+        return OrmSync.create_tables()
+    return OrmSync.update_tables()
 
 
 if __name__ == '__main__':

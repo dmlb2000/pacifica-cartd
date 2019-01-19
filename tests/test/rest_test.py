@@ -11,7 +11,9 @@ from pacifica.cartd.orm import Cart
 from pacifica.cartd.rest import CartRoot, error_page_default
 from pacifica.cartd.tasks import CART_APP
 from pacifica.cartd.globals import CHERRYPY_CONFIG
+# pylint: disable=import-error
 from cart_db_setup_test import cart_dbsetup_gen
+# pylint: enable=import-error
 
 CART_APP.conf.CELERY_ALWAYS_EAGER = True
 

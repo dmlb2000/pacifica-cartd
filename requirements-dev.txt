@@ -1,6 +1,5 @@
 -r requirements.txt
-codeclimate-test-reporter
-coverage>=4.0,<4.4
+coverage
 httpretty
 mock
 pacifica-archiveinterface
@@ -10,3 +9,4 @@ psutil
 pylint<2.0
 pytest
 radon
+recommonmark

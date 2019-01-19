@@ -22,7 +22,7 @@ SCHEMA_MINOR = 0
 DB = connect(get_config().get('database', 'peewee_url'))
 
 
-class orm_sync(object):
+class OrmSync(object):
     """
     Special module for syncing the orm.
 
@@ -34,19 +34,20 @@ class orm_sync(object):
     The version tuples are directly translated to method names in the
     orm_update class for the update between those versions.
 
-    class orm_update:
+    Example Version Control::
+
+      class orm_update:
         versions = [
-            (0, 1),
-            (0, 2),
-            (1, 0),
-            (1, 1)
+          (0, 1),
+          (0, 2),
+          (1, 0),
+          (1, 1)
         ]
 
         def update_0_1_to_0_2():
-            ...
+            pass
         def update_0_2_to_1_0():
-            ...
-        ...
+            pass
 
     The body of the update should follow peewee migration practices.
     http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#migrate

@@ -12,7 +12,9 @@ from pacifica.cartd.tasks import stage_file_task, stage_files, status_file_task,
 from pacifica.cartd.archive_requests import ArchiveRequests
 from pacifica.cartd.utils import Cartutils
 from pacifica.cartd.tasks import CART_APP
+# pylint: disable=import-error
 from cart_db_setup_test import cart_dbsetup_gen
+# pylint: enable=import-error
 
 CART_APP.conf.CELERY_ALWAYS_EAGER = True
 

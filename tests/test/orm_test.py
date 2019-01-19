@@ -6,8 +6,10 @@ import unittest
 import mock
 from peewee import OperationalError
 from pacifica.cartd.__main__ import dbsync
-from pacifica.cartd.orm import Cart, File, orm_sync
+from pacifica.cartd.orm import Cart, File, OrmSync
+# pylint: disable=import-error
 from cart_db_setup_test import cart_dbsetup_gen
+# pylint: enable=import-error
 
 
 class TestOrm(cart_dbsetup_gen(unittest.TestCase)):
@@ -28,7 +30,7 @@ class TestOrm(cart_dbsetup_gen(unittest.TestCase)):
         hit_exception = False
         os.environ['DATABASE_CONNECT_ATTEMPTS'] = '3'
         try:
-            orm_sync.dbconn_blocking()
+            OrmSync.dbconn_blocking()
         except OperationalError:
             hit_exception = True
         self.assertTrue(hit_exception)
