@@ -17,8 +17,6 @@ services:
       MYSQL_DATABASE: pacifica_cartd
       MYSQL_USER: cartd
       MYSQL_PASSWORD: cartd
-    ports:
-    - 3306:3306
 
   archiveinterface:
     image: pacifica/archiveinterface

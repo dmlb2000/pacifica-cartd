@@ -104,18 +104,19 @@ class TestCartEndToEnd(unittest.TestCase):
         """Test the status of a cart."""
         self.test_post_cart(cart_id)
 
-        while True:
+        tries = 40
+        wait = 3
+        while tries:
             resp = self.session.head(
                 'http://127.0.0.1:8081/{}'.format(cart_id))
             resp_status = resp.headers['X-Pacifica-Status']
             resp_message = resp.headers['X-Pacifica-Message']
             resp_code = resp.status_code
-            if resp_code == 204 and resp_status != 'staging':
-                break
-            if resp_code == 500:  # pragma: no cover
+            if (resp_code == 204 and resp_status != 'staging') or resp_code == 500:  # pragma: no cover
                 print(resp_message, file=sys.stderr)
                 break
-            time.sleep(2)
+            tries -= 1
+            time.sleep(wait)
 
         self.assertEqual(resp_status, 'ready')
         self.assertEqual(resp_message, '')

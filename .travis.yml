@@ -7,6 +7,7 @@ env:
 stages:
 - lint
 - test
+- test-docker
 - deploy
 ".script": &1
 - export CARTD_CPCONFIG=$PWD/server.conf
@@ -62,6 +63,17 @@ jobs:
   - script: *1
     before_script: *2
     python: 2.7
+  - stage: test-docker
+    sudo: required
+    python: 2.7
+    services:
+    - docker
+    script: >
+      docker-compose build --pull;
+      docker-compose up -d;
+      cd tests;
+      python -m unittest docker_test.BasicCartTests;
+      python -m unittest docker_test.RunCartTests
   - stage: deploy
     language: python
     script: skip

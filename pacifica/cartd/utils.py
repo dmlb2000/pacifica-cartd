@@ -438,6 +438,6 @@ class Cartutils(object):
             mycart.updated_date = datetime.datetime.now()
             mycart.save()
         except DoesNotExist:
-                # case if record no longer exists
+            # case if record no longer exists
             Cart.database_close()
             return
