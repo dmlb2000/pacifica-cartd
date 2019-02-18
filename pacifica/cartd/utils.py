@@ -20,6 +20,16 @@ int_type = six.integer_types[-1]
 # pylint: enable=invalid-name
 
 
+def parse_size(size):
+    """Parse size string to integer."""
+    units = {
+        'B': 1, 'KB': 10**3, 'MB': 10**6, 'GB': 10**9, 'TB': 10**12,
+        'b': 1, 'Kb': 1024, 'Mb': 1024**2, 'Gb': 1024**3, 'Tb': 1024**4
+    }
+    number, unit = [string.strip() for string in size.split()]
+    return int_type(float(number)*units[unit])
+
+
 class Cartutils(object):
     """Class used to provide utility functions for the cart to use."""
 

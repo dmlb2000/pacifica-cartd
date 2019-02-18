@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from json import dumps
 import hashlib
 import requests
+from .utils import parse_size
 from .config import get_config
 
 
@@ -23,14 +24,15 @@ class ArchiveRequests(object):
         the contents of a file from the archive interface
         to the specified cart filepath
         """
+        xfer_size = parse_size(get_config().get('cartd', 'transfer_size'))
         resp = requests.get(str(self._url + archive_filename), stream=True)
         myfile = open(cart_filepath, 'wb+')
-        buf = resp.raw.read(1024)
+        buf = resp.raw.read(xfer_size)
         myhash = hashlib.new(hashtype)
         while buf:
             myfile.write(buf)
             myhash.update(buf)
-            buf = resp.raw.read(1024)
+            buf = resp.raw.read(xfer_size)
         myfile.close()
         myhashval = myhash.hexdigest()
         if myhashval != hashval:

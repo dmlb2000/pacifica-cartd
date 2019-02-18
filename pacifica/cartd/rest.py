@@ -15,7 +15,7 @@ from six import PY2
 import cherrypy
 from cherrypy.lib import static
 from .tasks import create_cart
-from .utils import Cartutils
+from .utils import Cartutils, parse_size
 from .orm import Cart
 from .config import get_config
 
@@ -29,8 +29,6 @@ else:  # pragma: no cover only will work on one version of python
         """Convert the unicode object into bytes."""
         return bytes(unicode_obj, 'UTF-8')
     # pylint: enable=invalid-name
-
-BLOCK_SIZE = 1 << 20
 
 
 def error_page_default(**kwargs):
@@ -108,12 +106,14 @@ class CartRoot(object):
             cherrypy.response.headers['Content-Disposition'] = 'attachment; filename={}'.format(
                 rtn_name)
 
+            xfer_size = parse_size(get_config().get('cartd', 'transfer_size'))
+
             def read():
                 """read some size from rfd."""
-                buf = rfd.read(BLOCK_SIZE)
+                buf = rfd.read(xfer_size)
                 while buf:
                     yield buf
-                    buf = rfd.read(BLOCK_SIZE)
+                    buf = rfd.read(xfer_size)
                 wthread.join()
             return read()
         elif os.path.isfile(cart_path):

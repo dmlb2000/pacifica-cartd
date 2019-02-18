@@ -14,6 +14,8 @@ def get_config():
     """Return the ConfigParser object with defaults set."""
     configparser = SafeConfigParser()
     configparser.add_section('cartd')
+    configparser.set('cartd', 'transfer_size', getenv(
+        'TRANSFER_SIZE', '4 Mb'))
     configparser.set('cartd', 'volume_path', getenv(
         'VOLUME_PATH', '/tmp/'))
     configparser.set('cartd', 'lru_buffer_time', getenv(
