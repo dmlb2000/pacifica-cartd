@@ -44,7 +44,7 @@ install:
     cp sqlite3\sqlite-amalgamation-3240000\sqlite3.h "$env:PYTHON\include\sqlite3.h";
     cp "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\stdint.h" "C:\Users\appveyor\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0\VC\include\stdint.h";
     pip install -r requirements-dev.txt;
-    pip install celery[redis] eventlet 'redis<3.0';
+    pip install celery[redis] eventlet redis;
     echo 'done';
 
 build: off

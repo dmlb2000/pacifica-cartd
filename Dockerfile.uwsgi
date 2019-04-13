@@ -3,7 +3,7 @@ FROM python:3.6
 WORKDIR /usr/src/app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir uwsgi amqp pymysql psycopg2 cryptography
+RUN pip install --no-cache-dir uwsgi amqp pymysql 'psycopg2<2.8' cryptography redis
 ENV PEEWEE_PROTO mysql
 ENV PEEWEE_USER cartd
 ENV PEEWEE_PASS cartd
