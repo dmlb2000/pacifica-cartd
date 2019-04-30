@@ -410,6 +410,7 @@ class Cartutils(object):
                 bundle_flag = False
 
         if bundle_flag:
+            self.create_symlink(cartid)
             self.tar_files(cartid)
 
     def tar_files(self, cartid):
@@ -421,12 +422,12 @@ class Cartutils(object):
         """
         try:
             mycart = Cart.get(Cart.id == cartid)
+            bundle_path = os.path.join(
+                self._vol_path,
+                str(mycart.id),
+                mycart.cart_uid
+            )
             if mycart.bundle:
-                bundle_path = os.path.join(
-                    self._vol_path,
-                    str(mycart.id),
-                    mycart.cart_uid
-                )
                 bundle_tar = '{}.tar'.format(bundle_path)
                 cart_tar = tarfile.open(
                     bundle_tar,
@@ -437,12 +438,6 @@ class Cartutils(object):
                 cart_tar.close()
                 shutil.rmtree(bundle_path)
                 bundle_path = bundle_tar
-            else:
-                bundle_path = os.path.join(
-                    self._vol_path,
-                    str(mycart.id),
-                    mycart.cart_uid
-                )
             mycart.status = 'ready'
             mycart.bundle_path = bundle_path
             mycart.updated_date = datetime.datetime.now()
@@ -450,4 +445,25 @@ class Cartutils(object):
         except DoesNotExist:
             # case if record no longer exists
             Cart.database_close()
-            return
+
+    def create_symlink(self, cartid):
+        """Create a symlink to the data."""
+        try:
+            mycart = Cart.get(Cart.id == cartid)
+            bundle_path = os.path.join(
+                self._vol_path,
+                str(mycart.id),
+                mycart.cart_uid
+            )
+            if mycart.bundle:
+                bundle_path = '{}.tar'.format(bundle_path)
+            root_path = os.path.join(self._vol_path, 'cartuids')
+            if not os.path.isdir(root_path):
+                os.makedirs(root_path, 0o777)
+            dest = os.path.join(root_path, mycart.cart_uid)
+            if os.path.islink(dest):  # pragma: no cover
+                os.unlink(dest)
+            if hasattr(os, 'symlink'):  # pragma: no cover
+                os.symlink(bundle_path, dest)
+        except DoesNotExist:
+            Cart.database_close()

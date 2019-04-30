@@ -140,6 +140,11 @@ class TestCartEndToEnd(unittest.TestCase):
             saved_tar.getmember('38/1/2/3/foo.txt')).read()
         self.assertEqual(data, bytes_type('Writing content for first file'))
 
+    def test_get_cart_twice(self, cart_id='39'):
+        """Test the getting of a cart twice."""
+        self.test_status_cart(cart_id)
+        self.test_status_cart(cart_id)
+
     def test_get_noncart(self, cart_id='86'):
         """Test the getting of a cart."""
         resp = self.session.get('http://127.0.0.1:8081/{}'.format(cart_id))
@@ -169,6 +174,13 @@ class TestCartEndToEnd(unittest.TestCase):
         """Test pulling a file id that doesnt exist."""
         cart_utils = Cartutils()
         cart_utils.tar_files('8765')
+        # no action happens on invalid cart to tar, so no assertion to check
+        self.assertEqual(True, True)
+
+    def test_symlink_invalid_cart(self):
+        """Test pulling a file id that doesnt exist."""
+        cart_utils = Cartutils()
+        cart_utils.create_symlink('8765')
         # no action happens on invalid cart to tar, so no assertion to check
         self.assertEqual(True, True)
 
