@@ -12,7 +12,7 @@ import shutil
 import psutil
 import six
 from peewee import DoesNotExist
-from .orm import Cart, File
+from .orm import Cart, File, CartTasks
 from .config import get_config
 
 # pylint: disable=invalid-name
@@ -230,7 +230,7 @@ class Cartutils(object):
     #
     ###########################################################################
 
-    def remove_cart(self, uid):
+    def remove_cart(self, uid, revoke_func):
         """
         Call when a DELETE request comes in.
 
@@ -245,6 +245,7 @@ class Cartutils(object):
                      (Cart.deleted_date.is_null(True))))
         for cart in carts:
             iterator += 1
+            self.delete_cart_tasks(cart, revoke_func)
             success = self.delete_cart_bundle(cart)
             if not success:
                 deleted_flag = False
@@ -253,6 +254,12 @@ class Cartutils(object):
         elif deleted_flag:
             return False  # already deleted
         return None  # unknown error
+
+    @staticmethod
+    def delete_cart_tasks(cart, revoke_func):
+        """Get the cart tasks and delete revoke and terminate them."""
+        for task in CartTasks.select().where(CartTasks.cart_id == cart.id):
+            revoke_func(task.celery_task_id, terminate=True)
 
     def delete_cart_bundle(self, cart):
         """

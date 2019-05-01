@@ -17,7 +17,7 @@ from playhouse.migrate import SchemaMigrator, migrate
 from playhouse.db_url import connect
 from .config import get_config
 
-SCHEMA_MAJOR = 1
+SCHEMA_MAJOR = 2
 SCHEMA_MINOR = 0
 DB = connect(get_config().get('database', 'peewee_url'))
 
@@ -55,7 +55,8 @@ class OrmSync(object):
 
     versions = [
         (0, 1),
-        (1, 0)
+        (1, 0),
+        (2, 0)
     ]
 
     @staticmethod
@@ -76,7 +77,7 @@ class OrmSync(object):
     @staticmethod
     def create_tables():
         """Create the tables if they don't exist."""
-        for cls in [CartSystem, Cart, File]:
+        for cls in [CartSystem, Cart, File, CartTasks]:
             if not cls.table_exists():
                 cls.create_table()
         CartSystem.get_or_create_version()
@@ -92,6 +93,11 @@ class OrmSync(object):
                 BooleanField(default=False, null=True)
             )
         )
+
+    @classmethod
+    def update_1_0_to_2_0(cls):
+        """Update by adding the boolean column."""
+        CartTasks.create_table()
 
     @classmethod
     def update_tables(cls):
@@ -203,6 +209,13 @@ class Cart(CartBase):
     deleted_date = DateTimeField(null=True)
     status = TextField(default='waiting')
     error = TextField(default='')
+
+
+class CartTasks(CartBase):
+    """List of tasks based on a cart ID."""
+
+    cart_id = ForeignKeyField(Cart, index=True)
+    celery_task_id = CharField(default='')
 
 
 class File(CartBase):

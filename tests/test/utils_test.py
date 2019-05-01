@@ -338,5 +338,5 @@ class TestUtils(cart_dbsetup_gen(unittest.TestCase)):
         pacifica.cartd.orm.CartBase.throw_error = False
         mock_delete_cart.return_value = False
         cart_util = Cartutils()
-        return_val = cart_util.remove_cart(test_cart.id)
+        return_val = cart_util.remove_cart(test_cart.id, lambda x, terminate: x)
         self.assertEqual(return_val, None)

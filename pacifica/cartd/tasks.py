@@ -7,7 +7,7 @@ import datetime
 import requests
 from celery import Celery
 from peewee import DoesNotExist
-from .orm import Cart, File
+from .orm import Cart, File, CartTasks
 from .utils import Cartutils
 from .archive_requests import ArchiveRequests
 from .config import get_config
@@ -21,16 +21,6 @@ CART_APP = Celery(
 
 
 @CART_APP.task(ignore_result=True)
-def create_cart(file_ids, uid, bundle):
-    """Create the cart or update previous."""
-    Cart.database_connect()
-    mycart = Cart(cart_uid=uid, status='staging', bundle=bundle)
-    mycart.save()
-    stage_files.delay(file_ids, mycart.id)
-    Cart.database_close()
-
-
-@CART_APP.task(ignore_result=True)
 def stage_files(file_ids, mycart_id):
     """Tell the files to be staged on the backend system."""
     Cart.database_connect()
@@ -39,7 +29,11 @@ def stage_files(file_ids, mycart_id):
     cart_utils = Cartutils()
     file_id_error = cart_utils.update_cart_files(mycart, file_ids)
     if not file_id_error:
-        get_files_locally.delay(mycart.id)
+        get_files_task = CartTasks(
+            celery_task_id=str(get_files_locally.delay(mycart.id)),
+            cart_id=mycart_id
+        )
+        get_files_task.save()
     else:
         mycart.status = 'error'
         mycart.error = 'Error parsing file Ids with error: ' + \
@@ -55,7 +49,11 @@ def get_files_locally(cartid):
     # tell each file to be pulled
     Cart.database_connect()
     for cart_file in File.select().where(File.cart == cartid):
-        stage_file_task.delay(cart_file.id)
+        get_file_task = CartTasks(
+            celery_task_id=str(stage_file_task.delay(cart_file.id)),
+            cart_id=cartid
+        )
+        get_file_task.save()
     Cart.database_close()
 
 
@@ -85,8 +83,12 @@ def stage_file_task(file_id):
         cart_utils.prepare_bundle(mycart.id)
         return
     # successful stage so move on to status
+    statusfile_task = CartTasks(
+        celery_task_id=str(status_file_task.delay(file_id)),
+        cart_id=mycart.id
+    )
+    statusfile_task.save()
     Cart.database_close()
-    status_file_task.delay(file_id)
 
 
 @CART_APP.task(ignore_result=True)
@@ -121,11 +123,20 @@ def status_file_task(file_id):
         cart_utils.prepare_bundle(mycart.id)
         return
     elif not ready:  # pragma: no cover
+        statusfile_task = CartTasks(
+            celery_task_id=str(status_file_task.delay(file_id)),
+            cart_id=mycart.id
+        )
+        statusfile_task.save()
         Cart.database_close()
-        status_file_task.delay(file_id)
         return
     # ready so try to pull file
-    pull_file.delay(file_id, ready['filepath'], ready['modtime'], False)
+    pullfile_task = CartTasks(
+        celery_task_id=str(pull_file.delay(file_id, ready['filepath'], ready['modtime'], False)),
+        cart_id=mycart.id
+    )
+    pullfile_task.save()
+    Cart.database_close()
 
 
 @CART_APP.task(ignore_result=True)
@@ -160,7 +171,11 @@ def pull_file(file_id, filepath, modtime, record_error):
             cart_utils.prepare_bundle(mycart.id)
 
         else:
-            pull_file.delay(file_id, filepath, modtime, True)
+            pull_file_task = CartTasks(
+                celery_task_id=str(pull_file.delay(file_id, filepath, modtime, True)),
+                cart_id=mycart.id
+            )
+            pull_file_task.save()
             Cart.database_close()
 
     except ValueError as ex:

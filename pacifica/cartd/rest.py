@@ -14,9 +14,9 @@ from json import dumps
 from six import PY2
 import cherrypy
 from cherrypy.lib import static
-from .tasks import create_cart
+from .tasks import stage_files, CART_APP
 from .utils import Cartutils, parse_size
-from .orm import Cart
+from .orm import Cart, CartTasks
 from .config import get_config
 
 if PY2:  # pragma: no cover only works with one version of python
@@ -162,7 +162,13 @@ class CartRoot(object):
             )
         )
         Cart.database_connect()
-        create_cart(file_ids, uid, bundle)
+        mycart = Cart(cart_uid=uid, status='staging', bundle=bundle)
+        mycart.save()
+        files_task = CartTasks(
+            celery_task_id=str(stage_files.delay(file_ids, mycart.id)),
+            cart_id=mycart.id
+        )
+        files_task.save()
         Cart.database_close()
         cherrypy.response.status = '201 Created'
         return {'message': 'Cart Processing has begun'}
@@ -175,7 +181,7 @@ class CartRoot(object):
         """Delete a cart that has been created."""
         cart_utils = Cartutils()
         Cart.database_connect()
-        message = cart_utils.remove_cart(uid)
+        message = cart_utils.remove_cart(uid, CART_APP.control.revoke)
         Cart.database_close()
         if message is False:
             raise cherrypy.HTTPError(404, 'Not Found')
