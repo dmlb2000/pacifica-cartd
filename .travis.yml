@@ -1,4 +1,5 @@
 language: python
+dist: xenial
 services:
 - redis-server
 env:
@@ -34,11 +35,13 @@ stages:
 - coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk --equal
 - coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk
 - coverage run --include '*/site-packages/pacifica/cartd/*' -p -m celery -A pacifica.cartd.tasks worker -l info -c 1 -P solo & echo $! > celery.pid
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pacifica.cartd --stop-after-a-moment & echo $! > server.pid
+- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pacifica.cartd & echo $! > server.pid
 - sleep 1
 - coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pytest -xv e2e
 - kill `cat ../archive.pid`
+- kill `cat server.pid`
 - celery -A pacifica.cartd.tasks control shutdown || true
+- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pacifica.cartd --stop-after-a-moment || true
 - wait
 - coverage combine -a .coverage*
 - coverage report -m --fail-under 100
