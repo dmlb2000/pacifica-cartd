@@ -270,6 +270,11 @@ class Cartutils(object):
         try:
             path_to_files = os.path.join(self._vol_path, str(cart.id))
             shutil.rmtree(path_to_files)
+            dest = os.path.join(self._vol_path, 'cartuids', cart.cart_uid)
+            # windows has issues with python 2.7 and symlinks
+            # once we go to python 3 only we can probably handle this
+            if os.path.islink(dest):  # pragma: no cover
+                os.unlink(dest)
             cart.status = 'deleted'
             cart.deleted_date = datetime.datetime.now()
             cart.save()
