@@ -11,6 +11,7 @@ from datetime import datetime
 from sys import stderr
 from tarfile import TarFile
 from json import dumps
+from jsonschema import validate
 from six import PY2
 import cherrypy
 from cherrypy.lib import static
@@ -61,6 +62,27 @@ class CartRoot(object):
     HPSS Doc Tests
     """
 
+    json_schema = {
+        'type': 'object',
+        'properties': {
+            'fileids': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'id': {'type': ['integer', 'string']},
+                        'path': {'type': 'string'},
+                        'hashtype': {'type': 'string'},
+                        'hashsum': {'type': 'string'},
+                    },
+                    'required': ['id', 'path', 'hashtype', 'hashsum']
+                }
+            }
+        },
+        'required': [
+            'fileids'
+        ]
+    }
     exposed = True
 
     # Cherrypy requires these named methods.
@@ -150,13 +172,13 @@ class CartRoot(object):
 
     # Cherrypy requires these named methods.
     # pylint: disable=invalid-name
-    @staticmethod
+    @classmethod
     @cherrypy.tools.json_out()
     @cherrypy.tools.json_in()
-    def POST(uid):
+    def POST(cls, uid):
         """Get all the files locally and bundled."""
         data = cherrypy.request.json
-        file_ids = data['fileids']
+        validate(data, cls.json_schema)
         bundle = data.get(
             'bundle',
             get_config().getboolean(
@@ -168,7 +190,7 @@ class CartRoot(object):
         mycart = Cart(cart_uid=uid, status='staging', bundle=bundle)
         mycart.save()
         files_task = CartTasks(
-            celery_task_id=str(stage_files.delay(file_ids, mycart.id)),
+            celery_task_id=str(stage_files.delay(data['fileids'], mycart.id)),
             cart_id=mycart.id
         )
         files_task.save()
