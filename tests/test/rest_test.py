@@ -86,6 +86,12 @@ class TestRest(cart_dbsetup_gen(helper.CPWebCase)):
             'the right text came out.'
         )
 
+    def test_get_no_uid(self):
+        """Testing the cart interface get."""
+        req = requests.get('{}/'.format(self.url))
+        self.assertEqual(req.status_code, 200)
+        self.assertEqual(req.json()['message'], 'Pacifica Cartd Interface Up and Running')
+
     def test_status_invalid_uid(self):
         """Testing the cart interface status."""
         req = requests.head('{}/'.format(self.url))

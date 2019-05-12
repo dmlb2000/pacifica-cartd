@@ -66,8 +66,11 @@ class CartRoot(object):
     # Cherrypy requires these named methods.
     # pylint: disable=invalid-name
     @staticmethod
-    def GET(uid, **kwargs):
+    def GET(uid=None, **kwargs):
         """Download the tar file created by the cart."""
+        if not uid:
+            cherrypy.response.headers['Content-Type'] = 'application/json'
+            return bytes_type(dumps({'message': 'Pacifica Cartd Interface Up and Running'}))
         rtn_name = kwargs.get(
             'filename', 'data_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.tar')
         # get the bundle path if available
