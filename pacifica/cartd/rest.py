@@ -65,6 +65,33 @@ class CartRoot(object):
     json_schema = {
         'type': 'object',
         'properties': {
+            'metadata'{
+                'type': 'object',
+                'properties': {
+                    'type': { 'type': 'string', 'enum': ['requests', 'raw'] },
+                    'raw': {
+                        'type': 'object',
+                        'properties': {
+                            'content-type': {
+                                'type': 'string',
+                                'enum': ['application/json', 'text/plain']
+                            },
+                            'data': { 'type': 'string' }
+                        },
+                        'required': ['content-type', 'data']
+                    },
+                    'requests': {
+                        'type': 'object',
+                        'properties': {
+                            'method': { 'type': 'string', 'enum': ['get', 'put', 'post'] },
+                            'url': { 'type': 'string' },
+                            'args': { 'type': 'object' }
+                        },
+                        'required': ['method', 'url', 'args']
+                    }
+                },
+                'required': ['type']
+            },
             'fileids': {
                 'type': 'array',
                 'items': {
