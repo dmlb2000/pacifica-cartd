@@ -477,7 +477,7 @@ class Cartutils(object):
                 os.unlink(dest)
             if hasattr(os, 'symlink'):  # pragma: no cover
                 # pylint: disable=no-member
-                os.symlink(bundle_path, dest)
+                os.symlink(os.path.relpath(bundle_path, os.path.dirname(dest)), dest)
                 # pylint: enable=no-member
         except DoesNotExist:
             Cart.database_close()
