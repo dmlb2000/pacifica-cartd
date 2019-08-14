@@ -30,6 +30,21 @@ class TestArchiveRequests(unittest.TestCase):
         self.assertEqual(testfd.read().decode('UTF-8'), response_body)
 
     @httpretty.activate
+    def test_archive_get_fail(self):
+        """Test pulling a file that fails."""
+        httpretty.register_uri(httpretty.GET, '{}/1'.format(self.endpoint_url), status=500)
+        temp_dir = mkdtemp()
+        archreq = ArchiveRequests()
+        hashval = '5bf018b3c598df19b5f4363fc55f2f89'
+        hashtype = 'md5'
+        hit_exception = False
+        try:
+            archreq.pull_file('1', '{}/1'.format(temp_dir), hashval, hashtype)
+        except requests.exceptions.RequestException:
+            hit_exception = True
+        self.assertTrue(hit_exception)
+
+    @httpretty.activate
     def test_archive_stage(self):
         """Test staging a file."""
         response_body = {

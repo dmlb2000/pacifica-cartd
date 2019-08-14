@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Module that is used by the cart to send requests to the archive interface."""
 from __future__ import absolute_import
+from time import sleep
 from json import dumps
 import hashlib
 import requests
@@ -12,11 +13,15 @@ from .config import get_config
 class ArchiveRequests(object):
     """Class that supports all the requests to the archive interface."""
 
+    default_retry_count = 5
+    default_retry_sleep = 1
+
     def __init__(self):
         """Constructor for setting the AI URL."""
         self._url = get_config().get('archiveinterface', 'url')
 
-    def pull_file(self, archive_filename, cart_filepath, hashval, hashtype):
+    # pylint: disable=too-many-arguments
+    def pull_file(self, archive_filename, cart_filepath, hashval, hashtype, retry=None):
         """
         Pull file from AI.
 
@@ -24,8 +29,24 @@ class ArchiveRequests(object):
         the contents of a file from the archive interface
         to the specified cart filepath
         """
+        if retry is None:
+            retry = self.default_retry_count
+        while retry:
+            try:
+                self._pull_file(archive_filename, cart_filepath, hashval, hashtype)
+                retry = 0
+            except (requests.exceptions.RequestException, ValueError) as ex:
+                if retry == 1:
+                    raise ex
+                sleep(self.default_retry_sleep)
+                retry -= 1
+    # pylint: enable=too-many-arguments
+
+    def _pull_file(self, archive_filename, cart_filepath, hashval, hashtype):
         xfer_size = parse_size(get_config().get('cartd', 'transfer_size'))
         resp = requests.get(str(self._url + archive_filename), stream=True)
+        if int(resp.status_code/100) == 5:
+            raise requests.exceptions.RequestException('Status code is 500')
         myfile = open(cart_filepath, 'wb+')
         buf = resp.raw.read(xfer_size)
         myhash = hashlib.new(hashtype)
