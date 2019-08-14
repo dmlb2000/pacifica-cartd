@@ -2,7 +2,6 @@
 coverage
 httpretty
 mock
-pacifica-archiveinterface
 pbs
 pep257
 pre-commit

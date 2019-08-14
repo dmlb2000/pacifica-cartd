@@ -74,12 +74,11 @@ class TestCartdBase(object):
             """Run the main solo worker."""
             return celery_main([
                 'celery', '-A', 'pacifica.cartd.tasks', 'worker', '--pool', 'solo',
-                '-l', 'info', '-b', 'redis://127.0.0.1:6379/0'
+                '-l', 'info', '--quiet', '-b', 'redis://127.0.0.1:6379/0'
             ])
 
         self.celery_thread = threading.Thread(target=run_celery_worker)
         self.celery_thread.start()
-        sleep(3)
         archive_url = 'http://127.0.0.1:8080'
         for filename, content in self.test_files.items():
             url = '{}/{}'.format(archive_url, filename)
@@ -89,6 +88,7 @@ class TestCartdBase(object):
                 assert resp.status_code == 200
             resp = requests.put(url, data=content)
             assert resp.status_code == 201
+        sleep(3)
 
     # pylint: disable=invalid-name
     def tearDown(self):
@@ -99,7 +99,7 @@ class TestCartdBase(object):
                 '-b', 'redis://127.0.0.1:6379/0', 'shutdown'
             ])
         except SystemExit:
-            sleep(3)
+            pass
         self.celery_thread.join()
         try:
             celery_main([
@@ -107,7 +107,7 @@ class TestCartdBase(object):
                 '--force', 'purge'
             ])
         except SystemExit:
-            sleep(3)
+            pass
         for filename, _content in self.test_files.items():
             full_path = os.path.join(self.archive_dir, filename)
             if os.path.isfile(full_path):

@@ -15,6 +15,7 @@ from peewee import OperationalError, PeeweeException
 from .orm import OrmSync, CartSystem, SCHEMA_MAJOR, SCHEMA_MINOR
 from .rest import CartRoot, error_page_default
 from .globals import CHERRYPY_CONFIG, CONFIG_FILE
+from .fixit import fixit
 
 
 def stop_later(doit=False):
@@ -93,6 +94,15 @@ def cmd(*argv):
         dest='check_equal', action='store_true'
     )
     dbchk_parser.set_defaults(func=dbchk)
+    fixit_parser = subparsers.add_parser(
+        'fixit',
+        description='Fix an existing cart'
+    )
+    fixit_parser.add_argument(
+        '--cartid', dest='cartids', nargs='+', default=set(),
+        help='Cart IDs to try and fix'
+    )
+    fixit_parser.set_defaults(func=fixit)
     if not argv:  # pragma: no cover
         argv = sys_argv[1:]
     args = parser.parse_args(argv)

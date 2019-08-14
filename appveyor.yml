@@ -27,9 +27,6 @@ before_test:
 
 install:
 - ps: >
-    & "$env:PYTHON\python.exe" -m virtualenv C:\pacifica;
-    . C:\pacifica\Scripts\activate.ps1;
-    python -m pip install --upgrade pip setuptools wheel;
     Invoke-WebRequest -OutFile sqlite.zip https://www.sqlite.org/2018/sqlite-dll-win64-x64-3240000.zip;
     Invoke-WebRequest -OutFile sqlite-devel.zip https://www.sqlite.org/2018/sqlite-amalgamation-3240000.zip;
     Expand-Archive sqlite.zip -DestinationPath sqlite3;
@@ -41,6 +38,13 @@ install:
     cp sqlite3\sqlite3.lib "$env:PYTHON\libs\sqlite3.lib";
     cp sqlite3\sqlite-amalgamation-3240000\sqlite3.h "$env:PYTHON\include\sqlite3.h";
     cp "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\stdint.h" "C:\Users\appveyor\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0\VC\include\stdint.h";
+    & "$env:PYTHON\python.exe" -m virtualenv C:\cartd;
+    & "$env:PYTHON\python.exe" -m virtualenv C:\pacifica;
+    . C:\pacifica\Scripts\activate.ps1;
+    python -m pip install --upgrade pip setuptools wheel;
+    pip install pacifica-archiveinterface;
+    . C:\cartd\Scripts\activate.ps1;
+    python -m pip install --upgrade pip setuptools wheel;
     pip install -r requirements-dev.txt;
     pip install celery[redis] eventlet redis;
     echo 'done';
@@ -49,9 +53,8 @@ build: off
 
 test_script:
 - ps: >
-    . C:\pacifica\Scripts\activate.ps1;
+    . C:\cartd\Scripts\activate.ps1;
     $env:CARTD_CPCONFIG = "$PWD/server.conf";
     pre-commit run -a;
-    pip install .;
     coverage run --include 'pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e;
     coverage report -m --fail-under=100;

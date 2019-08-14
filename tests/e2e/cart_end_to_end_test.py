@@ -8,11 +8,13 @@ import time
 import tarfile
 import hashlib
 import json
+from argparse import Namespace
 from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
 from cherrypy.test import helper
 from pacifica.cartd.utils import Cartutils
+from pacifica.cartd.fixit import fixit
 from pacifica.cartd.rest import bytes_type
 from pacifica.cartd.tasks import pull_file
 from ..cart_db_setup_test import TestCartdBase
@@ -166,6 +168,18 @@ class TestCartEndToEnd(TestCartdBase, helper.CPWebCase):
 
         resp = self.session.delete('{}/{}'.format(self.url, cart_id))
         self.assertEqual(resp.json()['message'], 'Cart Deleted Successfully')
+
+    def test_fixit_cart(self, cart_id='40'):
+        """Test the deletion of a cart."""
+        self.test_status_cart(cart_id)
+        hit_exception = False
+        try:
+            fixit(Namespace(cartids=['40']))
+        # pylint: disable=broad-except
+        except Exception:
+            hit_exception = True
+        # pylint: enable=broad-except
+        self.assertFalse(hit_exception)
 
     def test_delete_invalid_cart(self, cart_id='393'):
         """Test the deletion of a invalid cart."""

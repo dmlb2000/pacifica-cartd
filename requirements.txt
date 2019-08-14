@@ -6,3 +6,4 @@ psutil
 pymysql
 requests
 setuptools
+tqdm
