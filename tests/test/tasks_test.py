@@ -2,24 +2,22 @@
 # -*- coding: utf-8 -*-
 """File used to unit test the pacifica_cart tasks."""
 import os
-import unittest
 import datetime
 import json
 import mock
 import requests
+from cherrypy.test import helper
 from pacifica.cartd.orm import Cart, File
 from pacifica.cartd.tasks import stage_file_task, stage_files, status_file_task, pull_file
 from pacifica.cartd.archive_requests import ArchiveRequests
 from pacifica.cartd.utils import Cartutils
 from pacifica.cartd.tasks import CART_APP
-# pylint: disable=import-error
-from cart_db_setup_test import cart_dbsetup_gen
-# pylint: enable=import-error
+from ..cart_db_setup_test import TestCartdBase
 
 CART_APP.conf.CELERY_ALWAYS_EAGER = True
 
 
-class TestTasks(cart_dbsetup_gen(unittest.TestCase)):
+class TestTasks(TestCartdBase, helper.CPWebCase):
     """Contains tests for tasks that dont need all services stood up."""
 
     @mock.patch.object(ArchiveRequests, 'stage_file')
@@ -159,7 +157,7 @@ class TestTasks(cart_dbsetup_gen(unittest.TestCase)):
         test_file = File.create(
             cart=test_cart,
             file_name='1.txt',
-            bundle_path='/tmp/1/1.txt'
+            bundle_path=os.path.join(os.getenv('VOLUME_PATH'), '1', '1.txt')
         )
         file_id = test_file.id
         stage_file_task(file_id)
@@ -175,7 +173,7 @@ class TestTasks(cart_dbsetup_gen(unittest.TestCase)):
         test_file = File.create(
             cart=test_cart,
             file_name='1.txt',
-            bundle_path='/tmp/1/1.txt'
+            bundle_path=os.path.join(os.getenv('VOLUME_PATH'), '1', '1.txt')
         )
         file_id = test_file.id
         status_file_task(file_id)
@@ -188,7 +186,7 @@ class TestTasks(cart_dbsetup_gen(unittest.TestCase)):
         test_file = self.create_sample_file(test_cart)
         mock_pull.side_effect = ValueError('Error with hash pulling file')
         file_id = test_file.id
-        pull_file(file_id, '/tmp/1/1.txt', '9999999', False)
+        pull_file(file_id, os.path.join(os.getenv('VOLUME_PATH'), '1', '1.txt'), '9999999', False)
         cart_after = Cart.get(Cart.id == test_cart.id)
         status = cart_after.status
         self.assertEqual(status, 'error')
@@ -200,5 +198,5 @@ class TestTasks(cart_dbsetup_gen(unittest.TestCase)):
         test_file = self.create_sample_file(test_cart)
         test_cart.deleted_date = datetime.datetime.now()
         test_cart.save()
-        pull_file(test_file.id, '/tmp/1/1.txt', '9999999', False)
+        pull_file(test_file.id, os.path.join(os.getenv('VOLUME_PATH'), '1', '1.txt'), '9999999', False)
         mock_pull.assert_not_called()

@@ -10,7 +10,7 @@ Using PeeWee to implement the ORM.
 # pylint: disable=invalid-name
 import datetime
 import time
-from peewee import PrimaryKeyField, IntegerField, CharField, DateTimeField
+from peewee import AutoField, IntegerField, CharField, DateTimeField
 from peewee import ForeignKeyField, TextField, BooleanField
 from peewee import Model, OperationalError
 from playhouse.migrate import SchemaMigrator, migrate
@@ -80,7 +80,7 @@ class OrmSync(object):
         for cls in [CartSystem, Cart, File, CartTasks]:
             if not cls.table_exists():
                 cls.create_table()
-        CartSystem.get_or_create_version()
+        return CartSystem.get_or_create_version()
 
     @classmethod
     def update_0_1_to_1_0(cls):
@@ -106,7 +106,7 @@ class OrmSync(object):
         db_ver = CartSystem.get_version()
         if verlist.index(verlist[-1]) == verlist.index(db_ver):
             # we have the current version don't update
-            return
+            return db_ver
         with Cart.atomic():
             for db_ver in verlist[verlist.index(db_ver):-1]:
                 next_db_ver = verlist[verlist.index(db_ver)+1]
@@ -117,7 +117,7 @@ class OrmSync(object):
                 getattr(cls, method_name)()
             CartSystem.drop_table()
             CartSystem.create_table()
-            CartSystem.get_or_create_version()
+            return CartSystem.get_or_create_version()
 
 
 class CartBase(Model):
@@ -175,8 +175,8 @@ class CartSystem(CartBase):
     @classmethod
     def get_or_create_version(cls):
         """Set or create the current version of the schema."""
-        major = cls.get_or_create(part='major', value=SCHEMA_MAJOR)
-        minor = cls.get_or_create(part='minor', value=SCHEMA_MINOR)
+        major, _created = cls.get_or_create(part='major', value=SCHEMA_MAJOR)
+        minor, _created = cls.get_or_create(part='minor', value=SCHEMA_MINOR)
         return (major, minor)
 
     @classmethod
@@ -200,7 +200,7 @@ class CartSystem(CartBase):
 class Cart(CartBase):
     """Cart object model."""
 
-    id = PrimaryKeyField()
+    id = AutoField()
     cart_uid = CharField(default=1)
     bundle_path = CharField(default='')
     bundle = BooleanField(default=False, null=True)
@@ -221,8 +221,8 @@ class CartTasks(CartBase):
 class File(CartBase):
     """File object model to keep track of what's been downloaded for a cart."""
 
-    id = PrimaryKeyField()
-    cart = ForeignKeyField(Cart, to_field='id')
+    id = AutoField()
+    cart = ForeignKeyField(Cart, field='id')
     file_name = CharField(default='')
     bundle_path = CharField(default='')
     hash_type = CharField(null=True)

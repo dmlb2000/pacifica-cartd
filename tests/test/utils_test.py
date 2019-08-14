@@ -1,22 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """File used to unit test the pacifica_cart."""
-import unittest
 import os
 import json
 from types import MethodType
+import tempfile
 import shutil
 import mock
 import psutil
+from cherrypy.test import helper
 from pacifica.cartd.orm import Cart
 from pacifica.cartd.utils import Cartutils
 import pacifica.cartd.orm
-# pylint: disable=import-error
-from cart_db_setup_test import cart_dbsetup_gen
-# pylint: enable=import-error
+from ..cart_db_setup_test import TestCartdBase
 
 
-class TestUtils(cart_dbsetup_gen(unittest.TestCase)):
+class TestUtils(TestCartdBase, helper.CPWebCase):
     """Contains all the tests for the CartUtils class."""
 
     def test_create_download_path(self):
@@ -52,12 +51,13 @@ class TestUtils(cart_dbsetup_gen(unittest.TestCase)):
 
     def test_create_bundle_directories(self):
         """Test the  creation of directories where files will be saved."""
-        directory_name = '/tmp/fakedir/'
+        tmp_dir = tempfile.mkdtemp()
+        directory_name = os.path.join(tmp_dir, 'tmp', 'fakedir')
         cart_utils = Cartutils()
         cart_utils.create_bundle_directories(directory_name)
-        self.assertEqual(os.path.isdir(directory_name), True)
-        os.rmdir(directory_name)
-        self.assertEqual(os.path.isdir(directory_name), False)
+        self.assertTrue(os.path.isdir(directory_name), 'create_bundle_directories should make directories')
+        shutil.rmtree(tmp_dir)
+        self.assertFalse(os.path.isdir(directory_name), 'Removing the directory tree after should also work')
 
     @mock.patch.object(os, 'makedirs')
     def test_bad_makedirs(self, mock_makedirs):
@@ -294,7 +294,7 @@ class TestUtils(cart_dbsetup_gen(unittest.TestCase)):
         test_cart2 = Cart.create(
             cart_uid='2',
             status='staging',
-            bundle_path='/tmp/2/',
+            bundle_path=os.path.join(os.getenv('VOLUME_PATH'), '2/'),
             updated_date=1
         )
         cart_utils = Cartutils()

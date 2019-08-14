@@ -1,55 +1,18 @@
 language: python
 dist: xenial
-services:
-- redis-server
-env:
-  BROKER_URL: redis://127.0.0.1:6379/0
-  BACKEND_URL: redis://127.0.0.1:6379/0
+sudo: true
 stages:
 - lint
 - test
 - test-docker
 - deploy
 ".script": &1
-- export CARTD_CPCONFIG=$PWD/server.conf
-- cd tests
-- pip install pacifica-cartd==0.2.0 redis
-- pacifica-cart-cmd dbsync
-- pip install ..
-- >
-  coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pacifica.cartd;
-  ret_val=$?;
-  if [[ $ret_val == 0 ]] ; then exit -1; fi;
-- >
-  coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk --equal;
-  ret_val=$?;
-  if [[ $ret_val == 0 ]] ; then exit -1; fi;
-- >
-  coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk;
-  ret_val=$?;
-  if [[ $ret_val == 0 ]] ; then exit -1; fi;
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbsync
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pytest -xv test
-- rm -f db.sqlite3
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbsync
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk --equal
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p test/cmd_test.py dbchk
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m celery -A pacifica.cartd.tasks worker -l info -c 1 -P solo & echo $! > celery.pid
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pacifica.cartd & echo $! > server.pid
-- sleep 1
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pytest -xv e2e
-- kill `cat ../archive.pid`
-- kill `cat server.pid`
-- celery -A pacifica.cartd.tasks control shutdown || true
-- coverage run --include '*/site-packages/pacifica/cartd/*' -p -m pacifica.cartd --stop-after-a-moment || true
-- wait
-- coverage combine -a .coverage*
+- coverage run --include 'pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e
 - coverage report -m --fail-under 100
-".before_script": &2
-- export ARCHIVEINTERFACE_CPCONFIG="$PWD/travis/server.conf"
-- pacifica-archiveinterface --config travis/config.cfg & echo $! > archive.pid
-- sleep 1
-- python travis/archiveinterfacepreload.py
+before_script:
+- pip install ansible
+- ansible-galaxy install pacifica.ansible_pacifica pacifica.ansible_travis
+- ansible-playbook ~/.ansible/roles/pacifica.ansible_travis/molecule/common/playbook.yml -i ~/.ansible/roles/pacifica.ansible_travis/molecule/common/inventory.yml -e "travis_virtualenv=python${TRAVIS_PYTHON_VERSION} github_repository=cartd"
 jobs:
   include:
   - stage: lint
@@ -61,13 +24,12 @@ jobs:
     script: pre-commit run -a
   - stage: test
     script: *1
-    before_script: *2
     python: 3.6
   - script: *1
-    before_script: *2
     python: 2.7
   - stage: test-docker
     sudo: required
+    before_script: skip
     python: 2.7
     services:
     - docker

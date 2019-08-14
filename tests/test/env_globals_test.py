@@ -4,6 +4,8 @@
 import unittest
 import os
 import sys
+# pylint: disable=unused-import
+import pacifica.cartd.globals  # noqa: F401
 
 
 class TestEnvGlobals(unittest.TestCase):

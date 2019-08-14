@@ -2,49 +2,15 @@
 # -*- coding: utf-8 -*-
 """File used to unit test the pacifica_cart."""
 import os
-import logging
 from tempfile import mkdtemp
-import cherrypy
-from cherrypy.test import helper
 import requests
+from cherrypy.test import helper
 from pacifica.cartd.orm import Cart
-from pacifica.cartd.rest import CartRoot, error_page_default
-from pacifica.cartd.tasks import CART_APP
-from pacifica.cartd.globals import CHERRYPY_CONFIG
-# pylint: disable=import-error
-from cart_db_setup_test import cart_dbsetup_gen
-# pylint: enable=import-error
-
-CART_APP.conf.CELERY_ALWAYS_EAGER = True
+from ..cart_db_setup_test import TestCartdBase
 
 
-# there's a lot of testing with this class suckit pylint
-# pylint: disable=too-many-public-methods
-class TestRest(cart_dbsetup_gen(helper.CPWebCase)):
+class TestRest(TestCartdBase, helper.CPWebCase):
     """Contain all the tests for the Cart Interface."""
-
-    PORT = 8081
-    HOST = '127.0.0.1'
-    url = 'http://{0}:{1}'.format(HOST, PORT)
-    headers = {'content-type': 'application/json'}
-
-    # pylint: disable=invalid-name
-    @classmethod
-    def tearDownClass(cls):
-        """Unset the VOLUME_PATH for future tests."""
-        del os.environ['VOLUME_PATH']
-    # pylint: enable=invalid-name
-
-    @staticmethod
-    def setup_server():
-        """Start all the services."""
-        logger = logging.getLogger('urllib2')
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(logging.StreamHandler())
-        os.environ['VOLUME_PATH'] = '{}{}'.format(mkdtemp(), os.path.sep)
-        cherrypy.config.update({'error_page.default': error_page_default})
-        cherrypy.config.update(CHERRYPY_CONFIG)
-        cherrypy.tree.mount(CartRoot(), '/', CHERRYPY_CONFIG)
 
     def test_cart_int_get(self):
         """Testing the cart interface get method w/o file_wrapper."""

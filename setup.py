@@ -17,7 +17,7 @@ setup(
     description='Pacifica Cartd',
     author='David Brown',
     author_email='dmlb2000@gmail.com',
-    packages=find_packages(),
+    packages=find_packages(include=['pacifica.*']),
     namespace_packages=['pacifica'],
     entry_points={
         'console_scripts': [

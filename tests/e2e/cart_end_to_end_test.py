@@ -2,62 +2,71 @@
 # -*- coding: utf-8 -*-
 """File that will tests the requests and coverage of the server and the tasks."""
 from __future__ import print_function
-import unittest
 import sys
 import os
 import time
 import tarfile
+import hashlib
 import json
 from urllib3.util.retry import Retry
 import requests
 from requests.adapters import HTTPAdapter
-from pacifica.cartd.tasks import CART_APP
+from cherrypy.test import helper
 from pacifica.cartd.utils import Cartutils
 from pacifica.cartd.rest import bytes_type
 from pacifica.cartd.tasks import pull_file
+from ..cart_db_setup_test import TestCartdBase
 
 
 def cart_json_helper():
     """Helper that returns a cart json text string."""
+    def hash_content(data):
+        """Hash the data."""
+        mhash = hashlib.md5()
+        mhash.update(data)
+        return mhash.hexdigest()
+
     return json.dumps({
         'fileids': [
             {
                 'id': 'foo.txt',
                 'path': '1/2/3/foo.txt',
                 'hashtype': 'md5',
-                'hashsum': 'ac59bb32dac432674dd6e620a6b35ff3'
+                'hashsum': hash_content(TestCartdBase.test_files['foo.txt'])
             },
             {
                 'id': 'bar.csv',
                 'path': '1/2/3/bar.csv',
                 'hashtype': 'md5',
-                'hashsum': 'ef39aa7f8df8bdc8b8d4d81f4e0ef566'
+                'hashsum': hash_content(TestCartdBase.test_files['bar.csv'])
             },
             {
                 'id': 'baz.ini',
                 'path': '2/3/4/baz.ini',
                 'hashtype': 'md5',
-                'hashsum': 'b0c21625a5ef364864191e5907d7afb4'
+                'hashsum': hash_content(TestCartdBase.test_files['baz.ini'])
             }
         ]
     })
 
 
-class TestCartEndToEnd(unittest.TestCase):
+class TestCartEndToEnd(TestCartdBase, helper.CPWebCase):
     """Contains all the tests for the end to end cart testing."""
 
+    # pylint: disable=invalid-name
     def setUp(self):
         """Make the tasks not asynchronise for testing."""
-        CART_APP.conf.update(CELERY_ALWAYS_EAGER=True)
+        super(TestCartEndToEnd, self).setUp()
         session = requests.Session()
         retries = Retry(total=5, backoff_factor=5.0)
         session.mount('http://', HTTPAdapter(max_retries=retries))
         self.session = session
+    # pylint: enable=invalid-name
 
     def setup_good_cart(self, cart_id):
         """Setup a test good cart."""
         resp = self.session.post(
-            'http://127.0.0.1:8081/{}'.format(cart_id),
+            '{}/{}'.format(self.url, cart_id),
             data=cart_json_helper(),
             headers={
                 'Content-Type': 'application/json'
@@ -71,13 +80,14 @@ class TestCartEndToEnd(unittest.TestCase):
         """Test the creation of a cart."""
         resp = self.setup_good_cart(cart_id)
         self.assertEqual(resp.json()['message'], 'Cart Processing has begun')
+        time.sleep(2)
 
     def test_post_cart_bundle(self, cart_id='36a'):
         """Test the creation of a cart."""
         cart_data = json.loads(cart_json_helper())
         cart_data['bundle'] = True
         resp = self.session.post(
-            'http://127.0.0.1:8081/{}'.format(cart_id),
+            '{}/{}'.format(self.url, cart_id),
             data=json.dumps(cart_data),
             headers={
                 'Content-Type': 'application/json'
@@ -90,7 +100,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(resp.json()['message'], 'Cart Processing has begun')
         time.sleep(5)
         resp = self.session.get(
-            'http://127.0.0.1:8081/{}?filename={}'.format(cart_id, cart_id))
+            '{}/{}?filename={}'.format(self.url, cart_id, cart_id))
         with open(cart_id, 'wb') as fdesc:
             for chunk in resp.iter_content(chunk_size=128):
                 fdesc.write(chunk)
@@ -107,8 +117,7 @@ class TestCartEndToEnd(unittest.TestCase):
         tries = 40
         wait = 3
         while tries:
-            resp = self.session.head(
-                'http://127.0.0.1:8081/{}'.format(cart_id))
+            resp = self.session.head('{}/{}'.format(self.url, cart_id))
             resp_status = resp.headers['X-Pacifica-Status']
             resp_message = resp.headers['X-Pacifica-Message']
             resp_code = resp.status_code
@@ -125,8 +134,7 @@ class TestCartEndToEnd(unittest.TestCase):
         """Test the getting of a cart."""
         self.test_status_cart(cart_id)
 
-        resp = self.session.get(
-            'http://127.0.0.1:8081/{}?filename={}'.format(cart_id, cart_id))
+        resp = self.session.get('{}/{}?filename={}'.format(self.url, cart_id, cart_id))
         with open(cart_id, 'wb') as fdesc:
             for chunk in resp.iter_content(chunk_size=128):
                 fdesc.write(chunk)
@@ -147,7 +155,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
     def test_get_noncart(self, cart_id='86'):
         """Test the getting of a cart."""
-        resp = self.session.get('http://127.0.0.1:8081/{}'.format(cart_id))
+        resp = self.session.get('{}/{}'.format(self.url, cart_id))
         self.assertEqual(
             resp.json()['message'], 'The cart does not exist or has already been deleted')
         self.assertEqual(resp.status_code, 404)
@@ -156,12 +164,12 @@ class TestCartEndToEnd(unittest.TestCase):
         """Test the deletion of a cart."""
         self.test_status_cart(cart_id)
 
-        resp = self.session.delete('http://127.0.0.1:8081/{}'.format(cart_id))
+        resp = self.session.delete('{}/{}'.format(self.url, cart_id))
         self.assertEqual(resp.json()['message'], 'Cart Deleted Successfully')
 
     def test_delete_invalid_cart(self, cart_id='393'):
         """Test the deletion of a invalid cart."""
-        resp = self.session.delete('http://127.0.0.1:8081/{}'.format(cart_id))
+        resp = self.session.delete('{}/{}'.format(self.url, cart_id))
         self.assertEqual(resp.json()['message'], 'Not Found')
 
     def test_pull_invalid_file(self):
@@ -187,7 +195,7 @@ class TestCartEndToEnd(unittest.TestCase):
     def test_status_cart_notfound(self):
         """Test the status of a cart with cart not found."""
         cart_id = '97'
-        resp = self.session.head('http://127.0.0.1:8081/{}'.format(cart_id))
+        resp = self.session.head('{}/{}'.format(self.url, cart_id))
         resp_status = resp.headers['X-Pacifica-Status']
         resp_message = resp.headers['X-Pacifica-Message']
         resp_code = resp.status_code
@@ -211,7 +219,7 @@ class TestCartEndToEnd(unittest.TestCase):
         }
 
         resp = self.session.post(
-            'http://127.0.0.1:8081/{}'.format(cart_id),
+            '{}/{}'.format(self.url, cart_id),
             data=json.dumps(bad_cart_data),
             headers={
                 'Content-Type': 'application/json'
@@ -221,7 +229,7 @@ class TestCartEndToEnd(unittest.TestCase):
 
         while True:  # pragma: no cover
             resp = self.session.head(
-                'http://127.0.0.1:8081/{}'.format(cart_id))
+                '{}/{}'.format(self.url, cart_id))
             resp_status = resp.headers['X-Pacifica-Status']
             resp_code = resp.status_code
             if (resp_code == 204 and resp_status != 'staging') or resp_code == 500:
@@ -256,7 +264,7 @@ class TestCartEndToEnd(unittest.TestCase):
             ]
         }
         resp = self.session.post(
-            'http://127.0.0.1:8081/{}'.format(cart_id),
+            '{}/{}'.format(self.url, cart_id),
             data=json.dumps(bad_cart_data),
             headers={
                 'Content-Type': 'application/json'
@@ -265,8 +273,7 @@ class TestCartEndToEnd(unittest.TestCase):
         self.assertEqual(resp.json()['message'], 'Cart Processing has begun')
 
         while True:
-            resp = self.session.head(
-                'http://127.0.0.1:8081/{}'.format(cart_id))
+            resp = self.session.head('{}/{}'.format(self.url, cart_id))
             resp_status = resp.headers['X-Pacifica-Status']
             resp_code = resp.status_code
             if resp_code == 204 and resp_status != 'staging':  # pragma: no cover

@@ -6,6 +6,7 @@ Pacifica Cart Interface.
 This is the main program that starts the WSGI server.
 The core of the server code is in cart_interface.py.
 """
+from sys import argv as sys_argv
 from time import sleep
 from argparse import ArgumentParser, SUPPRESS
 from threading import Thread
@@ -34,7 +35,7 @@ def stop_later(doit=False):
     sleep_thread.start()
 
 
-def main():
+def main(*argv):
     """Main method to start the httpd server."""
     parser = ArgumentParser(description='Run the cart server.')
     parser.add_argument('-c', '--config', metavar='CONFIG', type=str,
@@ -52,7 +53,9 @@ def main():
     parser.add_argument('--stop-after-a-moment', help=SUPPRESS,
                         default=False, dest='stop_later',
                         action='store_true')
-    args = parser.parse_args()
+    if not argv:  # pragma: no cover
+        argv = sys_argv[1:]
+    args = parser.parse_args(argv)
     OrmSync.dbconn_blocking()
     if not CartSystem.is_safe():
         raise OperationalError('Database version too old {} update to {}'.format(
@@ -68,7 +71,7 @@ def main():
     cherrypy.quickstart(CartRoot(), '/', args.cpconfig)
 
 
-def cmd():
+def cmd(*argv):
     """Main admin command line tool."""
     parser = ArgumentParser(description='Cart admin tool.')
     parser.add_argument(
@@ -90,7 +93,9 @@ def cmd():
         dest='check_equal', action='store_true'
     )
     dbchk_parser.set_defaults(func=dbchk)
-    args = parser.parse_args()
+    if not argv:  # pragma: no cover
+        argv = sys_argv[1:]
+    args = parser.parse_args(argv)
     return args.func(args)
 
 
@@ -116,9 +121,5 @@ def dbsync(_args):
         CartSystem.get_version()
     except PeeweeException:
         OrmSync.dbconn_blocking()
-        return OrmSync.create_tables()
-    return OrmSync.update_tables()
-
-
-if __name__ == '__main__':
-    main()
+        return bool2cmdint(OrmSync.create_tables())
+    return bool2cmdint(OrmSync.update_tables())

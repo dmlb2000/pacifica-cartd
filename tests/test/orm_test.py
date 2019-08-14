@@ -2,17 +2,15 @@
 # -*- coding: utf-8 -*-
 """This tests some of the cart orm class."""
 import os
-import unittest
 import mock
+from cherrypy.test import helper
 from peewee import OperationalError
 from pacifica.cartd.__main__ import dbsync
 from pacifica.cartd.orm import Cart, File, OrmSync
-# pylint: disable=import-error
-from cart_db_setup_test import cart_dbsetup_gen
-# pylint: enable=import-error
+from ..cart_db_setup_test import TestCartdBase
 
 
-class TestOrm(cart_dbsetup_gen(unittest.TestCase)):
+class TestOrm(TestCartdBase, helper.CPWebCase):
     """Contains the cart orm tests."""
 
     def test_cart_orm_db_setup(self):
