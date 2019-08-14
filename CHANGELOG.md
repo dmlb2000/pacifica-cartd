@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2019-08-14
+### Changed
+- Fix #76 Updated testing framework by [@dmlb2000](https://github.com/dmlb2000)
+- Fix #75 Add cart rebuild command by [@dmlb2000](https://github.com/dmlb2000)
+- Fix #74 File download retry loop by [@dmlb2000](https://github.com/dmlb2000)
+
 ## [0.3.11] - 2019-05-16
 ### Added
 - Download of data in the archiveinterface
