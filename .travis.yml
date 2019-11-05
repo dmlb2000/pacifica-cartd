@@ -9,10 +9,14 @@ stages:
 ".script": &1
 - coverage run --include 'pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e
 - coverage report -m --fail-under 100
-before_script:
+before_install:
+- pip install --upgrade pip setuptools wheel
 - pip install ansible
 - ansible-galaxy install pacifica.ansible_pacifica pacifica.ansible_travis
 - ansible-playbook ~/.ansible/roles/pacifica.ansible_travis/molecule/common/playbook.yml -i ~/.ansible/roles/pacifica.ansible_travis/molecule/common/inventory.yml -e "travis_virtualenv=python${TRAVIS_PYTHON_VERSION} github_repository=cartd"
+- pip freeze
+before_script:
+- pip freeze
 jobs:
   include:
   - stage: lint
@@ -29,7 +33,7 @@ jobs:
     python: 2.7
   - stage: test-docker
     sudo: required
-    before_script: skip
+    before_install: skip
     python: 2.7
     services:
     - docker
