@@ -28,4 +28,5 @@ documentation.
 
 * [Installation](docs/installation.md) documentation.
 * [Configuration](docs/configuration.md) documentation.
+* [Development](docs/development.md) documentation.
 * [Examples](docs/exampleusage.md) documentation.

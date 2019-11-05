@@ -72,3 +72,4 @@ jobs:
         tags: true
 install:
 - pip install -r requirements-dev.txt
+- python setup.py egg_info

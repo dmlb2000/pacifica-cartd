@@ -4,6 +4,7 @@ jsonschema
 peewee>2
 psutil
 pymysql
+redis
 requests
 setuptools
 tqdm
