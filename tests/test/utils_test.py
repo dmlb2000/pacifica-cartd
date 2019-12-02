@@ -14,6 +14,8 @@ from pacifica.cartd.utils import Cartutils
 import pacifica.cartd.orm
 from ..cart_db_setup_test import TestCartdBase
 
+# pylint: disable=too-many-public-methods
+
 
 class TestUtils(TestCartdBase, helper.CPWebCase):
     """Contains all the tests for the CartUtils class."""
@@ -340,3 +342,17 @@ class TestUtils(TestCartdBase, helper.CPWebCase):
         cart_util = Cartutils()
         return_val = cart_util.remove_cart(test_cart.id, lambda x, terminate: x)
         self.assertEqual(return_val, None)
+
+    def test_get_carts(self):
+        """Test if we can get a list of all carts."""
+        self.create_sample_cart('EFEFEFEFEFEFEFEFEF', 'staging', '1')
+        test_cart = self.create_sample_cart(2, 'deleted', '2')
+        test_cart.deleted_date = test_cart.creation_date
+        test_cart.save()
+        self.create_sample_cart(3, 'ready', '3')
+
+        cart_utils = Cartutils()
+        data = cart_utils.get_active_carts()
+
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0].id, 3)

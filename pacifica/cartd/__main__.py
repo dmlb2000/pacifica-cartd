@@ -6,16 +6,20 @@ Pacifica Cart Interface.
 This is the main program that starts the WSGI server.
 The core of the server code is in cart_interface.py.
 """
+from __future__ import print_function
 from sys import argv as sys_argv
 from time import sleep
 from argparse import ArgumentParser, SUPPRESS
 from threading import Thread
+import json
+import yaml
 import cherrypy
 from peewee import OperationalError, PeeweeException
-from .orm import OrmSync, CartSystem, SCHEMA_MAJOR, SCHEMA_MINOR
+from .orm import File, OrmSync, CartSystem, SCHEMA_MAJOR, SCHEMA_MINOR
 from .rest import CartRoot, error_page_default
 from .globals import CHERRYPY_CONFIG, CONFIG_FILE
 from .fixit import fixit
+from .utils import Cartutils
 
 
 def stop_later(doit=False):
@@ -103,6 +107,15 @@ def cmd(*argv):
         help='Cart IDs to try and fix'
     )
     fixit_parser.set_defaults(func=fixit)
+    dump_parser = subparsers.add_parser(
+        'dump',
+        description='Dump all the carts as yaml'
+    )
+    dump_parser.add_argument(
+        '--json', default=False, action='store_true',
+        help='Dump as Json'
+    )
+    dump_parser.set_defaults(func=dump)
     if not argv:  # pragma: no cover
         argv = sys_argv[1:]
     args = parser.parse_args(argv)
@@ -133,3 +146,22 @@ def dbsync(_args):
         OrmSync.dbconn_blocking()
         return bool2cmdint(OrmSync.create_tables())
     return bool2cmdint(OrmSync.update_tables())
+
+
+def dump(args):
+    """Dump the cart database."""
+    tree = []
+    carts = Cartutils.get_active_carts()
+    for cart in carts:
+        cdb = cart.dict()
+        files = File.select().where(File.cart == cart)
+        if files:
+            cdb['files'] = []
+            for c_file in files:
+                cdb['files'].append(c_file.dict())
+        tree.append(cdb)
+    if args.json:
+        print(json.dumps(tree))
+    else:
+        print(yaml.dump(tree))
+    return 0

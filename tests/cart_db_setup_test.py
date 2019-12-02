@@ -74,7 +74,7 @@ class TestCartdBase(object):
             """Run the main solo worker."""
             return celery_main([
                 'celery', '-A', 'pacifica.cartd.tasks', 'worker', '--pool', 'solo',
-                '-l', 'info', '--quiet', '-b', 'redis://127.0.0.1:6379/0'
+                '--quiet', '-b', 'redis://127.0.0.1:6379/0'
             ])
 
         self.celery_thread = threading.Thread(target=run_celery_worker)
@@ -114,3 +114,20 @@ class TestCartdBase(object):
                 os.unlink(full_path)
 
         # pylint: enable=protected-access
+
+
+def create_test_db():
+    """Create a simple test DB."""
+    test = TestCartdBase()
+    test.setUp()
+    test_cart = test.create_sample_cart('HELLOWORLD', 'ready', '1')
+    test.create_sample_file(test_cart)
+    test.create_sample_cart(2, 'staging', '2')
+    test_cart = test.create_sample_cart(3, 'deleted', '3')
+    test_cart.deleted_date = test_cart.creation_date
+    test_cart.save()
+    test.tearDown()
+
+
+if __name__ == '__main__':
+    create_test_db()

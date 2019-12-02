@@ -45,6 +45,7 @@ install:
     python -m pip install --upgrade pip setuptools wheel;
     pip install -r requirements-dev.txt;
     pip install celery[redis] eventlet redis;
+    pip freeze;
     echo 'done';
 
 build: off

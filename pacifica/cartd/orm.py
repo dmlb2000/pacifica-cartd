@@ -165,6 +165,13 @@ class CartBase(Model):
             setattr(self, field_name, val)
         self._dirty.clear()
 
+    def dict(self):
+        """return a dictionary of all the fields."""
+        data = {}
+        for k in self._meta.fields.keys():
+            data[k] = str(getattr(self, k))
+        return data
+
 
 class CartSystem(CartBase):
     """Cart Schema Version Model."""

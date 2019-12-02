@@ -29,6 +29,8 @@ def parse_size(size):
     number, unit = [string.strip() for string in size.split()]
     return int_type(float(number)*units[unit])
 
+# pylint: disable=too-many-public-methods
+
 
 class Cartutils(object):
     """Class used to provide utility functions for the cart to use."""
@@ -481,3 +483,12 @@ class Cartutils(object):
                 # pylint: enable=no-member
         except DoesNotExist:
             Cart.database_close()
+
+    @staticmethod
+    def get_active_carts():
+        """return a list of carts that are not marked deleted."""
+        carts = (Cart.select()
+                 .where(Cart.deleted_date.is_null(True))
+                 .order_by(Cart.creation_date.desc()))
+        cartlist = [c for c in carts.iterator()]
+        return cartlist

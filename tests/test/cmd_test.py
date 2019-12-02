@@ -1,11 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """Test script to run the command interface for testing."""
+from __future__ import print_function
 import sys
 import os
+import unicodedata
 from unittest import TestCase
 from tempfile import mkdtemp
 from shutil import rmtree
+import six
 try:
     import sh
 except ImportError:
@@ -22,11 +25,17 @@ except ImportError:
         @staticmethod
         def Command(attr):
             """Return command object like sh."""
+            for key in os.environ:
+                if six.PY2 and not isinstance(os.environ[key], str):
+                    print('Converting {} = {}({})'.format(key, type(os.environ[key]), os.environ[key]))
+                    os.environ[key] = str(unicodedata.normalize('NFKD', os.environ[key]).encode('ascii', 'ignore'))
+                    print('Converting {} = {}({})'.format(key, type(os.environ[key]), os.environ[key]))
             return pbs.Command(attr)
     sh = Sh()
 import peewee
 from pacifica.cartd.orm import DB
 from pacifica.cartd.__main__ import cmd, main
+from ..cart_db_setup_test import TestCartdBase
 
 
 class TestAdminCmdBase(TestCase):
@@ -73,6 +82,17 @@ class TestAdminCmd(TestAdminCmdBase):
         """Test that dbchk doesn't work."""
         with self.assertRaises(peewee.OperationalError):
             main('--stop-after-a-moment')
+
+    def test_dump(self):
+        """test that the dump command works."""
+        os.environ['VOLUME_PATH'] = '{}{}'.format(mkdtemp(), os.path.sep)
+        tcb = TestCartdBase()
+        tcb.setUp()
+        cart = TestCartdBase.create_sample_cart('EFEFEFE')
+        TestCartdBase.create_sample_file(cart)
+        self.assertEqual(cmd('dump'), 0)
+        self.assertEqual(cmd('dump', '--json'), 0)
+        tcb.tearDown()
 
 
 class TestAdminCmdSync(TestAdminCmdBase):
