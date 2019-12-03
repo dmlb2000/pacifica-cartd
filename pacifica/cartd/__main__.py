@@ -83,6 +83,7 @@ def cmd(*argv):
         '-c', '--config', metavar='CONFIG', type=str, default=CONFIG_FILE,
         dest='config', help='cart config file'
     )
+    parser.set_defaults(func=lambda _args: parser.print_help())
     subparsers = parser.add_subparsers(help='sub-command help')
     db_parser = subparsers.add_parser(
         'dbsync',
