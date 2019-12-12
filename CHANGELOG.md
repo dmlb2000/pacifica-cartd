@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2019-12-11
+### Added
+- Pull #90 add cart purge subcommand by [@karcaw](https://github.com/karcaw)
+- Pull #83 Add cart dump command by [@karcaw](https://github.com/karcaw)
+
+### Changed
+- Fix #81 add help for no subcommand by [@dmlb2000](https://github.com/dmlb2000)
+- Fix #86 drop support for Python 2.7 by [@dmlb2000](https://github.com/dmlb2000)
+- Fix #84 fix Travis CI by [@dmlb2000](https://github.com/dmlb2000)
+- Fix #82 update Development Docs by [@karcaw](https://github.com/karcaw)
+
 ## [0.4.0] - 2019-08-14
 ### Changed
 - Fix #76 Updated testing framework by [@dmlb2000](https://github.com/dmlb2000)
