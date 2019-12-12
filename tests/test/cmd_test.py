@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Test script to run the command interface for testing."""
 from __future__ import print_function
+from datetime import timedelta, datetime
 import sys
 import os
 import unicodedata
@@ -92,6 +93,21 @@ class TestAdminCmd(TestAdminCmdBase):
         TestCartdBase.create_sample_file(cart)
         self.assertEqual(cmd('dump'), 0)
         self.assertEqual(cmd('dump', '--json'), 0)
+        tcb.tearDown()
+
+    def test_purge(self):
+        """test the purge command."""
+        os.environ['VOLUME_PATH'] = '{}{}'.format(mkdtemp(), os.path.sep)
+        tcb = TestCartdBase()
+        tcb.setUp()
+        cart = TestCartdBase.create_sample_cart('EFEFEFE')
+        cart.created_date = datetime.now()-timedelta(days=70)
+        cart.updated_date = datetime.now()-timedelta(days=70)
+        cart.save()
+        TestCartdBase.create_sample_file(cart)
+        self.assertEqual(cmd('purge', '--time-ago=60 days ago'), 0)
+        cart.reload()
+        self.assertEqual(cart.status, 'deleted')
         tcb.tearDown()
 
 

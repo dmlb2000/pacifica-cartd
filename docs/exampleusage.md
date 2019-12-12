@@ -145,3 +145,13 @@ has a way to do this.
 ```
 pacifica-cartd-cmd fixit --cartid $MY_CART_UUID
 ```
+
+
+### Purge Old Carts that are older than a specific date.
+
+Sometimes carts dont get cleaned up by users, and need to be expired.
+The command line interface has a way to do this.
+
+```
+pacifica-cartd-cmd purge --time-ago="60 days ago"
+```

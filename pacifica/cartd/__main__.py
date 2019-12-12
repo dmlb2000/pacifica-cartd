@@ -11,6 +11,7 @@ from sys import argv as sys_argv
 from time import sleep
 from argparse import ArgumentParser, SUPPRESS
 from threading import Thread
+from datetime import timedelta, datetime
 import json
 import yaml
 import cherrypy
@@ -20,6 +21,14 @@ from .rest import CartRoot, error_page_default
 from .globals import CHERRYPY_CONFIG, CONFIG_FILE
 from .fixit import fixit
 from .utils import Cartutils
+from .tasks import CART_APP
+
+
+def objstr_to_timedelta(obj_str):
+    """Turn an object string of the format X unit ago into timedelta."""
+    value, unit, check = obj_str.split()
+    assert check == 'after' or check == 'ago'
+    return timedelta(**{unit: float(value)})
 
 
 def stop_later(doit=False):
@@ -117,6 +126,16 @@ def cmd(*argv):
         help='Dump as Json'
     )
     dump_parser.set_defaults(func=dump)
+    purge_parser = subparsers.add_parser(
+        'purge',
+        description='delete all carts before a time'
+    )
+    purge_parser.add_argument(
+        '--time-ago', dest='time_ago', type=objstr_to_timedelta,
+        help='only cart older than X days ago (i.e. --time-ago="7 days ago").',
+        required=False, default=timedelta(days=180)
+    )
+    purge_parser.set_defaults(func=purge)
     if not argv:  # pragma: no cover
         argv = sys_argv[1:]
     args = parser.parse_args(argv)
@@ -165,4 +184,16 @@ def dump(args):
         print(json.dumps(tree))
     else:
         print(yaml.dump(tree))
+    return 0
+
+
+def purge(args):
+    """purge old carts."""
+    cart_utils = Cartutils()
+    carts = cart_utils.get_active_carts()
+    for cart in carts:
+        if cart.updated_date < datetime.today() - args.time_ago:
+            print('deleting:'+str(cart.dict()))
+            message = cart_utils.remove_cart(cart.cart_uid, CART_APP.control.revoke)
+            print(message)
     return 0
