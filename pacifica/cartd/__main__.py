@@ -27,7 +27,7 @@ from .tasks import CART_APP
 def objstr_to_timedelta(obj_str):
     """Turn an object string of the format X unit ago into timedelta."""
     value, unit, check = obj_str.split()
-    assert check == 'after' or check == 'ago'
+    assert check in ('after', 'ago')
     return timedelta(**{unit: float(value)})
 
 

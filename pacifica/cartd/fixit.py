@@ -35,7 +35,7 @@ def fixit(args):
                 ready = cart_utils.check_file_ready_pull(response, c_file, cart_obj)
                 if isinstance(ready, int) and ready < 0:  # pragma: no cover hard to get here with error
                     raise c_file.error
-                elif ready:
+                if ready:
                     archive_request.pull_file(
                         c_file.file_name, ready['filepath'], c_file.hash_value, c_file.hash_type)
                     cart_utils.set_file_status(c_file, cart_obj, 'staged', False)

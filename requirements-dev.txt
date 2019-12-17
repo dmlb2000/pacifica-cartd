@@ -6,7 +6,7 @@ pbs; sys_platform == 'win32'
 pep257
 pre-commit
 psutil
-pylint<2.0
+pylint>2
 pytest
 radon
 recommonmark

@@ -4,6 +4,7 @@
 import unittest
 import os
 import sys
+import importlib
 # pylint: disable=unused-import
 import pacifica.cartd.globals  # noqa: F401
 
@@ -14,7 +15,6 @@ class TestEnvGlobals(unittest.TestCase):
     def test_set_logging(self):
         """Test that logging gets set for debugging."""
         os.environ['DATABASE_LOGGING'] = 'True'
-        import importlib
         # first delete the module from the loaded modules
         del sys.modules['pacifica.cartd.globals']
         # then we import the module

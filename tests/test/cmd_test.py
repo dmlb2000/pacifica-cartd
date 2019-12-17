@@ -5,17 +5,15 @@ from __future__ import print_function
 from datetime import timedelta, datetime
 import sys
 import os
-import unicodedata
 from unittest import TestCase
 from tempfile import mkdtemp
 from shutil import rmtree
-import six
 try:
     import sh
 except ImportError:
     import pbs
 
-    class Sh(object):
+    class Sh:
         """Sh style wrapper."""
 
         def __getattr__(self, attr):
@@ -26,11 +24,6 @@ except ImportError:
         @staticmethod
         def Command(attr):
             """Return command object like sh."""
-            for key in os.environ:
-                if six.PY2 and not isinstance(os.environ[key], str):
-                    print('Converting {} = {}({})'.format(key, type(os.environ[key]), os.environ[key]))
-                    os.environ[key] = str(unicodedata.normalize('NFKD', os.environ[key]).encode('ascii', 'ignore'))
-                    print('Converting {} = {}({})'.format(key, type(os.environ[key]), os.environ[key]))
             return pbs.Command(attr)
     sh = Sh()
 import peewee

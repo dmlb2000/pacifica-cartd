@@ -10,7 +10,7 @@ from .utils import parse_size
 from .config import get_config
 
 
-class ArchiveRequests(object):
+class ArchiveRequests:
     """Class that supports all the requests to the archive interface."""
 
     default_retry_count = 5

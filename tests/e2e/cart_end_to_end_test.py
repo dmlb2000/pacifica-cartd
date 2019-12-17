@@ -15,7 +15,6 @@ from requests.adapters import HTTPAdapter
 from cherrypy.test import helper
 from pacifica.cartd.utils import Cartutils
 from pacifica.cartd.fixit import fixit
-from pacifica.cartd.rest import bytes_type
 from pacifica.cartd.tasks import pull_file
 from ..cart_db_setup_test import TestCartdBase
 
@@ -102,7 +101,7 @@ class TestCartEndToEnd(TestCartdBase, helper.CPWebCase):
         self.assertEqual(resp.json()['message'], 'Cart Processing has begun')
         time.sleep(5)
         resp = self.session.get(
-            '{}/{}?filename={}'.format(self.url, cart_id, cart_id))
+            '{0}/{1}?filename={1}'.format(self.url, cart_id))
         with open(cart_id, 'wb') as fdesc:
             for chunk in resp.iter_content(chunk_size=128):
                 fdesc.write(chunk)
@@ -136,7 +135,7 @@ class TestCartEndToEnd(TestCartdBase, helper.CPWebCase):
         """Test the getting of a cart."""
         self.test_status_cart(cart_id)
 
-        resp = self.session.get('{}/{}?filename={}'.format(self.url, cart_id, cart_id))
+        resp = self.session.get('{0}/{1}?filename={1}'.format(self.url, cart_id))
         with open(cart_id, 'wb') as fdesc:
             for chunk in resp.iter_content(chunk_size=128):
                 fdesc.write(chunk)
@@ -148,7 +147,7 @@ class TestCartEndToEnd(TestCartdBase, helper.CPWebCase):
                         '{} should have foo.txt in it'.format(tar_members))
         data = saved_tar.extractfile(
             saved_tar.getmember('38/1/2/3/foo.txt')).read()
-        self.assertEqual(data, bytes_type('Writing content for first file'))
+        self.assertEqual(data, bytes('Writing content for first file', 'utf8'))
 
     def test_get_cart_twice(self, cart_id='39'):
         """Test the getting of a cart twice."""

@@ -12,7 +12,7 @@ from pacifica.cartd.rest import CartRoot, error_page_default
 from pacifica.cartd.orm import Cart, File, CartTasks
 
 
-class TestCartdBase(object):
+class TestCartdBase:
     """Contain all the tests for the Cart Interface."""
 
     archive_dir = mkdtemp()

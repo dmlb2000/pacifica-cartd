@@ -22,7 +22,7 @@ SCHEMA_MINOR = 0
 DB = connect(get_config().get('database', 'peewee_url'))
 
 
-class OrmSync(object):
+class OrmSync:
     """
     Special module for syncing the orm.
 
@@ -151,7 +151,7 @@ class CartBase(Model):
             cls._meta.database.close()
         # pylint: enable=no-member
 
-    class Meta(object):
+    class Meta:
         """Meta object containing the database connection."""
 
         database = DB  # This model uses the pacifica_cart database.

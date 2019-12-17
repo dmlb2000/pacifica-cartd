@@ -12,24 +12,12 @@ from sys import stderr
 from tarfile import TarFile
 from json import dumps
 from jsonschema import validate
-from six import PY2
 import cherrypy
 from cherrypy.lib import static
 from .tasks import stage_files, CART_APP
 from .utils import Cartutils, parse_size
 from .orm import Cart, CartTasks
 from .config import get_config
-
-if PY2:  # pragma: no cover only works with one version of python
-    # pylint: disable=invalid-name
-    bytes_type = str
-    # pylint: enable=invalid-name
-else:  # pragma: no cover only will work on one version of python
-    # pylint: disable=invalid-name
-    def bytes_type(unicode_obj):
-        """Convert the unicode object into bytes."""
-        return bytes(unicode_obj, 'UTF-8')
-    # pylint: enable=invalid-name
 
 
 def error_page_default(**kwargs):
@@ -51,10 +39,8 @@ class CartInterfaceError(Exception):
     Will be used to throw exceptions up to the top level of the application.
     """
 
-    pass
 
-
-class CartRoot(object):
+class CartRoot:
     """
     Define the methods that can be used for cart request types.
 
@@ -92,7 +78,7 @@ class CartRoot(object):
         """Download the tar file created by the cart."""
         if not uid:
             cherrypy.response.headers['Content-Type'] = 'application/json'
-            return bytes_type(dumps({'message': 'Pacifica Cartd Interface Up and Running'}))
+            return bytes(dumps({'message': 'Pacifica Cartd Interface Up and Running'}), 'utf8')
         rtn_name = kwargs.get(
             'filename', 'data_' + datetime.now().strftime('%Y_%m_%d_%H_%M_%S') + '.tar')
         # get the bundle path if available
@@ -103,8 +89,8 @@ class CartRoot(object):
         if cart_path is False:
             # cart not ready
             cherrypy.response.status = '202 Accepted'
-            return bytes_type('The cart is not ready for download.')
-        elif cart_path is None:
+            return bytes('The cart is not ready for download.', 'utf8')
+        if cart_path is None:
             # cart not found
             raise cherrypy.HTTPError(
                 404, 'The cart does not exist or has already been deleted')
@@ -141,7 +127,7 @@ class CartRoot(object):
                     buf = rfd.read(xfer_size)
                 wthread.join()
             return read()
-        elif os.path.isfile(cart_path):
+        if os.path.isfile(cart_path):
             return static.serve_file(
                 cart_path,
                 'application/octet-stream',
@@ -165,8 +151,7 @@ class CartRoot(object):
         if status == 'error':
             if 'No cart with uid' in message:
                 raise cherrypy.HTTPError(404, 'Not Found')
-            else:
-                raise cherrypy.HTTPError(500, 'Internal Server Error')
+            raise cherrypy.HTTPError(500, 'Internal Server Error')
         cherrypy.response.status = 204
         return 'No Content'
 

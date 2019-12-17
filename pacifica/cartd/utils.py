@@ -10,14 +10,9 @@ import tarfile
 from math import floor
 import shutil
 import psutil
-import six
 from peewee import DoesNotExist
 from .orm import Cart, File, CartTasks
 from .config import get_config
-
-# pylint: disable=invalid-name
-int_type = six.integer_types[-1]
-# pylint: enable=invalid-name
 
 
 def parse_size(size):
@@ -27,12 +22,12 @@ def parse_size(size):
         'b': 1, 'Kb': 1024, 'Mb': 1024**2, 'Gb': 1024**3, 'Tb': 1024**4
     }
     number, unit = [string.strip() for string in size.split()]
-    return int_type(float(number)*units[unit])
+    return int(float(number)*units[unit])
 
 # pylint: disable=too-many-public-methods
 
 
-class Cartutils(object):
+class Cartutils:
     """Class used to provide utility functions for the cart to use."""
 
     def __init__(self):
@@ -92,7 +87,7 @@ class Cartutils(object):
         try:
             decoded = json.loads(response)
             filesize = decoded['filesize']
-            return int_type(filesize)
+            return int(filesize)
         except (ValueError, KeyError, TypeError) as ex:
             cart_file.status = 'error'
             cart_file.error = """Failed to decode file size
@@ -113,7 +108,7 @@ class Cartutils(object):
         """
         try:
             # available space is in bytes
-            available_space = int_type(psutil.disk_usage(self._vol_path).free)
+            available_space = int(psutil.disk_usage(self._vol_path).free)
         except psutil.Error as ex:
             cart_file.status = 'error'
             cart_file.error = """Failed to get available file
@@ -253,7 +248,7 @@ class Cartutils(object):
                 deleted_flag = False
         if deleted_flag and iterator > 0:
             return 'Cart Deleted Successfully'
-        elif deleted_flag:
+        if deleted_flag:
             return False  # already deleted
         return None  # unknown error
 
@@ -493,5 +488,4 @@ class Cartutils(object):
         carts = (Cart.select()
                  .where(Cart.deleted_date.is_null(True))
                  .order_by(Cart.creation_date.desc()))
-        cartlist = [c for c in carts.iterator()]
-        return cartlist
+        return list(carts.iterator())

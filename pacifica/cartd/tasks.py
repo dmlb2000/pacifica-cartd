@@ -122,7 +122,7 @@ def status_file_task(file_id):
         Cart.database_close()
         cart_utils.prepare_bundle(mycart.id)
         return
-    elif not ready:  # pragma: no cover
+    if not ready:  # pragma: no cover
         statusfile_task = CartTasks(
             celery_task_id=str(status_file_task.delay(file_id)),
             cart_id=mycart.id
