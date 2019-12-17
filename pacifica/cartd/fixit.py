@@ -41,4 +41,4 @@ def fixit(args):
                     cart_utils.set_file_status(c_file, cart_obj, 'staged', False)
                     modtime = ready['modtime']
                     utime(ready['filepath'], (int(float(modtime)), int(float(modtime))))
-            cart_utils.prepare_bundle(cart_obj.id)
+        cart_utils.prepare_bundle(cart_obj.id)

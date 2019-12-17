@@ -1,13 +1,15 @@
 language: python
-dist: xenial
+dist: bionic
 sudo: true
+python: 3.6
 stages:
 - lint
 - test
 - test-docker
 - deploy
 script:
-- coverage run --include 'pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e
+- pip install .
+- coverage run --include '*/site-packages/pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e
 - coverage report -m --fail-under 100
 before_install:
 - pip install --upgrade pip setuptools wheel
@@ -20,15 +22,21 @@ before_script:
 jobs:
   include:
   - stage: lint
-    python: 3.6
+    before_script: skip
+    script: pre-commit run -a
+  - python: 3.7
+    before_script: skip
+    script: pre-commit run -a
+  - python: 3.8
     before_script: skip
     script: pre-commit run -a
   - stage: test
-    python: 3.6
+  - python: 3.7
+  - python: 3.8
   - stage: test-docker
     sudo: required
     before_install: skip
-    python: 3.6
+    python: 3.8
     services:
     - docker
     script: >
@@ -41,7 +49,7 @@ jobs:
     language: python
     script: skip
     before_script: skip
-    python: 3.6
+    python: 3.8
     deploy:
       skip_cleanup: true
       provider: pypi

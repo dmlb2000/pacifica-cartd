@@ -389,7 +389,7 @@ class Cartutils:
                     cart.save()
                 except (NameError, KeyError) as ex:
                     return ex  # return error so that the cart can be updated
-            return None
+        return None
 
     def prepare_bundle(self, cartid):
         """

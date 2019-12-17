@@ -1,6 +1,7 @@
 celery
 cherrypy
 jsonschema
+pacifica-namespace
 peewee>2
 psutil
 pymysql

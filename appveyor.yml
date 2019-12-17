@@ -9,6 +9,10 @@ environment:
   matrix:
     - PYTHON: C:\Python36-x64
       MSVC_VERSION: "Visual Studio 10 Win64"
+    - PYTHON: C:\Python37-x64
+      MSVC_VERSION: "Visual Studio 10 Win64"
+    - PYTHON: C:\Python38-x64
+      MSVC_VERSION: "Visual Studio 10 Win64"
 
 before_test:
 - ps: >
