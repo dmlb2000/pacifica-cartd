@@ -26,7 +26,7 @@ def error_page_default(**kwargs):
     return dumps({
         'status': kwargs['status'],
         'message': kwargs['message'],
-        'traceback': kwargs['traceback'],
+        'traceback': '' if kwargs['status'] == '404 Not Found' else kwargs['traceback'],
         'version': kwargs['version']
     })
 

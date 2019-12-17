@@ -26,6 +26,7 @@ class TestRest(TestCartdBase, helper.CPWebCase):
         """Testing the cart interface get against not valid cart uid."""
         req = requests.get('{}/123'.format(self.url))
         self.assertEqual(req.status_code, 404)
+        self.assertFalse(req.json()['traceback'], 'traceback should be empty')
 
     def test_not_valid_cart(self):
         """Testing the cart interface get against not ready cart."""
