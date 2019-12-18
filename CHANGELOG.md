@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2019-12-18
+### Added
+- Pull #92 Update to Pylint 2.0+ by [@dmlb2000](https://github.com/dmlb2000)
+- Pull #93 Include testing Python 3.7 and 3.8 by [@dmlb2000](https://github.com/dmlb2000)
+
+### Changed
+- Fix #85 Add option to disable cart purge by [@dmlb2000](https://github.com/dmlb2000)
+- Fix #88 Remove traceback from 404 carts by [@dmlb2000](https://github.com/dmlb2000)
+
 ## [0.5.0] - 2019-12-11
 ### Added
 - Pull #90 add cart purge subcommand by [@karcaw](https://github.com/karcaw)
