@@ -3,10 +3,7 @@
 """Configuration reading and validation module."""
 from os import getenv
 import logging
-try:
-    from ConfigParser import SafeConfigParser
-except ImportError:  # pragma: no cover python 2 vs 3 issue
-    from configparser import ConfigParser as SafeConfigParser
+from configparser import ConfigParser as SafeConfigParser
 from .globals import CONFIG_FILE
 
 
@@ -20,6 +17,8 @@ def get_config():
         'VOLUME_PATH', '/tmp/'))
     configparser.set('cartd', 'lru_buffer_time', getenv(
         'LRU_BUFFER_TIME', '0'))
+    configparser.set('cartd', 'lru_purge', getenv(
+        'LRU_PURGE', 'on'))
     configparser.set('cartd', 'bundle_task', getenv(
         'BUNDLE_TASK', 'off'))
     configparser.add_section('database')

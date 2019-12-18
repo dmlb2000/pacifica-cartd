@@ -153,6 +153,21 @@ class TestUtils(TestCartdBase, helper.CPWebCase):
         self.assertEqual(rtn, False)
         self.assertEqual(test_file.status, 'error')
 
+    def test_check_space_disabled(self):
+        """Test that the error when a bad path."""
+        test_cart = self.create_sample_cart()
+        test_file = self.create_sample_file(test_cart)
+        os.environ['LRU_PURGE'] = 'off'
+        cart_utils = Cartutils()
+        rtn = cart_utils.check_space_requirements(
+            test_file,
+            test_cart,
+            10,
+            False
+        )
+        self.assertEqual(rtn, True)
+        del os.environ['LRU_PURGE']
+
     def test_get_path_size(self):
         """Test to see if the path size of a directory is returned."""
         cart_utils = Cartutils()

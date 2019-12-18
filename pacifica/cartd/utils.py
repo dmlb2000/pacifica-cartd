@@ -34,6 +34,7 @@ class Cartutils:
         """Default constructor setting environment variable defaults."""
         self._vol_path = get_config().get('cartd', 'volume_path')
         self._lru_buff = get_config().get('cartd', 'lru_buffer_time')
+        self._lru_purge = get_config().getboolean('cartd', 'lru_purge')
 
     ###########################################################################
     #
@@ -106,6 +107,8 @@ class Cartutils:
         space. It will delete a cart first, then call  itself
         until either there is enough space or there is no carts to delete
         """
+        if not self._lru_purge:
+            return True
         try:
             # available space is in bytes
             available_space = int(psutil.disk_usage(self._vol_path).free)
