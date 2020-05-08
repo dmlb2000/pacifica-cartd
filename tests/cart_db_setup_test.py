@@ -66,9 +66,11 @@ class TestCartdBase:
     def setUp(self):
         """Setup the database with in memory sqlite."""
         # pylint: disable=protected-access
+        # pylint: disable=no-member
         if os.path.isfile('db.sqlite3'):
             Cart._meta.database.drop_tables([Cart, File, CartTasks])
         Cart._meta.database.create_tables([Cart, File, CartTasks])
+        # pylint: enable=no-member
 
         def run_celery_worker():
             """Run the main solo worker."""

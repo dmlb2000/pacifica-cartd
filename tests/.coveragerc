@@ -1,0 +1,6 @@
+[run]
+include = */site-packages/pacifica/cartd/*
+parallel = true
+
+[report]
+include = */site-packages/pacifica/cartd/*

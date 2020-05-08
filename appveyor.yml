@@ -9,17 +9,19 @@ environment:
   matrix:
     - PYTHON: C:\Python36-x64
       MSVC_VERSION: "Visual Studio 10 Win64"
+      TOX_ENV: py36
     - PYTHON: C:\Python37-x64
       MSVC_VERSION: "Visual Studio 10 Win64"
+      TOX_ENV: py37
     - PYTHON: C:\Python38-x64
       MSVC_VERSION: "Visual Studio 10 Win64"
+      TOX_ENV: py38
 
 before_test:
 - ps: >
     . C:\pacifica\Scripts\activate.ps1;
     $env:PATH = "${env:MYSQL_PATH}\bin;C:\pacifica\Scripts;${env:PATH}";
     mkdir ~/.pacifica-cartd; Set-Content -Path ~/.pacifica-cartd/config.ini -Value "[database]\npeewee_url = sqliteext:///db.sqlite3\n";
-    $env:CART_CPCONFIG = "$PWD/server.conf";
     $env:ARCHIVEINTERFACE_CPCONFIG = "$PWD/travis/server.conf";
     mkdir C:\tmp;
     Start-Process C:\pacifica\Scripts\pacifica-archiveinterface.exe -WorkingDirectory travis -ArgumentList "--config config.cfg" -RedirectStandardError archive-error.log -RedirectStandardOutput archive-output.log;
@@ -40,15 +42,11 @@ install:
     cp sqlite3\sqlite3.lib "$env:PYTHON\libs\sqlite3.lib";
     cp sqlite3\sqlite-amalgamation-3240000\sqlite3.h "$env:PYTHON\include\sqlite3.h";
     cp "c:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\include\stdint.h" "C:\Users\appveyor\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0\VC\include\stdint.h";
-    & "$env:PYTHON\python.exe" -m virtualenv C:\cartd;
     & "$env:PYTHON\python.exe" -m virtualenv C:\pacifica;
     . C:\pacifica\Scripts\activate.ps1;
     python -m pip install --upgrade pip setuptools wheel;
     pip install pacifica-archiveinterface;
-    . C:\cartd\Scripts\activate.ps1;
-    python -m pip install --upgrade pip setuptools wheel;
-    pip install -r requirements-dev.txt;
-    pip install celery[redis] eventlet redis;
+    pip install tox pre-commit pep257 pylint requests recommonmark httpretty mock;
     pip freeze;
     echo 'done';
 
@@ -58,6 +56,7 @@ test_script:
 - ps: >
     . C:\cartd\Scripts\activate.ps1;
     $env:CARTD_CPCONFIG = "$PWD/server.conf";
+    pip install .;
     pre-commit run -a;
-    coverage run --include 'pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e;
-    coverage report -m --fail-under=100;
+    cd tests;
+    tox -e "$env:TOX_ENV";

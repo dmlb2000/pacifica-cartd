@@ -3,6 +3,7 @@
 """Module that has the utility functionality for the cart."""
 from __future__ import absolute_import
 import os
+import sys
 import json
 import datetime
 import errno
@@ -478,7 +479,7 @@ class Cartutils:
             dest = os.path.join(root_path, mycart.cart_uid)
             if os.path.islink(dest):  # pragma: no cover
                 os.unlink(dest)
-            if hasattr(os, 'symlink'):  # pragma: no cover
+            if sys.platform != 'win32':  # pragma: no cover
                 # pylint: disable=no-member
                 os.symlink(os.path.relpath(bundle_path, os.path.dirname(dest)), dest)
                 # pylint: enable=no-member

@@ -27,7 +27,7 @@ except ImportError:
             return pbs.Command(attr)
     sh = Sh()
 import peewee
-from pacifica.cartd.orm import DB
+from pacifica.cartd.orm import DB, Cart, CartSystem, File, CartTasks
 from pacifica.cartd.__main__ import cmd, main
 from ..cart_db_setup_test import TestCartdBase
 
@@ -50,7 +50,7 @@ class TestAdminCmdBase(TestCase):
                 python_venv_cmd = sh.Command(fpath)
         python_venv_cmd('-m', 'pip', 'install', 'pacifica-cartd==0.2.0')
         if os.path.exists('db.sqlite3'):
-            os.unlink('db.sqlite3')
+            DB.drop_tables([CartSystem, Cart, File, CartTasks])
         python_venv_cmd('-c', 'import sys; from pacifica.cartd.__main__ import cmd; sys.exit(cmd())', 'dbsync')
 
     @classmethod
@@ -117,7 +117,11 @@ class TestAdminCmdSync(TestAdminCmdBase):
         cmd('dbsync')
         hit_exception = False
         try:
-            main('--stop-after-a-moment', '--cpconfig', 'server.conf')
+            main(
+                '--stop-after-a-moment',
+                '--cpconfig',
+                os.path.join(os.path.dirname(__file__), '..', '..', 'server.conf')
+            )
         # pylint: disable=broad-except
         except Exception:
             hit_exception = True

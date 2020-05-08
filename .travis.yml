@@ -7,10 +7,7 @@ stages:
 - test
 - test-docker
 - deploy
-script:
-- pip install .
-- coverage run --include '*/site-packages/pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e
-- coverage report -m --fail-under 100
+script: tox -e $TOX_ENV
 before_install:
 - pip install --upgrade pip setuptools wheel
 - pip install ansible
@@ -22,17 +19,20 @@ before_script:
 jobs:
   include:
   - stage: lint
-    before_script: skip
+    before_install: skip
     script: pre-commit run -a
   - python: 3.7
-    before_script: skip
+    before_install: skip
     script: pre-commit run -a
   - python: 3.8
-    before_script: skip
+    before_install: skip
     script: pre-commit run -a
   - stage: test
+    env: [ 'TOX_ENV=py36' ]
   - python: 3.7
+    env: [ 'TOX_ENV=py37' ]
   - python: 3.8
+    env: [ 'TOX_ENV=py38' ]
   - stage: test-docker
     sudo: required
     before_install: skip
@@ -60,5 +60,5 @@ jobs:
       on:
         tags: true
 install:
-- pip install -r requirements-dev.txt
-- python setup.py egg_info
+- pip install tox pre-commit pep257 pylint requests recommonmark httpretty mock
+- pip install .

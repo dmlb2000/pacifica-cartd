@@ -158,18 +158,22 @@ class CartBase(Model):
 
     def reload(self):
         """Reload my current state from the DB."""
+        # pylint: disable=no-member
         newer_self = self.get(self._meta.primary_key == getattr(
             self, self._meta.primary_key.name))
         for field_name in self._meta.fields.keys():
             val = getattr(newer_self, field_name)
             setattr(self, field_name, val)
         self._dirty.clear()
+        # pylint: enable=no-member
 
     def dict(self):
         """return a dictionary of all the fields."""
         data = {}
+        # pylint: disable=no-member
         for k in self._meta.fields.keys():
             data[k] = str(getattr(self, k))
+        # pylint: enable=no-member
         return data
 
 
