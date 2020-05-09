@@ -43,11 +43,9 @@ install:
     & "$env:PYTHON\python.exe" -m virtualenv C:\cartd;
     & "$env:PYTHON\python.exe" -m virtualenv C:\pacifica;
     . C:\pacifica\Scripts\activate.ps1;
-    python -m pip install --upgrade pip setuptools wheel;
     pip install pacifica-archiveinterface;
-    . C:\cartd\Scripts\activate.ps1;
     python -m pip install --upgrade pip setuptools wheel;
-    pip install -r requirements-dev.txt;
+    pip install .;
     pip install celery[redis] eventlet redis;
     pip freeze;
     echo 'done';
@@ -58,6 +56,8 @@ test_script:
 - ps: >
     . C:\cartd\Scripts\activate.ps1;
     $env:CARTD_CPCONFIG = "$PWD/server.conf";
+    pip install .;
+    pip install -r requirements-dev.txt;
     pre-commit run -a;
-    coverage run --include 'pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e;
+    coverage run --include '*/site-packages/pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e;
     coverage report -m --fail-under=100;

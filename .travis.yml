@@ -8,7 +8,6 @@ stages:
 - test-docker
 - deploy
 script:
-- pip install .
 - coverage run --include '*/site-packages/pacifica/cartd/*' -m pytest -xsv tests/test tests/e2e
 - coverage report -m --fail-under 100
 before_install:
@@ -60,5 +59,6 @@ jobs:
       on:
         tags: true
 install:
+- pip install .
 - pip install -r requirements-dev.txt
 - python setup.py egg_info
