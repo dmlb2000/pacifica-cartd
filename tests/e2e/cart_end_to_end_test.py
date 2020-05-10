@@ -16,6 +16,7 @@ from cherrypy.test import helper
 from pacifica.cartd.utils import Cartutils
 from pacifica.cartd.fixit import fixit
 from pacifica.cartd.tasks import pull_file
+from pacifica.cartd.orm import Cart
 from ..cart_db_setup_test import TestCartdBase
 
 
@@ -171,6 +172,11 @@ class TestCartEndToEnd(TestCartdBase, helper.CPWebCase):
     def test_fixit_cart(self, cart_id='40'):
         """Test the deletion of a cart."""
         self.test_status_cart(cart_id)
+        Cart.database_connect()
+        break_file = Cart.get(cart_uid=cart_id).files[0]
+        break_file.status = 'error'
+        break_file.save()
+        Cart.database_close()
         hit_exception = False
         try:
             fixit(Namespace(cartids=['40']))

@@ -27,6 +27,8 @@ def fixit(args):
         file_list = list(File.select().where(File.cart == cart_obj.id).execute())
         for file_index in trange(len(file_list), desc='Number of Files'):
             c_file = file_list[file_index]
+            if c_file.status == 'staged':
+                continue
             cart_utils.set_file_status(c_file, cart_obj, 'staging', False)
             ready = False
             while not ready:

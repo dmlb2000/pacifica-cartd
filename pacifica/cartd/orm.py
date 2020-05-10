@@ -233,7 +233,7 @@ class File(CartBase):
     """File object model to keep track of what's been downloaded for a cart."""
 
     id = AutoField()
-    cart = ForeignKeyField(Cart, field='id')
+    cart = ForeignKeyField(Cart, field='id', backref='files')
     file_name = CharField(default='')
     bundle_path = CharField(default='')
     hash_type = CharField(null=True)
