@@ -15,6 +15,7 @@ for user consumption of data.
 
    installation
    configuration
+   development
    exampleusage
    cartd
 

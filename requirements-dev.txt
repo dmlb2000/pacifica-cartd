@@ -8,6 +8,8 @@ psutil
 pylint>2
 pymysql
 pytest
+readthedocs-sphinx-ext
 recommonmark
 redis
 sh; sys_platform != 'win32'
+sphinx-rtd-theme
