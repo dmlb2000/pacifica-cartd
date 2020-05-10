@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2020-05-09
+### Added
+- Fix #99 Only Fix Error Files by [@dmlb2000](https://github.com/dmlb2000)
+- Fix #100 Fix ReadTheDocs Build by [@dmlb2000](https://github.com/dmlb2000)
+- Pull #104 Remove Requirements Files by [@dmlb2000](https://github.com/dmlb2000)
+- Pull #98 Namespace and Setup Fixes by [@dmlb2000](https://github.com/dmlb2000)
+
 ## [0.6.0] - 2019-12-18
 ### Added
 - Pull #92 Update to Pylint 2.0+ by [@dmlb2000](https://github.com/dmlb2000)
